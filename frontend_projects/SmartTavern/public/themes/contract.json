@@ -1,0 +1,119 @@
+{
+  "version": "1.0.0",
+  "selectorContract": {
+    "scopeAttr": "data-scope",
+    "partAttr": "data-part",
+    "notes": [
+      "Use [data-scope=\"...\"] to target feature modules and containers",
+      "Use [data-part=\"...\"] for sub-elements within a scope",
+      "Prefer attribute selectors over deep descendant selectors for stability"
+    ]
+  },
+  "stableScopes": [
+    { "value": "app-shell",        "desc": "Top-level application container" },
+    { "value": "start-view",       "desc": "Home/start page section" },
+    { "value": "main",             "desc": "Main content area wrapper" },
+    { "value": "chat-threaded",    "desc": "Threaded chat page container" },
+    { "value": "message-list",     "desc": "Threaded chat list container (scroll region)" },
+    { "value": "message-item",     "desc": "Threaded chat message card" },
+    { "value": "chat-sandbox",     "desc": "Full-screen frontend sandbox page container" },
+    { "value": "settings-view",    "desc": "Appearance/settings side panel container" },
+    { "value": "presets-view",     "desc": "Presets panel (right layer) container" },
+    { "value": "worldbook-view",   "desc": "Worldbook panel (right layer) container" },
+    { "value": "characters-view",  "desc": "Characters panel (right layer) container" },
+    { "value": "persona-view",     "desc": "Persona panel (right layer) container" },
+    { "value": "regex-view",       "desc": "Regex panel (right layer) container" }
+  ],
+  "stableParts": [
+    { "value": "content",      "desc": "Message text/content block within a message-item" },
+    { "value": "avatar",       "desc": "Avatar or role emblem area" },
+    { "value": "name",         "desc": "Display name area in message header" },
+    { "value": "badge",        "desc": "Small role badge near avatar" },
+    { "value": "floor-index",  "desc": "Visible floor index counter (#n)" },
+    { "value": "html-stage",   "desc": "Embedded HTML iframe stage within a message" },
+    { "value": "input-row",    "desc": "Threaded chat input area row" },
+    { "value": "menu",         "desc": "Per-message action menu container" }
+  ],
+  "cssTokens": [
+    "--st-color-bg",
+    "--st-color-text",
+    "--st-surface",
+    "--st-surface-2",
+    "--st-primary",
+    "--st-primary-contrast",
+    "--st-border",
+    "--st-accent",
+    "--st-overlay-ink",
+
+    "--st-font-body",
+    "--st-font-mono",
+    "--st-font-myth",
+
+    "--st-radius-sm",
+    "--st-radius-md",
+    "--st-radius-lg",
+    "--st-card-radius",
+
+    "--st-shadow-sm",
+    "--st-shadow-md",
+    "--st-shadow-lg",
+
+    "--st-surface-bg-image",
+    "--st-surface-bg-size",
+    "--st-surface-bg-position",
+    "--st-surface-bg-repeat",
+
+    "--st-bg-start",
+    "--st-bg-threaded",
+    "--st-bg-sandbox",
+
+    "--st-content-font-size",
+    "--st-name-font-size",
+    "--st-badge-font-size",
+    "--st-floor-font-size",
+    "--st-avatar-size",
+    "--st-chat-width",
+    "--st-input-height",
+
+    "--st-content-line-height",
+    "--st-message-gap",
+    "--st-stripe-width",
+
+    "--st-threaded-stage-aspect",
+    "--st-threaded-stage-maxw",
+    "--st-threaded-stage-padding",
+    "--st-threaded-stage-radius",
+
+    "--st-sandbox-max-width",
+    "--st-sandbox-aspect",
+    "--st-sandbox-padding",
+    "--st-sandbox-radius",
+
+    "--st-threaded-bg-opacity",
+    "--st-threaded-msg-bg-opacity",
+    "--st-sandbox-bg-opacity",
+    "--st-sandbox-stage-bg-opacity",
+    "--st-threaded-list-bg-opacity",
+    "--st-threaded-input-bg-opacity",
+    "--st-threaded-input-bg-focus-opacity",
+    "--st-threaded-stage-container-bg-opacity"
+  ],
+  "references": {
+    "files": [
+      "src/App.vue",
+      "src/components/chat/ThreadedChatPreview.vue",
+      "src/components/sidebar/AppearancePanel.vue"
+    ],
+    "hints": [
+      "Tokens are applied on :root via inline style at runtime",
+      "Appearance panel persists user overrides in localStorage and updates tokens live",
+      "Themes may ship additional CSS that references the tokens here"
+    ]
+  },
+  "notes": [
+    "Contract v1 focuses on visual tokens and stable selectors for themes to override safely.",
+    "Avoid targeting internal class names; prefer [data-scope] and [data-part].",
+    "Do not rely on component DOM nesting depth; treat scopes as the stable contract.",
+    "New tokens/scopes may be added in future minor versions; avoid breaking changes to existing contracts."
+  ]
+}

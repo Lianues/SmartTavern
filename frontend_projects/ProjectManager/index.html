@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>统一项目管理面板</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif !important;
+            color: #111111 !important;
+        }
+
+        /* 排版层级 - 严格遵循规范 */
+        h1 {
+            font-size: 36px !important;
+            line-height: 44px !important;
+            font-weight: 700 !important;
+            color: #000000 !important;
+            margin: 0 !important;
+        }
+        h2 {
+            font-size: 28px !important;
+            line-height: 36px !important;
+            font-weight: 700 !important;
+            color: #000000 !important;
+            margin: 0 !important;
+        }
+
+        /* 卡片与阴影 - 轻量微交互 */
+        .card-shadow {
+            box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+            transition: all 180ms ease-in-out;
+        }
+        .card-shadow:hover {
+            box-shadow: 0 6px 12px rgba(0,0,0,0.08);
+            transform: translateY(-1px);
+        }
+
+        /* 统一 4px 圆角 */
+        .rounded-4 {
+            border-radius: 4px !important;
+        }
+
+        /* 项目卡片（兼容 JS 生成的 .project-card） */
+        .project-card {
+            border-radius: 4px !important;
+            border: 1px solid #E5E7EB !important;
+            transition: all 180ms ease-in-out;
+        }
+        .project-card:hover {
+            border-color: #111111 !important;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.08);
+        }
+
+        /* 状态点（仅使用中性灰度） */
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        .status-running { background-color: #111827; }  /* 近黑 */
+        .status-stopped { background-color: #9CA3AF; }  /* 中灰 */
+        .status-unknown { background-color: #D1D5DB; }  /* 浅灰 */
+
+        /* 按钮（黑白极简） */
+        .btn-primary {
+            background-color: #111111 !important;
+            color: #ffffff !important;
+            border: 1px solid #111111 !important;
+            border-radius: 4px !important;
+            transition: transform 120ms ease, box-shadow 120ms ease, background-color 120ms ease;
+        }
+        .btn-primary:hover {
+            background-color: #0b0b0b !important;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.10);
+            transform: translateY(-1px);
+        }
+        .btn-secondary {
+            background-color: #ffffff !important;
+            color: #111111 !important;
+            border: 1px solid #111111 !important;
+            border-radius: 4px !important;
+            transition: transform 120ms ease, background-color 120ms ease, color 120ms ease;
+        }
+        .btn-secondary:hover {
+            background-color: #111111 !important;
+            color: #ffffff !important;
+            transform: translateY(-1px);
+        }
+
+        /* 端口徽标（中性） */
+        .port-badge {
+            background-color: #F3F4F6;
+            color: #111111;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        /* 加载动画颜色（黑白） */
+        .spinner {
+            border-bottom-color: #111111 !important;
+        }
+    </style>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    </head>
+    <body class="bg-gray-50 min-h-screen text-black">
+    <!-- Header -->
+    <header class="bg-white border-b border-gray-200">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <i data-lucide="layers" class="w-8 h-8 text-black"></i>
+                    <div>
+                        <h1 class="tracking-tight">统一项目管理面板</h1>
+                        <p class="text-gray-600 text-sm mt-1">ModularFlow Framework 项目控制中心</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                        <button id="refreshBtn" class="btn-secondary px-4 py-2 flex items-center space-x-2 focus:outline-none focus:ring-2 focus:ring-gray-800 focus:ring-offset-2">
+                            <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                            <span>刷新状态</span>
+                        </button>
+                        <button id="importProjectBtn" class="btn-primary px-4 py-2 flex items-center space-x-2 focus:outline-none focus:ring-2 focus:ring-gray-800 focus:ring-offset-2">
+                            <i data-lucide="package-plus" class="w-4 h-4"></i>
+                            <span>导入项目</span>
+                        </button>
+                        <button id="exportCardBtn" class="btn-secondary px-4 py-2 flex items-center space-x-2 focus:outline-none focus:ring-2 focus:ring-gray-800 focus:ring-offset-2">
+                            <i data-lucide="upload" class="w-4 h-4"></i>
+                            <span>导出项目卡</span>
+                        </button>
+                        <button id="importFromImageBtn" class="btn-secondary px-4 py-2 flex items-center space-x-2 focus:outline-none focus:ring-2 focus:ring-gray-800 focus:ring-offset-2">
+                            <i data-lucide="image" class="w-4 h-4"></i>
+                            <span>从图片导入</span>
+                        </button>
+                        <button id="openApiPanelBtn" class="btn-secondary px-4 py-2 flex items-center space-x-2 focus:outline-none focus:ring-2 focus:ring-gray-800 focus:ring-offset-2">
+                            <i data-lucide="book-open" class="w-4 h-4"></i>
+                            <span>API目录</span>
+                        </button>
+                    <div class="text-right">
+                        <div class="text-sm text-gray-500">当前时间</div>
+                        <div id="currentTime" class="text-lg font-mono text-black"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        <!-- System Overview -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-4 card-shadow p-6 border border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm">总项目数</p>
+                        <p id="totalProjects" class="text-2xl font-bold text-black">0</p>
+                    </div>
+                    <div class="bg-gray-100 p-3 rounded-4">
+                        <i data-lucide="folder" class="w-6 h-6 text-black"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-4 card-shadow p-6 border border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm">运行中</p>
+                        <p id="runningProjects" class="text-2xl font-bold text-black">0</p>
+                    </div>
+                    <div class="bg-gray-100 p-3 rounded-4">
+                        <i data-lucide="play-circle" class="w-6 h-6 text-black"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-4 card-shadow p-6 border border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm">已停止</p>
+                        <p id="stoppedProjects" class="text-2xl font-bold text-black">0</p>
+                    </div>
+                    <div class="bg-gray-100 p-3 rounded-4">
+                        <i data-lucide="stop-circle" class="w-6 h-6 text-black"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-4 card-shadow p-6 border border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm">端口占用</p>
+                        <p id="usedPorts" class="text-2xl font-bold text-black">0</p>
+                    </div>
+                    <div class="bg-gray-100 p-3 rounded-4">
+                        <i data-lucide="globe" class="w-6 h-6 text-black"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Projects Grid -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="tracking-tight">项目列表</h2>
+                <div class="flex space-x-3">
+                    <button id="startAllBtn" class="btn-primary px-4 py-2 flex items-center space-x-2 focus:outline-none focus:ring-2 focus:ring-gray-800 focus:ring-offset-2">
+                        <i data-lucide="play" class="w-4 h-4"></i>
+                        <span>启动所有</span>
+                    </button>
+                    <button id="stopAllBtn" class="btn-secondary px-4 py-2 flex items-center space-x-2 focus:outline-none focus:ring-2 focus:ring-gray-800 focus:ring-offset-2">
+                        <i data-lucide="stop" class="w-4 h-4"></i>
+                        <span>停止所有</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 前端项目列表 -->
+            <div class="mb-6">
+                <h3 class="text-base font-semibold text-black mb-2 flex items-center">
+                    <i data-lucide="monitor" class="w-4 h-4 mr-2 text-black"></i>
+                    前端项目
+                </h3>
+                <div id="projectsGridFrontend" class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                    <!-- Frontend projects will be loaded here -->
+                </div>
+            </div>
+            <!-- 后端项目列表 -->
+            <div>
+                <h3 class="text-base font-semibold text-black mb-2 flex items-center">
+                    <i data-lucide="server" class="w-4 h-4 mr-2 text-black"></i>
+                    后端项目
+                </h3>
+                <div id="projectsGridBackend" class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                    <!-- Backend projects will be loaded here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Project Management -->
+        <div class="bg-white rounded-4 card-shadow p-6 border border-gray-200 mb-8">
+            <h3 class="text-lg font-bold text-black mb-4 flex items-center">
+                <i data-lucide="folder-open" class="w-5 h-5 mr-2 text-black"></i>
+                项目管理
+            </h3>
+            <div class="mb-4">
+                <p class="text-gray-600 text-sm mb-4">您可以在这里管理项目，包括导入新项目和删除不需要的项目。</p>
+                <div class="flex space-x-3">
+                    <button id="importProjectBtnSection" class="btn-primary px-4 py-2 flex items-center space-x-2 focus:outline-none focus:ring-2 focus:ring-gray-800 focus:ring-offset-2">
+                        <i data-lucide="package-plus" class="w-4 h-4"></i>
+                        <span>导入项目</span>
+                    </button>
+                </div>
+            </div>
+            <!-- 合并端口配置到可管理项目列表，移除冗余的端口面板 -->
+            
+            <div id="projectManagementList" class="border border-gray-200 rounded-lg p-4">
+                <h4 class="font-medium text-gray-900 mb-3">可管理项目列表</h4>
+                <div id="managedProjectsList" class="space-y-2">
+                    <!-- Managed projects will be loaded here -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- Port Usage -->
+        <div class="bg-white rounded-4 card-shadow p-6 border border-gray-200">
+            <h3 class="text-lg font-bold text-black mb-4 flex items-center">
+                <i data-lucide="network" class="w-5 h-5 mr-2 text-black"></i>
+                端口使用情况
+            </h3>
+            <div id="portUsage" class="space-y-3">
+                <!-- Port usage will be loaded here -->
+            </div>
+        </div>
+        <!-- 通用 API 文件管理 -->
+        <div id="apiFilesPanel" class="bg-white rounded-4 card-shadow p-6 border border-gray-200 mt-8">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold text-black flex items-center">
+                    <i data-lucide="folder-cog" class="w-5 h-5 mr-2 text-black"></i>
+                    通用 API 文件管理
+                </h3>
+                <div class="text-xs text-gray-500">
+                    每页显示 10 条 | 删除将永久移除对应文件夹
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- 模块 API 面板 -->
+                <div class="border border-gray-200 rounded-4 p-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center">
+                            <i data-lucide="package" class="w-4 h-4 mr-2 text-black"></i>
+                            <span class="font-medium text-black">模块 API 文件夹</span>
+                        </div>
+                        <span id="apiModulesTotal" class="text-xs text-gray-500">0 项</span>
+                    </div>
+                    <div id="apiModulesList" class="space-y-2 min-h-[120px]">
+                        <div class="text-gray-500 text-sm py-4 text-center">暂无数据</div>
+                    </div>
+                    <div class="flex items-center justify-between mt-4" id="apiModulesPagination">
+                        <button id="apiModulesPrev" class="btn-secondary px-3 py-1 rounded text-sm">
+                            上一页
+                        </button>
+                        <span id="apiModulesPageInfo" class="text-sm text-gray-600">第 1 / 1 页</span>
+                        <button id="apiModulesNext" class="btn-secondary px-3 py-1 rounded text-sm">
+                            下一页
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 工作流 API 面板 -->
+                <div class="border border-gray-200 rounded-4 p-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center">
+                            <i data-lucide="workflow" class="w-4 h-4 mr-2 text-black"></i>
+                            <span class="font-medium text-black">工作流 API 文件夹</span>
+                        </div>
+                        <span id="apiWorkflowTotal" class="text-xs text-gray-500">0 项</span>
+                    </div>
+                    <div id="apiWorkflowList" class="space-y-2 min-h-[120px]">
+                        <div class="text-gray-500 text-sm py-4 text-center">暂无数据</div>
+                    </div>
+                    <div class="flex items-center justify-between mt-4" id="apiWorkflowPagination">
+                        <button id="apiWorkflowPrev" class="btn-secondary px-3 py-1 rounded text-sm">
+                            上一页
+                        </button>
+                        <span id="apiWorkflowPageInfo" class="text-sm text-gray-600">第 1 / 1 页</span>
+                        <button id="apiWorkflowNext" class="btn-secondary px-3 py-1 rounded text-sm">
+                            下一页
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-4 text-xs text-gray-500">
+                • 规则：以注册 API 脚本所在文件夹为单位，例如 api/modules/project_manager/ 即为一个模块；api/workflow/xxx/ 为一个工作流项。<br/>
+                • 删除：点击删除将递归删除该文件夹及其子文件，请谨慎操作。
+            </div>
+        </div>
+    </main>
+
+    <!-- Loading Modal -->
+    <div id="loadingModal" class="fixed inset-0 bg-black bg-opacity-50 items-center justify-center hidden z-50">
+        <div class="bg-white rounded-4 p-8 max-w-sm w-full mx-4">
+            <div class="text-center">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 spinner mx-auto mb-4 border-black"></div>
+                <p id="loadingText" class="text-gray-700">正在处理...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed top-4 right-4 bg-white rounded-4 card-shadow p-4 max-w-sm hidden z-50 border border-gray-200">
+        <div class="flex items-center space-x-3">
+            <div id="toastIcon" class="flex-shrink-0">
+                <i data-lucide="check-circle" class="w-5 h-5 text-black"></i>
+            </div>
+            <div>
+                <p id="toastTitle" class="font-medium text-black">成功</p>
+                <p id="toastMessage" class="text-sm text-gray-600">操作完成</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Import Project Modal -->
+    <div id="importProjectModal" class="fixed inset-0 bg-black bg-opacity-50 items-center justify-center hidden z-50">
+        <div class="bg-white rounded-4 p-8 max-w-lg w-full mx-4">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold text-black flex items-center">
+                    <i data-lucide="package-plus" class="w-5 h-5 mr-2 text-black"></i>
+                    导入项目
+                </h3>
+                <button id="closeImportModal" class="text-gray-500 hover:text-black">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <p class="text-gray-600 text-sm mb-4">
+                选择导入类型并上传文件：支持导入完整项目前后端压缩包，也支持导入单个 API 脚本（模块/工作流）。
+                当选择“API脚本”类型时，压缩包内必须仅包含一个 .py 文件，且路径以 api/modules 或 api/workflow 开头；也可直接上传嵌入了 zip 的 PNG 图片进行导入。
+            </p>
+            <form id="importProjectForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">导入类型</label>
+                    <div class="flex items-center space-x-6 flex-nowrap overflow-x-auto">
+                        <label class="flex items-center space-x-2">
+                            <input type="radio" name="importType" value="frontend" checked class="form-radio">
+                            <span class="text-sm text-gray-700 whitespace-nowrap">前端项目</span>
+                        </label>
+                        <label class="flex items-center space-x-2">
+                            <input type="radio" name="importType" value="backend" class="form-radio">
+                            <span class="text-sm text-gray-700 whitespace-nowrap">后端项目</span>
+                        </label>
+                        <label class="flex items-center space-x-2">
+                            <input type="radio" name="importType" value="api_module_script" class="form-radio">
+                            <span class="text-sm text-gray-700 whitespace-nowrap">API脚本（模块）</span>
+                        </label>
+                        <label class="flex items-center space-x-2">
+                            <input type="radio" name="importType" value="api_workflow_script" class="form-radio">
+                            <span class="text-sm text-gray-700 whitespace-nowrap">API脚本（工作流）</span>
+                        </label>
+                    </div>
+                </div>
+                <div>
+                    <label for="projectArchive" class="block text-sm font-medium text-gray-700 mb-1">项目压缩包或PNG图片</label>
+                    <input type="file" id="projectArchive" name="projectArchive" accept=".zip,.png"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-800 focus:border-gray-800">
+                    <p class="text-xs text-gray-500 mt-1">
+                        支持 .zip 与 .png。选择“API脚本”时，zip内必须仅包含一个 .py 文件，且路径前缀符合所选类型（模块: api/modules/...；工作流: api/workflow/...）。
+                        也可直接上传嵌入了 zip 的 PNG 图片进行导入。
+                    </p>
+                </div>
+                <div class="flex justify-end space-x-3">
+                    <button type="button" id="cancelImportBtn" class="btn-secondary px-4 py-2 rounded-md">
+                        取消
+                    </button>
+                    <button type="submit" class="btn-primary px-4 py-2 rounded-md">
+                        导入
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Delete Project Confirmation Modal -->
+    <div id="deleteProjectModal" class="fixed inset-0 bg-black bg-opacity-50 items-center justify-center hidden z-50">
+        <div class="bg-white rounded-4 p-8 max-w-md w-full mx-4">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold text-black flex items-center">
+                    <i data-lucide="trash-2" class="w-5 h-5 mr-2 text-red-600"></i>
+                    删除项目
+                </h3>
+                <button id="closeDeleteModal" class="text-gray-500 hover:text-black">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <p class="text-gray-700 mb-2">您确定要删除项目 <span id="deleteProjectName" class="font-semibold"></span> 吗？</p>
+            <p class="text-red-600 text-sm mb-4">此操作无法撤销，将删除所有相关文件。</p>
+            <div class="flex justify-end space-x-3">
+                <button type="button" id="cancelDeleteBtn" class="btn-secondary px-4 py-2 rounded-md">
+                    取消
+                </button>
+                <button type="button" id="confirmDeleteBtn" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md">
+                    删除
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Port Modal -->
+    <div id="editPortModal" class="fixed inset-0 bg-black bg-opacity-50 items-center justify-center hidden z-50">
+        <div class="bg-white rounded-4 p-8 max-w-md w-full mx-4">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold text-black flex items-center">
+                    <i data-lucide="settings" class="w-5 h-5 mr-2 text-black"></i>
+                    修改端口配置
+                </h3>
+                <button id="closePortModal" class="text-gray-500 hover:text-black">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <form id="editPortForm">
+                <input type="hidden" id="editProjectName">
+                <div class="space-y-4">
+                    <div>
+                        <label for="frontendPort" class="block text-sm font-medium text-gray-700 mb-1">前端端口</label>
+                        <input type="number" id="frontendPort" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-800 focus:border-gray-800" min="1024" max="65535">
+                    </div>
+                    <div>
+                        <label for="backendPort" class="block text-sm font-medium text-gray-700 mb-1">后端端口</label>
+                        <input type="number" id="backendPort" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-800 focus:border-gray-800" min="1024" max="65535">
+                    </div>
+                    <div>
+                        <label for="websocketPort" class="block text-sm font-medium text-gray-700 mb-1">WebSocket端口</label>
+                        <input type="number" id="websocketPort" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-800 focus:border-gray-800" min="1024" max="65535">
+                        <p class="text-xs text-gray-500 mt-1">通常与后端端口相同</p>
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button type="button" id="cancelPortBtn" class="btn-secondary px-4 py-2 rounded-md">
+                        取消
+                    </button>
+                    <button type="submit" class="btn-primary px-4 py-2 rounded-md">
+                        保存
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Export Frontend Card Modal -->
+    <div id="exportCardModal" class="fixed inset-0 bg-black bg-opacity-50 items-center justify-center hidden z-50">
+        <div class="bg-white rounded-4 p-8 max-w-lg w-full mx-4">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold text-black flex items-center">
+                    <i data-lucide="upload" class="w-5 h-5 mr-2 text-black"></i>
+                    导出项目卡
+                </h3>
+                <button id="closeExportCardModal" class="text-gray-500 hover:text-black">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <p class="text-gray-600 text-sm mb-4">
+                上传一个压缩包（.zip）与一张PNG图片（.png），系统会将压缩包嵌入到图片内并生成可下载的嵌入图片。
+            </p>
+            <form id="exportCardForm" class="space-y-4">
+                <div>
+                    <p class="text-sm text-gray-600">导出卡片为通用格式，无需区分前后端。请确保压缩包根目录包含 modularflow_config.py。</p>
+                </div>
+                <div>
+                    <label for="exportZipFile" class="block text-sm font-medium text-gray-700 mb-1">项目压缩包（.zip）</label>
+                    <input type="file" id="exportZipFile" name="archive" accept=".zip"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-800 focus:border-gray-800">
+                    <p class="text-xs text-gray-500 mt-1">仅支持 .zip 格式</p>
+                </div>
+                <div>
+                    <label for="exportImageFile" class="block text-sm font-medium text-gray-700 mb-1">PNG图片（.png）</label>
+                    <input type="file" id="exportImageFile" name="image" accept=".png"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-800 focus:border-gray-800">
+                    <p class="text-xs text-gray-500 mt-1">仅支持 .png 格式</p>
+                </div>
+                <div class="flex justify-end space-x-3">
+                    <button type="button" id="cancelExportCardBtn" class="btn-secondary px-4 py-2 rounded-md">
+                        取消
+                    </button>
+                    <button type="submit" class="btn-primary px-4 py-2 rounded-md">
+                        生成嵌入图片
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Import From Image Modal -->
+    <div id="importFromImageModal" class="fixed inset-0 bg-black bg-opacity-50 items-center justify-center hidden z-50">
+        <div class="bg-white rounded-4 p-8 max-w-lg w-full mx-4">
+            <div class="flex items-center justify之间? fix --> justify-between mb-4">
+                <h3 class="text-lg font-bold text-black flex items-center">
+                    <i data-lucide="image" class="w-5 h-5 mr-2 text-black"></i>
+                    从图片导入项目
+                </h3>
+                <button id="closeImportFromImageModal" class="text-gray-500 hover:text-black">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <p class="text-gray-600 text-sm mb-4">
+                选择一张嵌入了压缩包的PNG图片（.png）。选择后将自动解析、解压并导入项目。
+            </p>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">导入类型</label>
+                    <div class="flex items-center space-x-6 flex-nowrap overflow-x-auto">
+                        <label class="flex items-center space-x-2">
+                            <input type="radio" name="importFromImageType" value="frontend" checked class="form-radio">
+                            <span class="text-sm text-gray-700 whitespace-nowrap">前端项目</span>
+                        </label>
+                        <label class="flex items-center space-x-2">
+                            <input type="radio" name="importFromImageType" value="backend" class="form-radio">
+                            <span class="text-sm text-gray-700 whitespace-nowrap">后端项目</span>
+                        </label>
+                        <label class="flex items-center space-x-2">
+                            <input type="radio" name="importFromImageType" value="api_module_script" class="form-radio">
+                            <span class="text-sm text-gray-700 whitespace-nowrap">API脚本（模块）</span>
+                        </label>
+                        <label class="flex items-center space-x-2">
+                            <input type="radio" name="importFromImageType" value="api_workflow_script" class="form-radio">
+                            <span class="text-sm text-gray-700 whitespace-nowrap">API脚本（工作流）</span>
+                        </label>
+                    </div>
+                </div>
+                <div>
+                    <label for="importFromImageFile" class="block text-sm font-medium text-gray-700 mb-1">选择PNG图片</label>
+                    <input type="file" id="importFromImageFile" name="image" accept=".png"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-800 focus:border-gray-800">
+                    <p class="text-xs text-gray-500 mt-1">选择后将自动导入，无需额外点击</p>
+                </div>
+                <div class="flex justify-end">
+                    <button type="button" id="cancelImportFromImageBtn" class="btn-secondary px-4 py-2 rounded-md">
+                        关闭
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- API 目录面板 -->
+    <div id="apiRegistryModal" class="fixed inset-0 bg-black bg-opacity-50 items-center justify-center hidden z-50">
+        <div class="bg-white rounded-4 p-8 max-w-4xl w-full mx-4">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold text-black flex items-center">
+                    <i data-lucide="library-big" class="w-5 h-5 mr-2 text-black"></i>
+                    API目录
+                </h3>
+                <button id="closeApiRegistryModal" class="text-gray-500 hover:text-black">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                <div class="md:col-span-2">
+                    <input id="apiSearchInput" type="text" placeholder="搜索 API 名称、路径、命名空间..."
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-800 focus:border-gray-800">
+                </div>
+                <div class="flex items-center justify-end">
+                    <span class="text-sm text-gray-600">总数</span>
+                    <span id="apiTotalCount" class="ml-2 font-mono text-sm">0</span>
+                </div>
+            </div>
+            <div id="apiListContainer" class="space-y-3 max-h-[60vh] overflow-y-auto pr-2">
+                <!-- API 列表渲染位置 -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+      // 初始化 Lucide 图标
+      document.addEventListener('DOMContentLoaded', () => {
+        if (window.lucide) {
+          window.lucide.createIcons();
+        }
+      });
+    </script>
+    <script src="js/api.js?v=20250927"></script>
+    <script src="js/main.js?v=20250927"></script>
+</body>
+</html>

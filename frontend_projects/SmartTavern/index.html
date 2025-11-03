@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SmartTavern</title>
+    <!-- Tailwind via CDN (per ui美化规范) - 保留以支持即时渲染 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 预连接 Google Fonts 以加速 ResourceLoader 字体加载，减少潜在重排 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- 注意：Lucide 和 Flowbite 现在由 resourceLoader.js 在启动时加载 -->
+  <!-- Early theming + background to avoid white flash on dark theme -->
+  <style>
+    /* Default to dark background to prevent flash; override via prefers-color-scheme */
+    html, body { background: #0b0e14; margin: 0; padding: 0; }
+    @media (prefers-color-scheme: light) {
+      html, body { background: #f6f8fd; }
+    }
+    /* Honor early data-theme if present (set by the bootstrap script below) */
+    html[data-theme="dark"], html[data-theme="dark"] body { background: #0b0e14 !important; }
+    html[data-theme="light"], html[data-theme="light"] body { background: #f6f8fd !important; }
+    
+    /* 资源加载进度条样式 */
+    #loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      transition: opacity 0.3s ease-out;
+    }
+    #loading-overlay.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+    .loader-container {
+      text-align: center;
+      max-width: 400px;
+      width: 90%;
+    }
+    .loader-title {
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 24px;
+      opacity: 0.9;
+      color: rgba(255, 255, 255, 0.9);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif !important;
+    }
+    html[data-theme="light"] .loader-title { color: rgba(0, 0, 0, 0.9); }
+    @media (prefers-color-scheme: light) {
+      .loader-title { color: rgba(0, 0, 0, 0.9); }
+    }
+    .progress-bar-bg {
+      width: 100%;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 3px;
+      overflow: hidden;
+      position: relative;
+    }
+    html[data-theme="light"] .progress-bar-bg { background: rgba(0, 0, 0, 0.1); }
+    @media (prefers-color-scheme: light) {
+      .progress-bar-bg { background: rgba(0, 0, 0, 0.1); }
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #f59e0b 0%, #f97316 100%);
+      border-radius: 3px;
+      transition: width 0.3s ease-out;
+      width: 0%;
+    }
+    .progress-text {
+      margin-top: 16px;
+      font-size: 14px;
+      opacity: 0.7;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      color: rgba(255, 255, 255, 0.7);
+    }
+    html[data-theme="light"] .progress-text { color: rgba(0, 0, 0, 0.7); }
+    @media (prefers-color-scheme: light) {
+      .progress-text { color: rgba(0, 0, 0, 0.7); }
+    }
+  </style>
+  <script>
+    (function () {
+      try {
+        // Load last selected theme if available; otherwise follow system
+        var saved = localStorage.getItem('st.theme');
+        var t = (saved === 'dark' || saved === 'light' || saved === 'system') ? saved : null;
+        if (!t) {
+          t = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'system';
+        }
+        if (t === 'dark' || t === 'light') {
+          document.documentElement.setAttribute('data-theme', t);
+        }
+      } catch (e) {}
+    })();
+  </script>
+  </head>
+  <body data-app="smarttavern">
+    <!-- 资源加载进度条 -->
+    <div id="loading-overlay">
+      <div class="loader-container">
+        <div class="loader-title">SmartTavern</div>
+        <div class="progress-bar-bg">
+          <div class="progress-bar-fill" id="progress-bar"></div>
+        </div>
+        <div class="progress-text" id="progress-text">正在加载资源...</div>
+      </div>
+    </div>
+    
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

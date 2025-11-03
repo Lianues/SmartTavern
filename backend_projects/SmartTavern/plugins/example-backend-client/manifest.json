@@ -1,0 +1,8 @@
+{
+  "name": "Example Backend Client",
+  "description": "Frontend plugin that calls backend plugin APIs under /api/plugins/smarttavern/example_backend/*Frontend plugin that calls backend plugin APIs under /api/plugins/smarttavern/example_backend/*Frontend plugin that calls backend plugin APIs under /api/plugins/smarttavern/example_backend/*",
+  "entries": ["index.js"],
+  "backend_entries": [
+    "api/plugins/SmartTavern/example_backend/example_backend.py"
+  ]
+}

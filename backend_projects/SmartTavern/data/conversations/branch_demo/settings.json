@@ -1,0 +1,12 @@
+{
+  "preset": "backend_projects/SmartTavern/data/presets/Default/preset.json",
+  "world_books": [
+    "backend_projects/SmartTavern/data/world_books/参考用main_world/worldbook.json"
+  ],
+  "character": "backend_projects/SmartTavern/data/characters/心与露/character.json",
+  "persona": "backend_projects/SmartTavern/data/personas/用户2/persona.json",
+  "regex_rules": [
+    "backend_projects/SmartTavern/data/regex_rules/remove_xml_tags/regex_rule.json"
+  ],
+  "llm_config": "backend_projects/SmartTavern/data/llm_configs/openai_gpt4/llm_config.json"
+}

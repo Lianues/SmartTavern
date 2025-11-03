@@ -1,0 +1,33 @@
+{
+  "name": "OpenAI GPT-4",
+  "description": "OpenAI GPT-4 配置示例（兼容格式）",
+  "provider": "openai",
+  "base_url": "https://api.spinsnow.fun/jjc/v1",
+  "api_key": "1111",
+  "model": "claude-sonnet-4-5-20250929",
+  "max_tokens": 20000,
+  "temperature": 0.7,
+  "top_p": 1,
+  "presence_penalty": 0,
+  "frequency_penalty": 0,
+  "stream": true,
+  "timeout": 60,
+  "connect_timeout": 10,
+  "enable_logging": false,
+  "custom_params": {},
+  "gemini_config": {
+    "topP": 1,
+    "maxOutputTokens": 2048,
+    "topK": null,
+    "candidateCount": null,
+    "stopSequences": [],
+    "responseMimeType": "",
+    "safetySettings": {},
+    "customParams": {}
+  },
+  "anthropic_config": {
+    "stop_sequences": [],
+    "enable_thinking": false,
+    "thinking_budget": 16000
+  }
+}

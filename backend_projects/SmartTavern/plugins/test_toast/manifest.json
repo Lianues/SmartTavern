@@ -1,0 +1,8 @@
+{
+  "name": "test_toast",
+  "description": "测试：后端注册 toast stid（前端无行为，占位以消除缺失告警）",
+  "entries": [
+    "index.js"
+  ]
+}
+

@@ -1,0 +1,66 @@
+// SmartTavern Workflow - HomeMenu Bootstrap (v1)
+// 作用：注册开始页(home-menu)的内置按钮（New / Load / Gallery / Options）
+// 注意：仅注册数据与动作标识，点击后由上层监听 actionId 后映射到既有行为。
+
+import Host from '../../core/host'
+import type { HomeMenuContext } from './contract'
+
+/**
+ * 注册开始页内置按钮
+ * @returns {() => void} disposer - 撤销全部内置按钮
+ */
+export function registerHomeMenuBuiltins(): () => void {
+  const registeredIds: string[] = []
+
+  registeredIds.push(Host.registerHomeButton({
+    id: 'home.new',
+    label: 'New Game',
+    icon: 'swords',
+    order: 10,
+    actionId: 'ui.home.newGame',
+  }))
+
+  registeredIds.push(Host.registerHomeButton({
+    id: 'home.load',
+    label: 'Load Game',
+    icon: 'history',
+    order: 20,
+    actionId: 'ui.home.openLoad',
+    // 默认显示；当无存档时禁用（由 HomeMenu 上下文提供）
+    visibleWhen: true,
+    disabledWhen: (ctx: HomeMenuContext) => !ctx?.hasSaves,
+  }))
+
+  registeredIds.push(Host.registerHomeButton({
+    id: 'home.gallery',
+    label: 'Gallery',
+    icon: 'image',
+    order: 30,
+    actionId: 'ui.home.openGallery',
+  }))
+
+  registeredIds.push(Host.registerHomeButton({
+    id: 'home.options',
+    label: 'Options',
+    icon: 'settings',
+    order: 40,
+    actionId: 'ui.home.openOptions',
+  }))
+
+  // 统一 disposer：撤销全部
+  return () => {
+    for (const id of registeredIds) {
+      try { Host.unregisterHomeButton(id) } catch (_) {}
+    }
+  }
+}
+
+/** 撤销（备用 API） */
+export function unregisterHomeMenuBuiltins(): void {
+  try { Host.unregisterHomeButton('home.new') } catch (_) {}
+  try { Host.unregisterHomeButton('home.load') } catch (_) {}
+  try { Host.unregisterHomeButton('home.gallery') } catch (_) {}
+  try { Host.unregisterHomeButton('home.options') } catch (_) {}
+}
+
+export default registerHomeMenuBuiltins

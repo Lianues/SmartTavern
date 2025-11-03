@@ -1,0 +1,26 @@
+{
+  "name": "参考用main_world",
+  "description": "这是世界书的描述",
+  "entries": [
+    {
+      "id": "1",
+      "name": "未来都市",
+      "content": "故事发生在一座名为“新星港”的未来都市。这里科技高度发达，悬浮车穿梭于摩天大楼之间。",
+      "mode": "always",
+      "position": "before_char",
+      "order": 5,
+      "enabled": true
+    },
+    {
+      "id": "2",
+      "name": "艾拉的背景",
+      "content": "艾拉是新星港最顶尖的机械工程师之一。",
+      "mode": "conditional",
+      "condition": "<<keywords:艾拉,工程师>>",
+      "position": "user",
+      "depth": 0,
+      "order": 101,
+      "enabled": true
+    }
+  ]
+}

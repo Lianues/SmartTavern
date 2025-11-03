@@ -1,0 +1,100 @@
+/* SmartTavern Design Tokens (v1)
+   Note:
+   - These are CSS custom properties used across the app.
+   - Runtime themes (ThemeStore) override them via document.documentElement.style.setProperty.
+   - AppearancePanel also updates these live and persists to localStorage.
+*/
+
+:root {
+  /* 基础语义令牌（RGB 形式，便于调优） */
+  --st-color-bg: 246 248 253;
+  --st-color-text: 18 24 38;
+  --st-surface: 255 255 255;
+  --st-surface-2: 248 249 255;
+  --st-primary: 88 80 236;
+  --st-primary-contrast: 255 255 255;
+  --st-border: 225 228 236;
+  --st-accent: 14 165 233;
+  /* 背景遮罩在浅色主题使用纯白，在深色主题使用纯黑（RGB三通道数值） */
+  --st-overlay-ink: 255 255 255;
+
+  --st-radius-sm: 2px;
+  --st-radius-md: 3px;
+  --st-radius-lg: 4px;
+
+  --st-shadow-sm: 0 1px 2px rgba(0,0,0,0.06);
+  --st-shadow-md: 0 8px 30px rgba(0,0,0,0.06);
+  --st-shadow-lg: 0 12px 45px rgba(0,0,0,0.1);
+
+  /* 背景图 Hook（可被主题覆盖） */
+  --st-surface-bg-image: none;
+  --st-surface-bg-size: cover;
+  --st-surface-bg-position: center center;
+  --st-surface-bg-repeat: no-repeat;
+
+  /* 页面背景图（可被外观面板覆盖） */
+  --st-bg-start: url('/images/HomePage.png');
+  --st-bg-threaded: url('/images/ThreadedChat.png');
+  --st-bg-sandbox: url('/images/SandboxChat.png');
+
+  --st-font-body: 'Inter', ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial, 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji';
+  --st-font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+  --st-font-myth: 'Cinzel', 'Cormorant Garamond', Georgia, serif;
+
+  /* Chat tuning defaults */
+  --st-content-font-size: 20px; /* 正文文字大小 */
+  --st-name-font-size: 16px; /* 角色名称文字大小 */
+  --st-badge-font-size: 11px; /* 角色徽章文字大小 */
+  --st-floor-font-size: 16px; /* 楼层号文字大小 */
+  --st-avatar-size: 56px; /* 角色头像大小 */
+  --st-chat-width: 80%; /* 百分比宽度 */
+  --st-input-height: 100px; /* 输入框高度 */
+
+  /* New: common appearance tokens (overridable via AppearancePanel) */
+  --st-content-line-height: 1.75;
+  --st-message-gap: 12px;
+  /* If unset, components may fall back to var(--st-radius-lg) */
+  --st-card-radius: var(--st-radius-lg);
+  --st-stripe-width: 8px;
+
+  /* Threaded 内嵌 HTML 舞台（消息卡片内 iframe） */
+  --st-threaded-stage-aspect: 16 / 9;   /* 宽高比 */
+  --st-threaded-stage-maxw: 100;        /* 最大宽度（百分比的数值，CSS 内用 *1%） */
+  --st-threaded-stage-padding: 8px;     /* 舞台内边距 */
+  --st-threaded-stage-radius: 12px;     /* 舞台圆角 */
+
+  /* Sandbox layout controls */
+  --st-sandbox-max-width: 1100px;  /* 舞台最大宽度 */
+  --st-sandbox-aspect: 16 / 9;     /* 舞台宽高比（CSS aspect-ratio） */
+  --st-sandbox-padding: 16px;      /* 舞台内边距 */
+  --st-sandbox-radius: 18px;       /* 舞台圆角 */
+
+  /* Background opacity controls */
+  --st-threaded-bg-opacity: 0.12;            /* 楼层对话 背景图片遮罩不透明度 (0~1) */
+  --st-threaded-msg-bg-opacity: 0.82;        /* 楼层消息卡 背景不透明度 (0~1) */
+  --st-sandbox-bg-opacity: 0.12;             /* 全局沙盒 背景图片遮罩不透明度 (0~1) */
+  --st-sandbox-stage-bg-opacity: 0.82;       /* 全局沙盒 舞台背景不透明度 (0~1) */
+
+  /* Background blur controls (px; used by overlay layers) */
+  --st-threaded-bg-blur: 0px;                /* 楼层对话 背景图片遮罩模糊(px) */
+  --st-sandbox-bg-blur: 0px;                 /* 全局沙盒 背景图片遮罩模糊(px) */
+
+  /* Threaded chat container and input opacities */
+  --st-threaded-list-bg-opacity: 0.62;       /* 楼层对话 列表容器背景不透明度 (0~1) */
+  --st-threaded-input-bg-opacity: 0.80;      /* 楼层对话 底部输入框背景不透明度 (0~1) */
+  --st-threaded-input-bg-focus-opacity: 0.86;/* 楼层对话 底部输入框聚焦背景不透明度 (0~1) */
+  --st-threaded-stage-container-bg-opacity: 0.82; /* 楼层内 HTML 舞台容器背景不透明度 (0~1) */
+}
+
+/* 暗色主题 */
+[data-theme="dark"] {
+  --st-color-bg: 14 17 22;
+  --st-color-text: 232 236 244;
+  --st-surface: 23 27 36;
+  --st-surface-2: 28 34 45;
+  --st-primary: 129 140 248;
+  --st-primary-contrast: 19 23 32;
+  --st-border: 45 54 70;
+  --st-accent: 94 234 212;
+  --st-overlay-ink: 0 0 0;
+}

@@ -1,0 +1,43 @@
+{
+    "name": "参考用main_world",
+    "description": "这是世界书的描述",
+    "regex_rules": [
+        {
+            "id": "remove_xml_tags_rule",
+            "name": "Remove XML Tags",
+            "enabled": false,
+            "mode": "always",
+            "find_regex": "<([a-zA-Z0-9]+)>(.|\\n)*?</\\1>",
+            "replace_regex": "移除xml",
+            "targets": [
+                "preset",
+                "world_book",
+                "history"
+            ],
+            "placement": "before_macro",
+            "views": [
+                "user_view",
+                "assistant_view"
+            ],
+            "description": "Removes XML tags and their content, affecting only the user_view."
+        },
+        {
+            "id": "53a86be21-aaa329111a-45b5-88c1-4209d4d232f1a11",
+            "name": "状态栏",
+            "enabled": true,
+            "mode": "always",
+            "find_regex": "<StatusPlaceHolderImpl/>",
+            "replace_regex": "这里是状态栏",
+            "targets": [
+                "history"
+            ],
+            "placement": "after_macro",
+            "views": [
+                "user_view"
+            ],
+            "min_depth": 0,
+            "max_depth": 5,
+            "description": "仅对Markdown内容生效"
+        }
+    ]
+}

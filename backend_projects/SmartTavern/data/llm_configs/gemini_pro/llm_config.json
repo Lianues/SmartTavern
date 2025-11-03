@@ -1,0 +1,14 @@
+{
+  "name": "Google Gemini Pro",
+  "description": "Google Gemini Pro 配置示例",
+  "provider": "gemini",
+  "api_type": "gemini",
+  "base_url": "https://generativelanguage.googleapis.com/v1beta",
+  "api_key": "${GEMINI_API_KEY}",
+  "model": "gemini-pro",
+  "temperature": 0.7,
+  "max_tokens": 2048,
+  "top_p": 0.95,
+  "top_k": 40,
+  "stream": true
+}

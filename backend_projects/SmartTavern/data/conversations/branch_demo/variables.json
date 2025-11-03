@@ -1,0 +1,26 @@
+{
+  "variables": {
+    "user": "用户2",
+    "char": "心"
+  },
+  "stat_overrides": {
+    "全局": {
+      "日期": "",
+      "时间": ""
+    },
+    "心": {
+      "好感度": 100,
+      "醋意值": 0,
+      "恋人": false,
+      "处女": true
+    },
+    "露": {
+      "好感度": 20,
+      "恋人": false,
+      "处女": true
+    }
+  },
+  "a": "2",
+  "plugin_loaded": "context-variables-backend",
+  "__conversation_file": "backend_projects/SmartTavern/data/conversations/branch_demo/conversation.json"
+}
