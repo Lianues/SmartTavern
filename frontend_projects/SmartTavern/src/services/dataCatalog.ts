@@ -52,6 +52,55 @@ interface CardItem {
   file: string
 }
 
+// 导入/导出相关类型
+type ImportDataType = 'preset' | 'character' | 'worldbook' | 'persona' | 'regex_rule' | 'llm_config'
+
+interface ImportDataResponse {
+  success: boolean
+  message?: string
+  error?: string
+  data_type?: string
+  name?: string
+  folder?: string
+  file?: string
+  extra_files?: string[]
+  [key: string]: any
+}
+
+interface ExportDataResponse {
+  success: boolean
+  message?: string
+  error?: string
+  data_type?: string
+  name?: string
+  format?: 'zip' | 'png'
+  filename?: string
+  content_base64?: string
+  size?: number
+  [key: string]: any
+}
+
+interface SupportedTypesResponse {
+  success: boolean
+  types?: Array<{
+    type: string
+    dir: string
+    main_file: string
+  }>
+  formats?: string[]
+  [key: string]: any
+}
+
+interface CheckNameExistsResponse {
+  success: boolean
+  exists?: boolean
+  folder_name?: string
+  suggested_name?: string | null
+  error?: string
+  message?: string
+  [key: string]: any
+}
+
 type DataType = 'preset' | 'worldbook' | 'character' | 'persona' | 'regex' | 'conversation' | 'llmconfig'
 
 // 扩展 ImportMeta 接口以支持 env
@@ -124,6 +173,30 @@ async function postJSON(path: string, body: any = {}): Promise<any> {
     throw err
   }
   return data
+}
+
+/** Decode base64 string to Uint8Array */
+function _b64ToBytes(b64: string): Uint8Array {
+  const bin = atob(b64)
+  const len = bin.length
+  const bytes = new Uint8Array(len)
+  for (let i = 0; i < len; i++) bytes[i] = bin.charCodeAt(i)
+  return bytes
+}
+
+/** Convert File/Blob to base64 string */
+async function _fileToBase64(file: File | Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => {
+      const result = reader.result as string
+      // Remove data URL prefix (e.g., "data:image/png;base64,")
+      const base64 = result.includes(',') ? (result.split(',')[1] || '') : result
+      resolve(base64)
+    }
+    reader.onerror = () => reject(reader.error)
+    reader.readAsDataURL(file)
+  })
 }
 
 // Public API
@@ -299,15 +372,15 @@ const DataCatalog = {
   getPluginsAssetBlob: null as any,
   getDataAsset: null as any,
   getDataAssetBlob: null as any,
-}
-
-/** Decode base64 string to Uint8Array */
-function _b64ToBytes(b64: string): Uint8Array {
-  const bin = atob(b64)
-  const len = bin.length
-  const bytes = new Uint8Array(len)
-  for (let i = 0; i < len; i++) bytes[i] = bin.charCodeAt(i)
-  return bytes
+  
+  // Import/Export functions (declared here for TypeScript)
+  importData: null as any,
+  importDataFromFile: null as any,
+  exportData: null as any,
+  exportDataAsBlob: null as any,
+  downloadExportedData: null as any,
+  getSupportedTypes: null as any,
+  checkNameExists: null as any,
 }
 
 /**
@@ -358,6 +431,141 @@ DataCatalog.getDataAssetBlob = async function (file: string): Promise<DataAssetB
   const bytes = _b64ToBytes(res.content_base64)
   const mime = String(res.mime || 'application/octet-stream')
   return { blob: new Blob([bytes.buffer as ArrayBuffer], { type: mime }), mime, size: Number(res.size || bytes.length) }
+}
+
+// ==================== 导入/导出 API ====================
+
+/**
+ * 导入数据
+ * @param dataType - 数据类型: preset, character, worldbook, persona, regex_rule, llm_config
+ * @param fileContentBase64 - Base64 编码的文件内容
+ * @param filename - 原始文件名
+ * @param targetName - 目标名称（可选）
+ * @param overwrite - 是否覆盖已存在的数据
+ */
+DataCatalog.importData = function (
+  dataType: ImportDataType,
+  fileContentBase64: string,
+  filename: string,
+  targetName?: string,
+  overwrite: boolean = false
+): Promise<ImportDataResponse> {
+  return postJSON('smarttavern/data_import/import_data', {
+    data_type: dataType,
+    file_content_base64: fileContentBase64,
+    filename,
+    target_name: targetName,
+    overwrite,
+  })
+}
+
+/**
+ * 从 File 对象导入数据（便捷方法）
+ * @param dataType - 数据类型
+ * @param file - File 对象
+ * @param targetName - 目标名称（可选）
+ * @param overwrite - 是否覆盖
+ */
+DataCatalog.importDataFromFile = async function (
+  dataType: ImportDataType,
+  file: File,
+  targetName?: string,
+  overwrite: boolean = false
+): Promise<ImportDataResponse> {
+  const base64 = await _fileToBase64(file)
+  return DataCatalog.importData(dataType, base64, file.name, targetName, overwrite)
+}
+
+/**
+ * 导出数据
+ * @param folderPath - 要导出的目录路径
+ * @param dataType - 数据类型（可选，自动检测）
+ * @param embedImageBase64 - 嵌入图片的 Base64（可选，提供则输出 PNG，否则输出 ZIP）
+ */
+DataCatalog.exportData = function (
+  folderPath: string,
+  dataType?: ImportDataType,
+  embedImageBase64?: string
+): Promise<ExportDataResponse> {
+  return postJSON('smarttavern/data_import/export_data', {
+    folder_path: folderPath,
+    data_type: dataType,
+    embed_image_base64: embedImageBase64,
+  })
+}
+
+/**
+ * 导出数据并返回 Blob
+ * @param folderPath - 要导出的目录路径
+ * @param dataType - 数据类型（可选）
+ * @param embedImageBase64 - 嵌入图片的 Base64（可选）
+ */
+DataCatalog.exportDataAsBlob = async function (
+  folderPath: string,
+  dataType?: ImportDataType,
+  embedImageBase64?: string
+): Promise<{ blob: Blob; filename: string; mime: string; size: number }> {
+  const res = await DataCatalog.exportData(folderPath, dataType, embedImageBase64)
+  if (!res.success || !res.content_base64) {
+    const err: any = new Error(`[DataCatalog] Export failed: ${res.message || res.error || 'Unknown error'}`)
+    err.details = res
+    throw err
+  }
+  const bytes = _b64ToBytes(res.content_base64)
+  const mime = res.format === 'png' ? 'image/png' : 'application/zip'
+  const filename = res.filename || `export.${res.format || 'zip'}`
+  return {
+    blob: new Blob([bytes.buffer as ArrayBuffer], { type: mime }),
+    filename,
+    mime,
+    size: Number(res.size || bytes.length),
+  }
+}
+
+/**
+ * 导出数据并触发下载
+ * @param folderPath - 要导出的目录路径
+ * @param dataType - 数据类型（可选）
+ * @param embedImageBase64 - 嵌入图片的 Base64（可选）
+ */
+DataCatalog.downloadExportedData = async function (
+  folderPath: string,
+  dataType?: ImportDataType,
+  embedImageBase64?: string
+): Promise<void> {
+  const { blob, filename } = await DataCatalog.exportDataAsBlob(folderPath, dataType, embedImageBase64)
+  
+  // 创建下载链接
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
+}
+
+/**
+ * 获取支持的导入/导出类型
+ */
+DataCatalog.getSupportedTypes = function (): Promise<SupportedTypesResponse> {
+  return postJSON('smarttavern/data_import/get_supported_types', {})
+}
+
+/**
+ * 检查名称是否已存在
+ * @param dataType - 数据类型
+ * @param name - 要检查的名称
+ */
+DataCatalog.checkNameExists = function (
+  dataType: ImportDataType,
+  name: string
+): Promise<CheckNameExistsResponse> {
+  return postJSON('smarttavern/data_import/check_name_exists', {
+    data_type: dataType,
+    name,
+  })
 }
 
 export default DataCatalog

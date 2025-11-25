@@ -3,6 +3,9 @@ import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import Host from '@/workflow/core/host'
 import * as CatalogChannel from '@/workflow/channels/catalog'
 import * as SettingsChannel from '@/workflow/channels/settings'
+import DataCatalog from '@/services/dataCatalog'
+import ImportConflictModal from '@/components/common/ImportConflictModal.vue'
+import ExportModal from '@/components/common/ExportModal.vue'
 
 const props = defineProps({
   anchorLeft: { type: Number, default: 308 },
@@ -11,10 +14,10 @@ const props = defineProps({
   top: { type: Number, default: 64 },
   bottom: { type: Number, default: 12 },
   title: { type: String, default: '预设 Presets' },
-  conversationFile: { type: String, default: null }, // 当前对话文件路径
+  conversationFile: { type: String, default: null },
 })
 
-const emit = defineEmits(['close','use','view','delete'])
+const emit = defineEmits(['close','use','view','delete','import','export'])
 
 const panelStyle = computed(() => ({
   position: 'fixed',
@@ -28,13 +31,29 @@ const panelStyle = computed(() => ({
 const usingKey = ref(null)
 const settingsLoaded = ref(false)
 
+// 导入相关状态
+const fileInputRef = ref(null)
+const importing = ref(false)
+const importError = ref(null)
+const pendingImportFile = ref(null)
+
+// 导入冲突弹窗状态
+const showImportConflictModal = ref(false)
+const importConflictExistingName = ref('')
+const importConflictSuggestedName = ref('')
+
+// 导出弹窗状态
+const showExportModal = ref(false)
+
 // 使用通道响应式状态
 const presets = CatalogChannel.presets
 const loading = computed(() =>
   CatalogChannel.loadingStates.value.presets ||
-  (props.conversationFile ? SettingsChannel.isLoading(props.conversationFile) : false)
+  (props.conversationFile ? SettingsChannel.isLoading(props.conversationFile) : false) ||
+  importing.value
 )
 const error = computed(() =>
+  importError.value ||
   CatalogChannel.errorStates.value.presets ||
   (props.conversationFile ? SettingsChannel.getError(props.conversationFile) : null)
 )
@@ -46,12 +65,10 @@ let unsubscribeSettings = null
 function loadData() {
   if (settingsLoaded.value) return
   
-  // 请求预设列表
   Host.events.emit(CatalogChannel.EVT_CATALOG_PRESETS_REQ, {
     requestId: Date.now()
   })
   
-  // 请求设置（如果有对话文件）
   if (props.conversationFile) {
     Host.events.emit(SettingsChannel.EVT_SETTINGS_GET_REQ, {
       conversationFile: props.conversationFile,
@@ -59,29 +76,31 @@ function loadData() {
     })
   } else {
     settingsLoaded.value = true
-    // 如果没有对话文件，默认选第一个
     if (!usingKey.value && presets.value.length) {
       usingKey.value = presets.value[0].key
     }
   }
 }
 
+function refreshPresets() {
+  Host.events.emit(CatalogChannel.EVT_CATALOG_PRESETS_REQ, {
+    requestId: Date.now()
+  })
+}
+
 onMounted(() => {
-  // 监听预设列表响应
   unsubscribePresets = Host.events.on(CatalogChannel.EVT_CATALOG_PRESETS_RES, (payload) => {
     if (payload?.success) {
       setTimeout(() => {
         try { window?.lucide?.createIcons?.() } catch (_) {}
       }, 50)
       
-      // 如果没有对话文件，自动选第一个
       if (!props.conversationFile && !usingKey.value && presets.value.length) {
         usingKey.value = presets.value[0].key
       }
     }
   })
   
-  // 监听设置响应
   unsubscribeSettings = Host.events.on(SettingsChannel.EVT_SETTINGS_GET_RES, (payload) => {
     if (payload?.success && payload?.conversationFile === props.conversationFile) {
       const settings = payload.settings || {}
@@ -100,7 +119,6 @@ onUnmounted(() => {
   if (unsubscribeSettings) unsubscribeSettings()
 })
 
-// 监听面板打开，触发懒加载
 watch(() => props.conversationFile, (v) => {
   if (v && !settingsLoaded.value) {
     loadData()
@@ -116,21 +134,19 @@ function onUse(k) {
     return
   }
   
-  // 通过事件请求更新设置
   Host.events.emit(SettingsChannel.EVT_SETTINGS_UPDATE_REQ, {
     conversationFile: props.conversationFile,
     patch: { preset: k },
     requestId: Date.now()
   })
   
-  // 监听更新响应（一次性）
   const unsubUpdate = Host.events.on(SettingsChannel.EVT_SETTINGS_UPDATE_RES, (payload) => {
     if (payload?.conversationFile === props.conversationFile) {
       if (payload.success) {
         usingKey.value = k
         emit('use', k)
       }
-      unsubUpdate() // 移除监听器
+      unsubUpdate()
     }
   })
 }
@@ -139,6 +155,120 @@ function onView(k){ emit('view', k) }
 function onDelete(k){ emit('delete', k) }
 
 const isLucide = (v) => typeof v === 'string' && /^[a-z\-]+$/.test(v)
+
+function getFolderName(filePath) {
+  if (!filePath) return ''
+  const parts = filePath.split('/')
+  if (parts.length >= 2) {
+    return parts[parts.length - 2]
+  }
+  return ''
+}
+
+// ==================== 导入功能 ====================
+
+function triggerImport() {
+  importError.value = null
+  if (fileInputRef.value) {
+    fileInputRef.value.click()
+  }
+}
+
+function extractPresetName(filename) {
+  return filename.replace(/\.(json|zip|png)$/i, '')
+}
+
+async function handleFileSelect(event) {
+  const files = event.target.files
+  if (!files || files.length === 0) return
+  
+  const file = files[0]
+  const validTypes = ['.json', '.zip', '.png']
+  const ext = '.' + (file.name.split('.').pop() || '').toLowerCase()
+  if (!validTypes.includes(ext)) {
+    importError.value = `不支持的文件类型: ${ext}，请选择 .json、.zip 或 .png 文件`
+    event.target.value = ''
+    return
+  }
+  
+  const presetName = extractPresetName(file.name)
+  
+  try {
+    const checkResult = await DataCatalog.checkNameExists('preset', presetName)
+    if (checkResult.success && checkResult.exists) {
+      openImportConflictModal(file, checkResult.folder_name, checkResult.suggested_name)
+      event.target.value = ''
+      return
+    }
+  } catch (err) {
+    console.warn('[PresetsPanel] Check name exists failed:', err)
+  }
+  
+  await doImport(file, false)
+  event.target.value = ''
+}
+
+async function doImport(file, overwrite = false, targetName = null) {
+  importing.value = true
+  importError.value = null
+  
+  try {
+    const result = await DataCatalog.importDataFromFile('preset', file, targetName, overwrite)
+    if (result.success) {
+      refreshPresets()
+      emit('import', result)
+    } else {
+      importError.value = result.message || result.error || '导入失败'
+    }
+  } catch (err) {
+    console.error('[PresetsPanel] Import error:', err)
+    importError.value = err.message || '导入失败'
+  } finally {
+    importing.value = false
+  }
+}
+
+function openImportConflictModal(file, existingName, suggestedName) {
+  pendingImportFile.value = file
+  importConflictExistingName.value = existingName
+  importConflictSuggestedName.value = suggestedName
+  showImportConflictModal.value = true
+}
+
+function closeImportConflictModal() {
+  showImportConflictModal.value = false
+  pendingImportFile.value = null
+}
+
+async function handleConflictOverwrite() {
+  const file = pendingImportFile.value
+  closeImportConflictModal()
+  if (file) {
+    await doImport(file, true)
+  }
+}
+
+async function handleConflictRename(targetName) {
+  const file = pendingImportFile.value
+  closeImportConflictModal()
+  if (file) {
+    await doImport(file, false, targetName)
+  }
+}
+
+// ==================== 导出功能 ====================
+
+function openExportModal() {
+  showExportModal.value = true
+}
+
+function closeExportModal() {
+  showExportModal.value = false
+}
+
+function handleExportComplete(result) {
+  emit('export', result)
+}
 </script>
 
 <template>
@@ -152,12 +282,47 @@ const isLucide = (v) => typeof v === 'string' && /^[a-z\-]+$/.test(v)
           <span class="pr-icon"><i data-lucide="sliders-horizontal"></i></span>
           {{ props.title }}
         </div>
-        <button class="pr-close" type="button" title="关闭" @click="close">✕</button>
+        <div class="pr-header-actions">
+          <button
+            class="pr-action-btn"
+            type="button"
+            title="导入预设 (支持 .json, .zip, .png)"
+            @click="triggerImport"
+            :disabled="importing"
+          >
+            <i data-lucide="download"></i>
+            <span>导入</span>
+          </button>
+          <button 
+            class="pr-action-btn" 
+            type="button" 
+            title="导出预设"
+            @click="openExportModal"
+            :disabled="presets.length === 0"
+          >
+            <i data-lucide="upload"></i>
+            <span>导出</span>
+          </button>
+          <button class="pr-close" type="button" title="关闭" @click="close">✕</button>
+        </div>
       </header>
 
+      <input
+        ref="fileInputRef"
+        type="file"
+        accept=".json,.zip,.png"
+        style="display: none;"
+        @change="handleFileSelect"
+      />
+
       <CustomScrollbar class="pr-body">
-        <div v-if="loading" class="pr-loading">加载中...</div>
-        <div v-else-if="error" class="pr-error">加载失败：{{ error }}</div>
+        <div v-if="loading" class="pr-loading">
+          {{ importing ? '正在导入...' : '加载中...' }}
+        </div>
+        <div v-else-if="error" class="pr-error">
+          {{ importError ? importError : `加载失败：${error}` }}
+          <button v-if="importError" class="pr-error-dismiss" @click="importError = null">×</button>
+        </div>
         <div v-else class="pr-list">
           <div
             v-for="it in presets"
@@ -172,6 +337,12 @@ const isLucide = (v) => typeof v === 'string' && /^[a-z\-]+$/.test(v)
               </div>
               <div class="pr-texts">
                 <div class="pr-name">{{ it.name }}</div>
+                <div class="pr-folder">
+                  <svg class="pr-folder-icon" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                  </svg>
+                  <span>{{ getFolderName(it.key) }}</span>
+                </div>
                 <div class="pr-desc">{{ it.desc }}</div>
               </div>
             </div>
@@ -191,6 +362,29 @@ const isLucide = (v) => typeof v === 'string' && /^[a-z\-]+$/.test(v)
           </div>
         </div>
       </CustomScrollbar>
+
+      <!-- 使用可复用的导入冲突弹窗组件 -->
+      <ImportConflictModal
+        :show="showImportConflictModal"
+        data-type="preset"
+        data-type-name="预设"
+        :existing-name="importConflictExistingName"
+        :suggested-name="importConflictSuggestedName"
+        @close="closeImportConflictModal"
+        @overwrite="handleConflictOverwrite"
+        @rename="handleConflictRename"
+      />
+
+      <!-- 使用可复用的导出弹窗组件 -->
+      <ExportModal
+        :show="showExportModal"
+        data-type="preset"
+        data-type-name="预设"
+        :items="presets"
+        default-icon="sliders-horizontal"
+        @close="closeExportModal"
+        @export="handleExportComplete"
+      />
     </div>
 </template>
 
@@ -207,7 +401,6 @@ const isLucide = (v) => typeof v === 'string' && /^[a-z\-]+$/.test(v)
   overflow: hidden;
 }
 
-/* Header */
 .pr-header {
   display: flex;
   align-items: center;
@@ -223,6 +416,38 @@ const isLucide = (v) => typeof v === 'string' && /^[a-z\-]+$/.test(v)
   color: rgb(var(--st-color-text));
 }
 .pr-icon i { width: 18px; height: 18px; display: inline-block; }
+
+.pr-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pr-action-btn {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid rgba(var(--st-primary), 0.5);
+  background: rgba(var(--st-primary), 0.08);
+  color: rgb(var(--st-color-text));
+  border-radius: 4px;
+  padding: 6px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: transform .2s cubic-bezier(.22,.61,.36,1), background .2s cubic-bezier(.22,.61,.36,1), box-shadow .2s cubic-bezier(.22,.61,.36,1);
+}
+.pr-action-btn i { width: 14px; height: 14px; display: inline-block; }
+.pr-action-btn:hover:not(:disabled) {
+  background: rgba(var(--st-primary), 0.15);
+  transform: translateY(-1px);
+  box-shadow: var(--st-shadow-sm);
+}
+.pr-action-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .pr-close {
   appearance: none;
   border: 1px solid rgba(var(--st-border), 0.9);
@@ -238,7 +463,6 @@ const isLucide = (v) => typeof v === 'string' && /^[a-z\-]+$/.test(v)
   box-shadow: var(--st-shadow-sm);
 }
 
-/* Body */
 .pr-body {
   padding: 12px;
   overflow: hidden;
@@ -249,7 +473,6 @@ const isLucide = (v) => typeof v === 'string' && /^[a-z\-]+$/.test(v)
   gap: 12px;
 }
 
-/* Card */
 .pr-card {
   display: grid;
   grid-template-columns: 1fr auto;
@@ -259,7 +482,7 @@ const isLucide = (v) => typeof v === 'string' && /^[a-z\-]+$/.test(v)
   border-radius: var(--st-radius-md);
   background: rgb(var(--st-surface));
   padding: 12px;
-  min-height: 112px; /* 确保右侧三按钮完整显示，统一高度 */
+  min-height: 112px;
   transition: background .2s cubic-bezier(.22,.61,.36,1), border-color .2s cubic-bezier(.22,.61,.36,1), transform .2s cubic-bezier(.22,.61,.36,1), box-shadow .2s cubic-bezier(.22,.61,.36,1);
 }
 .pr-card:hover {
@@ -267,7 +490,6 @@ const isLucide = (v) => typeof v === 'string' && /^[a-z\-]+$/.test(v)
   box-shadow: var(--st-shadow-sm);
 }
 
-/* Left main */
 .pr-main {
   display: grid;
   grid-template-columns: auto 1fr;
@@ -296,6 +518,23 @@ const isLucide = (v) => typeof v === 'string' && /^[a-z\-]+$/.test(v)
   overflow: hidden;
   text-overflow: ellipsis;
 }
+.pr-folder {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 3px;
+  padding: 2px 6px;
+  font-size: 10px;
+  color: rgba(var(--st-color-text), 0.55);
+  background: rgba(var(--st-border), 0.15);
+  border-radius: 3px;
+  font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+  max-width: fit-content;
+}
+.pr-folder-icon {
+  flex-shrink: 0;
+  opacity: 0.7;
+}
 .pr-desc {
   margin-top: 4px;
   color: rgba(var(--st-color-text), 0.75);
@@ -303,12 +542,11 @@ const isLucide = (v) => typeof v === 'string' && /^[a-z\-]+$/.test(v)
   line-height: 1.4;
   display: -webkit-box;
   -webkit-line-clamp: 2;
-  line-clamp: 2; /* 标准属性，用于兼容性 */
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 
-/* Right actions (vertical) */
 .pr-actions {
   display: flex;
   flex-direction: column;
@@ -329,7 +567,8 @@ const isLucide = (v) => typeof v === 'string' && /^[a-z\-]+$/.test(v)
   text-align: center;
 }
 .pr-btn:focus-visible,
-.pr-close:focus-visible {
+.pr-close:focus-visible,
+.pr-action-btn:focus-visible {
   outline: 2px solid rgba(var(--st-primary), 0.6);
   outline-offset: 2px;
 }
@@ -351,14 +590,32 @@ const isLucide = (v) => typeof v === 'string' && /^[a-z\-]+$/.test(v)
   background: rgba(220, 38, 38, 0.1);
 }
 
-/* States */
 .pr-loading,
 .pr-error {
   padding: 12px;
   font-size: 13px;
   color: rgba(var(--st-color-text), 0.8);
 }
-.pr-error { color: rgb(220, 38, 38); }
+.pr-error { 
+  color: rgb(220, 38, 38);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.pr-error-dismiss {
+  appearance: none;
+  border: none;
+  background: rgba(220, 38, 38, 0.1);
+  color: rgb(220, 38, 38);
+  border-radius: 4px;
+  padding: 2px 6px;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+}
+.pr-error-dismiss:hover {
+  background: rgba(220, 38, 38, 0.2);
+}
 
 @media (max-width: 640px) {
   .pr-card { grid-template-columns: 1fr; }

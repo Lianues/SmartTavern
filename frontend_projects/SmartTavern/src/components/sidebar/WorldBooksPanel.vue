@@ -3,6 +3,9 @@ import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import Host from '@/workflow/core/host'
 import * as CatalogChannel from '@/workflow/channels/catalog'
 import * as SettingsChannel from '@/workflow/channels/settings'
+import DataCatalog from '@/services/dataCatalog'
+import ImportConflictModal from '@/components/common/ImportConflictModal.vue'
+import ExportModal from '@/components/common/ExportModal.vue'
 
 const props = defineProps({
   anchorLeft: { type: Number, default: 308 },
@@ -14,7 +17,7 @@ const props = defineProps({
   conversationFile: { type: String, default: null },
 })
 
-const emit = defineEmits(['close','use','view','delete'])
+const emit = defineEmits(['close','use','view','delete','import','export'])
 
 const panelStyle = computed(() => ({
   position: 'fixed',
@@ -25,33 +28,46 @@ const panelStyle = computed(() => ({
   zIndex: String(props.zIndex),
 }))
 
-const usingKeys = ref([]) // 多选：使用数组
+const usingKeys = ref([]) // 多选
 const settingsLoaded = ref(false)
+
+// 导入相关状态
+const fileInputRef = ref(null)
+const importing = ref(false)
+const importError = ref(null)
+const pendingImportFile = ref(null)
+
+// 导入冲突弹窗状态
+const showImportConflictModal = ref(false)
+const importConflictExistingName = ref('')
+const importConflictSuggestedName = ref('')
+
+// 导出弹窗状态
+const showExportModal = ref(false)
 
 // 使用通道响应式状态
 const worldbooks = CatalogChannel.worldbooks
 const loading = computed(() =>
   CatalogChannel.loadingStates.value.worldbooks ||
-  (props.conversationFile ? SettingsChannel.isLoading(props.conversationFile) : false)
+  (props.conversationFile ? SettingsChannel.isLoading(props.conversationFile) : false) ||
+  importing.value
 )
 const error = computed(() =>
+  importError.value ||
   CatalogChannel.errorStates.value.worldbooks ||
   (props.conversationFile ? SettingsChannel.getError(props.conversationFile) : null)
 )
 
-// 监听事件响应
 let unsubscribeWorldbooks = null
 let unsubscribeSettings = null
 
 function loadData() {
   if (settingsLoaded.value) return
   
-  // 请求世界书列表
   Host.events.emit(CatalogChannel.EVT_CATALOG_WORLDBOOKS_REQ, {
     requestId: Date.now()
   })
   
-  // 请求设置（如果有对话文件）
   if (props.conversationFile) {
     Host.events.emit(SettingsChannel.EVT_SETTINGS_GET_REQ, {
       conversationFile: props.conversationFile,
@@ -62,8 +78,13 @@ function loadData() {
   }
 }
 
+function refreshWorldbooks() {
+  Host.events.emit(CatalogChannel.EVT_CATALOG_WORLDBOOKS_REQ, {
+    requestId: Date.now()
+  })
+}
+
 onMounted(() => {
-  // 监听世界书列表响应
   unsubscribeWorldbooks = Host.events.on(CatalogChannel.EVT_CATALOG_WORLDBOOKS_RES, (payload) => {
     if (payload?.success) {
       setTimeout(() => {
@@ -72,11 +93,9 @@ onMounted(() => {
     }
   })
   
-  // 监听设置响应
   unsubscribeSettings = Host.events.on(SettingsChannel.EVT_SETTINGS_GET_RES, (payload) => {
     if (payload?.success && payload?.conversationFile === props.conversationFile) {
       const settings = payload.settings || {}
-      // world_books是数组字段（多选）
       if (Array.isArray(settings.world_books)) {
         usingKeys.value = settings.world_books
       }
@@ -98,7 +117,6 @@ watch(() => props.conversationFile, (v) => {
 
 function close(){ emit('close') }
 
-// 多选逻辑：切换选中状态
 function onUse(k) {
   if (!props.conversationFile) {
     const idx = usingKeys.value.indexOf(k)
@@ -111,7 +129,6 @@ function onUse(k) {
     return
   }
   
-  // 计算新的选中列表
   const newKeys = [...usingKeys.value]
   const idx = newKeys.indexOf(k)
   if (idx >= 0) {
@@ -120,21 +137,19 @@ function onUse(k) {
     newKeys.push(k)
   }
   
-  // 通过事件请求更新设置
   Host.events.emit(SettingsChannel.EVT_SETTINGS_UPDATE_REQ, {
     conversationFile: props.conversationFile,
     patch: { world_books: newKeys },
     requestId: Date.now()
   })
   
-  // 监听更新响应（一次性）
   const unsubUpdate = Host.events.on(SettingsChannel.EVT_SETTINGS_UPDATE_RES, (payload) => {
     if (payload?.conversationFile === props.conversationFile) {
       if (payload.success) {
         usingKeys.value = newKeys
         emit('use', k)
       }
-      unsubUpdate() // 移除监听器
+      unsubUpdate()
     }
   })
 }
@@ -143,8 +158,121 @@ function onView(k){ emit('view', k) }
 function onDelete(k){ emit('delete', k) }
 const isLucide = (v) => typeof v === 'string' && /^[a-z\-]+$/.test(v)
 
-// 辅助：检查是否选中
+function getFolderName(filePath) {
+  if (!filePath) return ''
+  const parts = filePath.split('/')
+  if (parts.length >= 2) {
+    return parts[parts.length - 2]
+  }
+  return ''
+}
+
 const isUsing = (k) => usingKeys.value.includes(k)
+
+// ==================== 导入功能 ====================
+
+function triggerImport() {
+  importError.value = null
+  if (fileInputRef.value) {
+    fileInputRef.value.click()
+  }
+}
+
+function extractWorldbookName(filename) {
+  return filename.replace(/\.(json|zip|png)$/i, '')
+}
+
+async function handleFileSelect(event) {
+  const files = event.target.files
+  if (!files || files.length === 0) return
+  
+  const file = files[0]
+  const validTypes = ['.json', '.zip', '.png']
+  const ext = '.' + (file.name.split('.').pop() || '').toLowerCase()
+  if (!validTypes.includes(ext)) {
+    importError.value = `不支持的文件类型: ${ext}，请选择 .json、.zip 或 .png 文件`
+    event.target.value = ''
+    return
+  }
+  
+  const worldbookName = extractWorldbookName(file.name)
+  
+  try {
+    const checkResult = await DataCatalog.checkNameExists('worldbook', worldbookName)
+    if (checkResult.success && checkResult.exists) {
+      openImportConflictModal(file, checkResult.folder_name, checkResult.suggested_name)
+      event.target.value = ''
+      return
+    }
+  } catch (err) {
+    console.warn('[WorldBooksPanel] Check name exists failed:', err)
+  }
+  
+  await doImport(file, false)
+  event.target.value = ''
+}
+
+async function doImport(file, overwrite = false, targetName = null) {
+  importing.value = true
+  importError.value = null
+  
+  try {
+    const result = await DataCatalog.importDataFromFile('worldbook', file, targetName, overwrite)
+    if (result.success) {
+      refreshWorldbooks()
+      emit('import', result)
+    } else {
+      importError.value = result.message || result.error || '导入失败'
+    }
+  } catch (err) {
+    console.error('[WorldBooksPanel] Import error:', err)
+    importError.value = err.message || '导入失败'
+  } finally {
+    importing.value = false
+  }
+}
+
+function openImportConflictModal(file, existingName, suggestedName) {
+  pendingImportFile.value = file
+  importConflictExistingName.value = existingName
+  importConflictSuggestedName.value = suggestedName
+  showImportConflictModal.value = true
+}
+
+function closeImportConflictModal() {
+  showImportConflictModal.value = false
+  pendingImportFile.value = null
+}
+
+async function handleConflictOverwrite() {
+  const file = pendingImportFile.value
+  closeImportConflictModal()
+  if (file) {
+    await doImport(file, true)
+  }
+}
+
+async function handleConflictRename(targetName) {
+  const file = pendingImportFile.value
+  closeImportConflictModal()
+  if (file) {
+    await doImport(file, false, targetName)
+  }
+}
+
+// ==================== 导出功能 ====================
+
+function openExportModal() {
+  showExportModal.value = true
+}
+
+function closeExportModal() {
+  showExportModal.value = false
+}
+
+function handleExportComplete(result) {
+  emit('export', result)
+}
 </script>
 
 <template>
@@ -158,12 +286,47 @@ const isUsing = (k) => usingKeys.value.includes(k)
           <span class="wb-icon"><i data-lucide="book-open"></i></span>
           {{ props.title }}
         </div>
-        <button class="wb-close" type="button" title="关闭" @click="close">✕</button>
+        <div class="wb-header-actions">
+          <button
+            class="wb-action-btn"
+            type="button"
+            title="导入世界书 (支持 .json, .zip, .png)"
+            @click="triggerImport"
+            :disabled="importing"
+          >
+            <i data-lucide="download"></i>
+            <span>导入</span>
+          </button>
+          <button
+            class="wb-action-btn"
+            type="button"
+            title="导出世界书"
+            @click="openExportModal"
+            :disabled="worldbooks.length === 0"
+          >
+            <i data-lucide="upload"></i>
+            <span>导出</span>
+          </button>
+          <button class="wb-close" type="button" title="关闭" @click="close">✕</button>
+        </div>
       </header>
 
+      <input
+        ref="fileInputRef"
+        type="file"
+        accept=".json,.zip,.png"
+        style="display: none;"
+        @change="handleFileSelect"
+      />
+
       <CustomScrollbar class="wb-body">
-        <div v-if="loading" class="wb-loading">加载中...</div>
-        <div v-else-if="error" class="wb-error">加载失败：{{ error }}</div>
+        <div v-if="loading" class="wb-loading">
+          {{ importing ? '正在导入...' : '加载中...' }}
+        </div>
+        <div v-else-if="error" class="wb-error">
+          {{ importError ? importError : `加载失败：${error}` }}
+          <button v-if="importError" class="wb-error-dismiss" @click="importError = null">×</button>
+        </div>
         <div v-else class="wb-list">
           <div
             v-for="it in worldbooks"
@@ -178,6 +341,12 @@ const isUsing = (k) => usingKeys.value.includes(k)
               </div>
               <div class="wb-texts">
                 <div class="wb-name">{{ it.name }}</div>
+                <div class="wb-folder">
+                  <svg class="wb-folder-icon" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                  </svg>
+                  <span>{{ getFolderName(it.key) }}</span>
+                </div>
                 <div class="wb-desc">{{ it.desc }}</div>
               </div>
             </div>
@@ -197,6 +366,29 @@ const isUsing = (k) => usingKeys.value.includes(k)
           </div>
         </div>
       </CustomScrollbar>
+
+      <!-- 使用可复用的导入冲突弹窗组件 -->
+      <ImportConflictModal
+        :show="showImportConflictModal"
+        data-type="worldbook"
+        data-type-name="世界书"
+        :existing-name="importConflictExistingName"
+        :suggested-name="importConflictSuggestedName"
+        @close="closeImportConflictModal"
+        @overwrite="handleConflictOverwrite"
+        @rename="handleConflictRename"
+      />
+
+      <!-- 使用可复用的导出弹窗组件 -->
+      <ExportModal
+        :show="showExportModal"
+        data-type="worldbook"
+        data-type-name="世界书"
+        :items="worldbooks"
+        default-icon="book-open"
+        @close="closeExportModal"
+        @export="handleExportComplete"
+      />
     </div>
 </template>
 
@@ -213,7 +405,6 @@ const isUsing = (k) => usingKeys.value.includes(k)
   overflow: hidden;
 }
 
-/* Header */
 .wb-header {
   display: flex;
   align-items: center;
@@ -229,6 +420,38 @@ const isUsing = (k) => usingKeys.value.includes(k)
   color: rgb(var(--st-color-text));
 }
 .wb-icon i { width: 18px; height: 18px; display: inline-block; }
+
+.wb-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.wb-action-btn {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid rgba(var(--st-primary), 0.5);
+  background: rgba(var(--st-primary), 0.08);
+  color: rgb(var(--st-color-text));
+  border-radius: 4px;
+  padding: 6px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: transform .2s cubic-bezier(.22,.61,.36,1), background .2s cubic-bezier(.22,.61,.36,1), box-shadow .2s cubic-bezier(.22,.61,.36,1);
+}
+.wb-action-btn i { width: 14px; height: 14px; display: inline-block; }
+.wb-action-btn:hover:not(:disabled) {
+  background: rgba(var(--st-primary), 0.15);
+  transform: translateY(-1px);
+  box-shadow: var(--st-shadow-sm);
+}
+.wb-action-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .wb-close {
   appearance: none;
   border: 1px solid rgba(var(--st-border), 0.9);
@@ -244,7 +467,6 @@ const isUsing = (k) => usingKeys.value.includes(k)
   box-shadow: var(--st-shadow-sm);
 }
 
-/* Body */
 .wb-body {
   padding: 12px;
   overflow: hidden;
@@ -255,7 +477,6 @@ const isUsing = (k) => usingKeys.value.includes(k)
   gap: 12px;
 }
 
-/* Card */
 .wb-card {
   display: grid;
   grid-template-columns: 1fr auto;
@@ -265,7 +486,7 @@ const isUsing = (k) => usingKeys.value.includes(k)
   border-radius: var(--st-radius-md);
   background: rgb(var(--st-surface));
   padding: 12px;
-  min-height: 112px; /* 确保右侧三按钮完整显示，统一高度 */
+  min-height: 112px;
   transition: background .2s cubic-bezier(.22,.61,.36,1), border-color .2s cubic-bezier(.22,.61,.36,1), transform .2s cubic-bezier(.22,.61,.36,1), box-shadow .2s cubic-bezier(.22,.61,.36,1);
 }
 .wb-card:hover {
@@ -273,7 +494,6 @@ const isUsing = (k) => usingKeys.value.includes(k)
   box-shadow: var(--st-shadow-sm);
 }
 
-/* Left main */
 .wb-main {
   display: grid;
   grid-template-columns: auto 1fr;
@@ -302,6 +522,23 @@ const isUsing = (k) => usingKeys.value.includes(k)
   overflow: hidden;
   text-overflow: ellipsis;
 }
+.wb-folder {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 3px;
+  padding: 2px 6px;
+  font-size: 10px;
+  color: rgba(var(--st-color-text), 0.55);
+  background: rgba(var(--st-border), 0.15);
+  border-radius: 3px;
+  font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+  max-width: fit-content;
+}
+.wb-folder-icon {
+  flex-shrink: 0;
+  opacity: 0.7;
+}
 .wb-desc {
   margin-top: 4px;
   color: rgba(var(--st-color-text), 0.75);
@@ -314,7 +551,6 @@ const isUsing = (k) => usingKeys.value.includes(k)
   overflow: hidden;
 }
 
-/* Right actions (vertical) */
 .wb-actions {
   display: flex;
   flex-direction: column;
@@ -357,14 +593,32 @@ const isUsing = (k) => usingKeys.value.includes(k)
   background: rgba(220, 38, 38, 0.1);
 }
 
-/* States */
 .wb-loading,
 .wb-error {
   padding: 12px;
   font-size: 13px;
   color: rgba(var(--st-color-text), 0.8);
 }
-.wb-error { color: rgb(220, 38, 38); }
+.wb-error {
+  color: rgb(220, 38, 38);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.wb-error-dismiss {
+  appearance: none;
+  border: none;
+  background: rgba(220, 38, 38, 0.1);
+  color: rgb(220, 38, 38);
+  border-radius: 4px;
+  padding: 2px 6px;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+}
+.wb-error-dismiss:hover {
+  background: rgba(220, 38, 38, 0.2);
+}
 
 @media (max-width: 640px) {
   .wb-card { grid-template-columns: 1fr; }

@@ -3,6 +3,8 @@ import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import Host from '@/workflow/core/host'
 import { PluginLoader } from '@/workflow/loader.js'
 import DataCatalog from '@/services/dataCatalog'
+import ImportConflictModal from '@/components/common/ImportConflictModal.vue'
+import ExportModal from '@/components/common/ExportModal.vue'
 
 const props = defineProps({
   anchorLeft: { type: Number, default: 308 },
@@ -11,11 +13,10 @@ const props = defineProps({
   top: { type: Number, default: 64 },
   bottom: { type: Number, default: 12 },
   title: { type: String, default: '插件 Plugins' },
-  // 预留：如需与当前会话绑定工作流策略，可透传 conversationFile
   conversationFile: { type: String, default: null },
 })
 
-const emit = defineEmits(['close','use','delete'])
+const emit = defineEmits(['close','use','delete','import','export'])
 
 const panelStyle = computed(() => ({
   position: 'fixed',
@@ -26,11 +27,25 @@ const panelStyle = computed(() => ({
   zIndex: String(props.zIndex),
 }))
 
- // 插件清单：从后端扫描 plugins
- const plugins = ref([])
+// 插件清单：从后端扫描 plugins
+const plugins = ref([])
 
 // 正在处理的条目（防止重复点击）
 const pending = ref({})
+
+// 导入相关状态
+const fileInputRef = ref(null)
+const importing = ref(false)
+const importError = ref(null)
+const pendingImportFile = ref(null)
+
+// 导入冲突弹窗状态
+const showImportConflictModal = ref(false)
+const importConflictExistingName = ref('')
+const importConflictSuggestedName = ref('')
+
+// 导出弹窗状态
+const showExportModal = ref(false)
 
 /** 规范化插件 ID：使用文件路径派生稳定 ID，便于 load/unload */
 function mkId(file) {
@@ -90,6 +105,14 @@ async function onUnload(dir) {
 function close(){ emit('close') }
 
 const isLucide = (v) => typeof v === 'string' && /^[a-z\-]+$/.test(v)
+
+// 从目录路径提取文件夹名称
+function getFolderName(dirPath) {
+  if (!dirPath) return ''
+  const parts = dirPath.split('/')
+  // 插件目录的最后一部分就是文件夹名
+  return parts[parts.length - 1] || ''
+}
 
 // 拉取后端插件清单，并富化 icon（icon.png）
 async function loadPlugins() {
@@ -196,6 +219,122 @@ async function onToggle(it) {
     nextTick(() => { try { window?.lucide?.createIcons?.() } catch (_) {} })
   }
 }
+
+// ==================== 导入功能 ====================
+
+function triggerImport() {
+  importError.value = null
+  if (fileInputRef.value) fileInputRef.value.click()
+}
+
+function extractPluginName(filename) {
+  return filename.replace(/\.(json|zip|png)$/i, '')
+}
+
+async function handleFileSelect(event) {
+  const files = event.target.files
+  if (!files || files.length === 0) return
+  
+  const file = files[0]
+  const validTypes = ['.json', '.zip', '.png']
+  const ext = '.' + (file.name.split('.').pop() || '').toLowerCase()
+  if (!validTypes.includes(ext)) {
+    importError.value = `不支持的文件类型: ${ext}，请选择 .json、.zip 或 .png 文件`
+    event.target.value = ''
+    return
+  }
+  
+  const pluginName = extractPluginName(file.name)
+  
+  try {
+    const checkResult = await DataCatalog.checkNameExists('plugin', pluginName)
+    if (checkResult.success && checkResult.exists) {
+      openImportConflictModal(file, checkResult.folder_name, checkResult.suggested_name)
+      event.target.value = ''
+      return
+    }
+  } catch (err) {
+    console.warn('[PluginsPanel] Check name exists failed:', err)
+  }
+  
+  await doImport(file, false)
+  event.target.value = ''
+}
+
+async function doImport(file, overwrite = false, targetName = null) {
+  importing.value = true
+  importError.value = null
+  
+  try {
+    const result = await DataCatalog.importDataFromFile('plugin', file, targetName, overwrite)
+    if (result.success) {
+      // 刷新插件列表
+      await loadPlugins()
+      
+      // 如果插件已注册，自动加载
+      if (result.registered) {
+        const pluginDir = `backend_projects/SmartTavern/plugins/${result.folder}`
+        const id = mkId(pluginDir)
+        try {
+          await PluginLoader.loadPluginByDir(pluginDir, { id, replace: true })
+          Host.pushToast?.({ type: 'success', message: `已导入并启用插件：${result.name}`, timeout: 2000 })
+        } catch (e) {
+          console.warn('[PluginsPanel] Auto load plugin failed:', e)
+          Host.pushToast?.({ type: 'warning', message: `插件已导入，但自动加载失败：${e?.message || e}`, timeout: 2800 })
+        }
+      } else {
+        Host.pushToast?.({ type: 'success', message: `已导入插件：${result.name}`, timeout: 1800 })
+      }
+      
+      emit('import', result)
+    } else {
+      importError.value = result.message || result.error || '导入失败'
+    }
+  } catch (err) {
+    console.error('[PluginsPanel] Import error:', err)
+    importError.value = err.message || '导入失败'
+  } finally {
+    importing.value = false
+  }
+}
+
+function openImportConflictModal(file, existingName, suggestedName) {
+  pendingImportFile.value = file
+  importConflictExistingName.value = existingName
+  importConflictSuggestedName.value = suggestedName
+  showImportConflictModal.value = true
+}
+
+function closeImportConflictModal() {
+  showImportConflictModal.value = false
+  pendingImportFile.value = null
+}
+
+async function handleConflictOverwrite() {
+  const file = pendingImportFile.value
+  closeImportConflictModal()
+  if (file) await doImport(file, true)
+}
+
+async function handleConflictRename(targetName) {
+  const file = pendingImportFile.value
+  closeImportConflictModal()
+  if (file) await doImport(file, false, targetName)
+}
+
+// ==================== 导出功能 ====================
+
+function openExportModal() {
+  showExportModal.value = true
+}
+
+function closeExportModal() {
+  showExportModal.value = false
+}
+
+function handleExportComplete(result) {
+  emit('export', result)
+}
 </script>
 
 <template>
@@ -209,11 +348,25 @@ async function onToggle(it) {
         <span class="wf-icon"><i data-lucide="puzzle"></i></span>
         {{ props.title }}
       </div>
-      <button class="wf-close" type="button" title="关闭" @click="close">✕</button>
+      <div class="wf-header-actions">
+        <button class="wf-action-btn" type="button" title="导入插件 (支持 .json, .zip, .png)" @click="triggerImport" :disabled="importing">
+          <i data-lucide="download"></i><span>导入</span>
+        </button>
+        <button class="wf-action-btn" type="button" title="导出插件" @click="openExportModal" :disabled="plugins.length === 0">
+          <i data-lucide="upload"></i><span>导出</span>
+        </button>
+        <button class="wf-close" type="button" title="关闭" @click="close">✕</button>
+      </div>
     </header>
+    <input ref="fileInputRef" type="file" accept=".json,.zip,.png" style="display: none;" @change="handleFileSelect" />
 
     <CustomScrollbar class="wf-body">
-      <div class="wf-hint">用于管理插件（后端 plugins 目录）：加载 / 卸载。</div>
+      <div v-if="importing" class="wf-loading">正在导入...</div>
+      <div v-else-if="importError" class="wf-error">
+        {{ importError }}
+        <button class="wf-error-dismiss" @click="importError = null">×</button>
+      </div>
+      <div class="wf-hint">用于管理插件（后端 plugins 目录）：加载 / 卸载。导入新插件后将自动启用。</div>
 
       <div class="wf-list">
         <div
@@ -229,6 +382,12 @@ async function onToggle(it) {
             </div>
             <div class="wf-texts">
               <div class="wf-name">{{ it.name }}</div>
+              <div class="wf-folder">
+                <svg class="wf-folder-icon" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                </svg>
+                <span>{{ getFolderName(it.dir) }}</span>
+              </div>
               <div class="wf-desc">{{ it.desc }}</div>
             </div>
           </div>
@@ -248,6 +407,30 @@ async function onToggle(it) {
         </div>
       </div>
     </CustomScrollbar>
+
+    <!-- 使用可复用的导入冲突弹窗组件 -->
+    <ImportConflictModal
+      :show="showImportConflictModal"
+      data-type="plugin"
+      data-type-name="插件"
+      :existing-name="importConflictExistingName"
+      :suggested-name="importConflictSuggestedName"
+      @close="closeImportConflictModal"
+      @overwrite="handleConflictOverwrite"
+      @rename="handleConflictRename"
+    />
+
+    <!-- 使用可复用的导出弹窗组件 -->
+    <ExportModal
+      :show="showExportModal"
+      data-type="plugin"
+      data-type-name="插件"
+      :items="plugins"
+      default-icon="puzzle"
+      :use-key-as-path="true"
+      @close="closeExportModal"
+      @export="handleExportComplete"
+    />
   </div>
 </template>
 
@@ -280,6 +463,13 @@ async function onToggle(it) {
   color: rgb(var(--st-color-text));
 }
 .wf-icon i { width: 18px; height: 18px; display: inline-block; }
+
+.wf-header-actions { display: flex; align-items: center; gap: 8px; }
+.wf-action-btn { appearance: none; display: inline-flex; align-items: center; gap: 4px; border: 1px solid rgba(var(--st-primary), 0.5); background: rgba(var(--st-primary), 0.08); color: rgb(var(--st-color-text)); border-radius: 4px; padding: 6px 10px; font-size: 12px; cursor: pointer; transition: transform .2s cubic-bezier(.22,.61,.36,1), background .2s cubic-bezier(.22,.61,.36,1), box-shadow .2s cubic-bezier(.22,.61,.36,1); }
+.wf-action-btn i { width: 14px; height: 14px; display: inline-block; }
+.wf-action-btn:hover:not(:disabled) { background: rgba(var(--st-primary), 0.15); transform: translateY(-1px); box-shadow: var(--st-shadow-sm); }
+.wf-action-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
 .wf-close {
   appearance: none;
   border: 1px solid rgba(var(--st-border), 0.9);
@@ -321,7 +511,7 @@ async function onToggle(it) {
   border-radius: var(--st-radius-md);
   background: rgb(var(--st-surface));
   padding: 12px;
-  height: 88px; /* 固定高度统一，超出内容省略 */
+  min-height: 112px; /* 增加高度以容纳文件夹标签 */
   overflow: hidden;
   transition: background .2s cubic-bezier(.22,.61,.36,1), border-color .2s cubic-bezier(.22,.61,.36,1), transform .2s cubic-bezier(.22,.61,.36,1), box-shadow .2s cubic-bezier(.22,.61,.36,1);
 }
@@ -351,13 +541,33 @@ async function onToggle(it) {
 }
 .wf-avatar i { width: 18px; height: 18px; display: inline-block; }
 .wf-avatar-img { width: 100%; height: 100%; object-fit: cover; border-radius: 4px; }
-.wf-texts { min-width: 0; }
+.wf-texts {
+  min-width: 0;
+  overflow: hidden;
+}
 .wf-name {
   font-weight: 700;
   color: rgb(var(--st-color-text));
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+.wf-folder {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 3px;
+  padding: 2px 6px;
+  font-size: 10px;
+  color: rgba(var(--st-color-text), 0.55);
+  background: rgba(var(--st-border), 0.15);
+  border-radius: 3px;
+  font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+  max-width: fit-content;
+}
+.wf-folder-icon {
+  flex-shrink: 0;
+  opacity: 0.7;
 }
 .wf-desc {
   margin-top: 4px;
@@ -369,6 +579,8 @@ async function onToggle(it) {
   line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: break-word;
 }
 .wf-url {
   margin-top: 4px;
@@ -415,6 +627,25 @@ async function onToggle(it) {
   border-color: rgba(220, 38, 38, 0.7);
   background: rgba(220, 38, 38, 0.1);
 }
+
+.wf-loading,
+.wf-error {
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  font-size: 13px;
+  color: rgba(var(--st-color-text), 0.8);
+  border-radius: 4px;
+}
+.wf-loading { background: rgba(var(--st-primary), 0.08); }
+.wf-error {
+  background: rgba(220, 38, 38, 0.1);
+  color: rgb(220, 38, 38);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.wf-error-dismiss { appearance: none; border: none; background: rgba(220, 38, 38, 0.1); color: rgb(220, 38, 38); border-radius: 4px; padding: 2px 6px; cursor: pointer; font-size: 14px; line-height: 1; }
+.wf-error-dismiss:hover { background: rgba(220, 38, 38, 0.2); }
 
 @media (max-width: 640px) {
   .wf-card { grid-template-columns: 1fr; }

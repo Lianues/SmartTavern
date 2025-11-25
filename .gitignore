@@ -4,6 +4,5 @@ backups/
 __pycache__/
 *.py[cod]
 *$py.class
-ui美化规范.md
 demo_branch_backend
 demo_branch_frontend
