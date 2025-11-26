@@ -13,12 +13,16 @@ import { ref, computed } from 'vue'
 export interface SidebarEntry {
   /** 唯一标识 */
   id: string
-  /** 显示文本 */
+  /** 显示文本（静态）或翻译 key（以 $ 开头表示使用 i18n） */
   label: string
+  /** 翻译 key（用于动态语言切换，优先级高于 label） */
+  labelKey?: string
   /** lucide 图标名 */
   icon: string
   /** 描述文本 */
   desc?: string
+  /** 描述翻译 key */
+  descKey?: string
   /** 排序优先级（小在前） */
   order?: number
   /** 点击触发的事件 ID */
@@ -37,8 +41,10 @@ export interface SidebarEntry {
 export interface NormalizedSidebarEntry {
   id: string
   label: string
+  labelKey: string | null
   icon: string
   desc: string
+  descKey: string | null
   order: number
   actionId: string
   params: any
@@ -82,8 +88,10 @@ export const useSidebarStore = defineStore('workflow.sidebar', () => {
     const normalized: NormalizedSidebarEntry = {
       id,
       label: String(entry.label || id),
+      labelKey: entry.labelKey ? String(entry.labelKey) : null,
       icon: String(entry.icon || 'circle'),
       desc: entry.desc ? String(entry.desc) : '',
+      descKey: entry.descKey ? String(entry.descKey) : null,
       order: typeof entry.order === 'number' ? entry.order : 50,
       actionId: entry.actionId ? String(entry.actionId) : `sidebar.${id}`,
       params: entry.params || {},

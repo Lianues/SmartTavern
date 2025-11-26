@@ -3,8 +3,24 @@ import { ref, computed, nextTick, onMounted, onUnmounted, watch } from 'vue'
 import Host from '@/workflow/core/host'
 import { getHomeMenuContext } from '@/workflow/slots/homeMenu/context'
 import * as Conversation from '@/workflow/channels/conversation'
+import { useI18n } from '@/locales'
+
+const { t } = useI18n()
 
 const emit = defineEmits(['new-game', 'open-load', 'open-gallery', 'open-options'])
+
+// 翻译按钮标签
+// 优先使用 labelKey 动态翻译（支持语言切换），若无则使用静态 label
+function translateLabel(btn) {
+  if (btn.labelKey) {
+    const translated = t(btn.labelKey)
+    // 如果翻译结果不是键本身，则使用翻译
+    if (translated && translated !== btn.labelKey) {
+      return translated
+    }
+  }
+  return btn.label
+}
 
 // 由后端接口 list_conversations 决定是否显示"Load Game"（事件驱动）
 // - 不再依赖 localStorage；若接口失败则默认为 false
@@ -127,7 +143,7 @@ function onClick(btn) {
         @click="onClick(btn)"
       >
         <i :data-lucide="btn.icon || 'circle'" class="icon-20" aria-hidden="true"></i>
-        <span>{{ btn.label }}</span>
+        <span>{{ translateLabel(btn) }}</span>
       </button>
     </nav>
   </div>
@@ -151,11 +167,13 @@ function onClick(btn) {
   align-items: center;
   gap: 14px;
   padding: 14px 20px;
-  border-radius: var(--st-radius-lg);
-  border: 1px solid var(--menu-border, rgb(var(--st-border) /0.7));
+  border-radius: var(--st-radius-lg, 4px);
+  /* 使用硬编码 fallback 确保边框始终可见 */
+  border: 1px solid var(--menu-border, rgba(255, 255, 255, 0.7));
   background: transparent; /* no white mask on home */
-  color: var(--menu-fg, rgb(var(--st-color-text)));
-  text-shadow: var(--menu-shadow, none);
+  /* 主页按钮固定使用白色文字，因为背景是深色图片 */
+  color: var(--menu-fg, rgba(255, 255, 255, 0.95));
+  text-shadow: var(--menu-shadow, 0 1px 3px rgba(0, 0, 0, 0.5));
   font-family: var(--st-font-myth);
   font-weight: 800;
   font-size: 20px;
@@ -169,8 +187,8 @@ function onClick(btn) {
 }
 .menu-btn:hover {
   transform: translateX(4px);
-  border-color: rgb(var(--st-primary) /0.6);
-  color: var(--menu-fg, rgb(var(--st-color-text)));
+  border-color: rgba(255, 255, 255, 0.9);
+  color: var(--menu-fg, rgba(255, 255, 255, 1));
 }
 .icon-20 { width: 26px; height: 26px; stroke: currentColor; }
 
@@ -182,8 +200,8 @@ function onClick(btn) {
 }
 .menu-btn:disabled:hover {
   transform: none;
-  border-color: var(--menu-border, rgb(var(--st-border) /0.7));
-  color: var(--menu-fg, rgb(var(--st-color-text)));
-  text-shadow: var(--menu-shadow, none);
+  border-color: var(--menu-border, rgba(255, 255, 255, 0.7));
+  color: var(--menu-fg, rgba(255, 255, 255, 0.95));
+  text-shadow: var(--menu-shadow, 0 1px 3px rgba(0, 0, 0, 0.5));
 }
 </style>

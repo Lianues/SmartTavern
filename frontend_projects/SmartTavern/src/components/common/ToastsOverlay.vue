@@ -1,7 +1,9 @@
 <script setup>
 import { computed } from 'vue'
 import { useToastsStore } from '@/stores/workflow/toasts'
+import { useI18n } from '@/locales'
 
+const { t } = useI18n()
 const store = useToastsStore()
 const toasts = computed(() => store.list)
 
@@ -13,10 +15,10 @@ function closeToast(id) {
 /** 友好标题 */
 function typeTitle(type) {
   switch (type) {
-    case 'success': return '成功'
-    case 'warning': return '提示'
-    case 'error': return '错误'
-    default: return '消息'
+    case 'success': return t('components.toasts.success')
+    case 'warning': return t('components.toasts.warning')
+    case 'error': return t('components.toasts.error')
+    default: return t('components.toasts.info')
   }
 }
 </script>
@@ -25,18 +27,18 @@ function typeTitle(type) {
   <div class="st-toasts" aria-live="polite" aria-atomic="true">
     <transition-group name="st-toast" tag="div" class="st-toasts-list">
       <div
-        v-for="t in toasts"
-        :key="t.id"
+        v-for="toast in toasts"
+        :key="toast.id"
         class="st-toast"
-        :data-type="t.type"
+        :data-type="toast.type"
         role="status"
       >
-        <div class="st-toast__bar" :data-type="t.type" aria-hidden="true"></div>
+        <div class="st-toast__bar" :data-type="toast.type" aria-hidden="true"></div>
         <div class="st-toast__content">
-          <div class="st-toast__title">{{ typeTitle(t.type) }}</div>
-          <div class="st-toast__message">{{ t.message }}</div>
+          <div class="st-toast__title">{{ typeTitle(toast.type) }}</div>
+          <div class="st-toast__message">{{ toast.message }}</div>
         </div>
-        <button class="st-toast__close" type="button" @click="closeToast(t.id)" aria-label="关闭">×</button>
+        <button class="st-toast__close" type="button" @click="closeToast(toast.id)" :aria-label="t('components.toasts.close')">×</button>
       </div>
     </transition-group>
   </div>

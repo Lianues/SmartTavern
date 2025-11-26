@@ -1,0 +1,10 @@
+{
+  "name": "locale-ja-JP",
+  "description": "日本語言語パック / Japanese Language Pack / 日语语言包",
+  "version": "1.0.0",
+  "author": "SmartTavern",
+  "entries": [
+    "index.js"
+  ],
+  "backend_entries": []
+}

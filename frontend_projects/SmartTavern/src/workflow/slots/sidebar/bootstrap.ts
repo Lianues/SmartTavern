@@ -1,88 +1,109 @@
 // SmartTavern Workflow - Sidebar Slot Bootstrap
 // 职责：注册内置侧边栏导航项（预设/世界书/角色/用户/正则/AI配置/工作流/外观/应用设置）
 // 说明：侧边栏项可由插件动态注册，此文件仅注册内置项
+// 注意：使用 labelKey/descKey 而非直接翻译，支持语言切换时动态更新
 
 import { useSidebarStore } from '@/stores/workflow/sidebar'
 import type { SidebarEntry } from '@/stores/workflow/sidebar'
 
 /**
  * 注册所有内置侧边栏导航项
- * 每个项包含：id、label、icon、desc、order、actionId
+ * 每个项包含：id、label、labelKey、icon、desc、descKey、order、actionId
+ * 使用 labelKey/descKey 存储翻译 key，由渲染组件动态翻译
  */
 export function registerSidebarBuiltins(): void {
   const store = useSidebarStore()
   
   // 内置侧边栏项配置（按 order 排序）
+  // 使用 labelKey/descKey 替代静态翻译，实现语言切换时动态更新
   const builtins: SidebarEntry[] = [
     {
       id: 'presets',
-      label: '预设 Presets',
+      label: 'Presets',  // fallback
+      labelKey: 'slots.sidebar.presets.label',
       icon: 'sliders-horizontal',
-      desc: '管理提示词预设与切换',
+      desc: 'Manage prompt presets',  // fallback
+      descKey: 'slots.sidebar.presets.desc',
       order: 10,
       actionId: 'sidebar.panel.presets',
     },
     {
       id: 'worldbooks',
-      label: '世界书 World Books',
+      label: 'World Books',
+      labelKey: 'slots.sidebar.worldbooks.label',
       icon: 'book-open',
-      desc: '设定世界观/术语库',
+      desc: 'Define world lore',
+      descKey: 'slots.sidebar.worldbooks.desc',
       order: 20,
       actionId: 'sidebar.panel.worldbooks',
     },
     {
       id: 'characters',
-      label: '角色卡 Characters',
+      label: 'Characters',
+      labelKey: 'slots.sidebar.characters.label',
       icon: 'users',
-      desc: '管理角色信息卡',
+      desc: 'Manage character cards',
+      descKey: 'slots.sidebar.characters.desc',
       order: 30,
       actionId: 'sidebar.panel.characters',
     },
     {
       id: 'personas',
-      label: '用户信息 Personas',
+      label: 'Personas',
+      labelKey: 'slots.sidebar.personas.label',
       icon: 'user-cog',
-      desc: '配置用户画像与偏好',
+      desc: 'Configure user profiles',
+      descKey: 'slots.sidebar.personas.desc',
       order: 40,
       actionId: 'sidebar.panel.personas',
     },
     {
       id: 'regexrules',
-      label: '正则 Regex Rules',
+      label: 'Regex Rules',
+      labelKey: 'slots.sidebar.regexrules.label',
       icon: 'scan-text',
-      desc: '清洗/后处理规则',
+      desc: 'Text processing rules',
+      descKey: 'slots.sidebar.regexrules.desc',
       order: 50,
       actionId: 'sidebar.panel.regexrules',
     },
     {
       id: 'llmconfigs',
-      label: 'LLM配置 LLM Configs',
+      label: 'LLM Configs',
+      labelKey: 'slots.sidebar.llmconfigs.label',
       icon: 'plug',
-      desc: '全局AI提供商与参数',
+      desc: 'AI providers & parameters',
+      descKey: 'slots.sidebar.llmconfigs.desc',
       order: 60,
       actionId: 'sidebar.panel.llmconfigs',
     },
     {
       id: 'plugins',
-      label: '插件 Plugins',
+      label: 'Plugins',
+      labelKey: 'slots.sidebar.plugins.label',
       icon: 'puzzle',
-      desc: '管理前端插件',
+      desc: 'Manage plugins',
+      descKey: 'slots.sidebar.plugins.desc',
       order: 70,
       actionId: 'sidebar.panel.plugins',
     },
     {
       id: 'appearance',
-      label: '外观 Appearance',
+      label: 'Appearance',
+      labelKey: 'slots.sidebar.appearance.label',
       icon: 'palette',
-      desc: '主题与外观设定',
+      desc: 'Theme & visual settings',
+      descKey: 'slots.sidebar.appearance.desc',
       order: 80,
       actionId: 'sidebar.panel.appearance',
     },
     {
       id: 'app',
-      label: '应用设置 App Settings',
+      label: 'App Settings',
+      labelKey: 'slots.sidebar.app.label',
       icon: 'settings',
-      desc: '全局应用行为与高级选项',
+      desc: 'Global app behavior',
+      descKey: 'slots.sidebar.app.desc',
       order: 90,
       actionId: 'sidebar.panel.app',
     },

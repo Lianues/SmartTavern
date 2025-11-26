@@ -1,6 +1,9 @@
 
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
+import { useI18n } from '@/locales'
+
+const { t } = useI18n()
 
 /**
  * SidebarDrawer
@@ -204,8 +207,8 @@ const drawerStyle = computed(() => {
       data-scope="sidebar"
     >
       <div class="sd-header">
-        <div class="sd-title">设置</div>
-        <button class="sd-close" type="button" @click="open = false" title="收起">
+        <div class="sd-title">{{ t('sidebar.title') }}</div>
+        <button class="sd-close" type="button" @click="open = false" :title="t('sidebar.collapse')">
           <i data-lucide="chevron-left"></i>
         </button>
       </div>
@@ -221,7 +224,7 @@ const drawerStyle = computed(() => {
     :class="fabClass"
     :style="iconStyle"
     type="button"
-    title="展开侧边栏"
+    :title="t('sidebar.expand')"
     @pointerdown.prevent="onPointerDown"
   >
     <span class="sd-fab-icon">

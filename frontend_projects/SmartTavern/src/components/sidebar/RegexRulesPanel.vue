@@ -6,6 +6,9 @@ import * as SettingsChannel from '@/workflow/channels/settings'
 import DataCatalog from '@/services/dataCatalog'
 import ImportConflictModal from '@/components/common/ImportConflictModal.vue'
 import ExportModal from '@/components/common/ExportModal.vue'
+import { useI18n } from '@/locales'
+
+const { t } = useI18n()
 
 const props = defineProps({
   anchorLeft: { type: Number, default: 308 },
@@ -13,7 +16,6 @@ const props = defineProps({
   zIndex: { type: Number, default: 59 },
   top: { type: Number, default: 64 },
   bottom: { type: Number, default: 12 },
-  title: { type: String, default: '正则 Regex Rules' },
   conversationFile: { type: String, default: null },
 })
 
@@ -198,7 +200,7 @@ async function handleFileSelect(event) {
   const validTypes = ['.json', '.zip', '.png']
   const ext = '.' + (file.name.split('.').pop() || '').toLowerCase()
   if (!validTypes.includes(ext)) {
-    importError.value = `不支持的文件类型: ${ext}，请选择 .json、.zip 或 .png 文件`
+    importError.value = t('error.invalidFileType', { ext })
     event.target.value = ''
     return
   }
@@ -230,11 +232,11 @@ async function doImport(file, overwrite = false, targetName = null) {
       refreshRegexRules()
       emit('import', result)
     } else {
-      importError.value = result.message || result.error || '导入失败'
+      importError.value = result.message || result.error || t('error.importFailed')
     }
   } catch (err) {
     console.error('[RegexRulesPanel] Import error:', err)
-    importError.value = err.message || '导入失败'
+    importError.value = err.message || t('error.importFailed')
   } finally {
     importing.value = false
   }
@@ -286,26 +288,26 @@ function handleExportComplete(result) {
     :style="panelStyle"
   >
       <header class="rg-header">
-        <div class="rg-title">
+        <div class="rg-title st-panel-title">
           <span class="rg-icon"><i data-lucide="scan-text"></i></span>
-          {{ props.title }}
+          {{ t('panel.regexRules.title') }}
         </div>
         <div class="rg-header-actions">
-          <button class="rg-action-btn" type="button" title="导入正则规则 (支持 .json, .zip, .png)" @click="triggerImport" :disabled="importing">
-            <i data-lucide="download"></i><span>导入</span>
+          <button class="rg-action-btn st-btn-shrinkable" type="button" :title="t('panel.regexRules.importTitle')" @click="triggerImport" :disabled="importing">
+            <i data-lucide="download"></i><span class="st-btn-text">{{ t('common.import') }}</span>
           </button>
-          <button class="rg-action-btn" type="button" title="导出正则规则" @click="openExportModal" :disabled="regexRules.length === 0">
-            <i data-lucide="upload"></i><span>导出</span>
+          <button class="rg-action-btn st-btn-shrinkable" type="button" :title="t('panel.regexRules.exportTitle')" @click="openExportModal" :disabled="regexRules.length === 0">
+            <i data-lucide="upload"></i><span class="st-btn-text">{{ t('common.export') }}</span>
           </button>
-          <button class="rg-close" type="button" title="关闭" @click="close">✕</button>
+          <button class="rg-close" type="button" :title="t('common.close')" @click="close">✕</button>
         </div>
       </header>
       <input ref="fileInputRef" type="file" accept=".json,.zip,.png" style="display: none;" @change="handleFileSelect" />
 
       <CustomScrollbar class="rg-body">
-        <div v-if="loading" class="rg-loading">{{ importing ? '正在导入...' : '加载中...' }}</div>
+        <div v-if="loading" class="rg-loading">{{ importing ? t('common.importing') : t('common.loading') }}</div>
         <div v-else-if="error" class="rg-error">
-          {{ importError ? importError : `加载失败：${error}` }}
+          {{ importError ? importError : t('error.loadFailed', { error }) }}
           <button v-if="importError" class="rg-error-dismiss" @click="importError = null">×</button>
         </div>
         <div v-else class="rg-list">
@@ -333,16 +335,16 @@ function handleExportComplete(result) {
             </div>
             <div class="rg-actions">
               <button
-                class="rg-btn"
+                class="rg-btn st-btn-shrinkable"
                 :class="{ active: isUsing(it.key) }"
                 type="button"
                 @click="onUse(it.key)"
                 :aria-pressed="isUsing(it.key)"
-              >{{ isUsing(it.key) ? '使用中' : '使用' }}</button>
+              >{{ isUsing(it.key) ? t('common.using') : t('common.use') }}</button>
 
-              <button class="rg-btn" type="button" @click="onView(it.key)">查看</button>
+              <button class="rg-btn st-btn-shrinkable" type="button" @click="onView(it.key)">{{ t('common.view') }}</button>
 
-              <button class="rg-btn rg-danger" type="button" @click="onDelete(it.key)">删除</button>
+              <button class="rg-btn rg-danger st-btn-shrinkable" type="button" @click="onDelete(it.key)">{{ t('common.delete') }}</button>
             </div>
           </div>
         </div>
@@ -352,7 +354,7 @@ function handleExportComplete(result) {
       <ImportConflictModal
         :show="showImportConflictModal"
         data-type="regex"
-        data-type-name="正则规则"
+        :data-type-name="t('panel.regexRules.typeName')"
         :existing-name="importConflictExistingName"
         :suggested-name="importConflictSuggestedName"
         @close="closeImportConflictModal"
@@ -364,7 +366,7 @@ function handleExportComplete(result) {
       <ExportModal
         :show="showExportModal"
         data-type="regex"
-        data-type-name="正则规则"
+        :data-type-name="t('panel.regexRules.typeName')"
         :items="regexRules"
         default-icon="scan-text"
         @close="closeExportModal"

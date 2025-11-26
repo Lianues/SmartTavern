@@ -2,6 +2,9 @@
 import { ref, computed, watch, nextTick, onMounted } from 'vue'
 import WorldBookCard from './cards/WorldBookCard.vue'
 import RegexRuleCard from './cards/RegexRuleCard.vue'
+import { useI18n } from '@/locales'
+
+const { t } = useI18n()
 
 const props = defineProps({
   characterData: { type: Object, default: null }
@@ -120,19 +123,19 @@ function addWorldEntry() {
   const id = newWbId.value.trim()
   const name = newWbName.value.trim()
   if (!id) {
-    wbError.value = '请填写世界书 ID'
+    wbError.value = t('detail.character.errors.wbIdRequired')
     return
   }
   if (!name) {
-    wbError.value = '请填写世界书名称'
+    wbError.value = t('detail.character.errors.wbNameRequired')
     return
   }
   if (!currentData.value.world_book) {
-    currentData.value.world_book = { name: '角色世界书', entries: [] }
+    currentData.value.world_book = { name: t('detail.character.worldBook.defaultName'), entries: [] }
   }
   const list = currentData.value.world_book.entries || []
   if (list.some(e => e.id === id)) {
-    wbError.value = 'ID 已存在'
+    wbError.value = t('detail.character.errors.wbIdExists')
     return
   }
   const entry = {
@@ -280,16 +283,16 @@ function addRegexRule() {
   const id = newRuleId.value.trim()
   const name = newRuleName.value.trim()
   if (!id) {
-    ruleError.value = '请填写规则 id'
+    ruleError.value = t('detail.character.errors.ruleIdRequired')
     return
   }
   if (!name) {
-    ruleError.value = '请填写规则名称'
+    ruleError.value = t('detail.character.errors.ruleNameRequired')
     return
   }
   const rules = currentData.value.regex_rules || []
   if (rules.some(r => r.id === id)) {
-    ruleError.value = '该 id 已存在'
+    ruleError.value = t('detail.character.errors.ruleIdExists')
     return
   }
   const rule = {
@@ -406,38 +409,38 @@ watch([
       <div class="flex items-center justify-between gap-3">
         <div class="flex items-center gap-2">
           <i data-lucide="user" class="w-5 h-5 text-black"></i>
-          <h2 class="text-lg font-bold text-black">角色卡编辑</h2>
+          <h2 class="text-lg font-bold text-black">{{ t('detail.character.pageTitle') }}</h2>
         </div>
         <div class="px-3 py-1 rounded-4 bg-gray-100 border border-gray-300 text-black text-sm">
-          编辑模式
+          {{ t('detail.character.editMode') }}
         </div>
       </div>
-      <p class="mt-2 text-xs text-black/60">此页面支持编辑角色的基本信息、初始消息、内嵌世界书和正则规则</p>
+      <p class="mt-2 text-xs text-black/60">{{ t('detail.character.editHint') }}</p>
     </div>
 
     <!-- 基本设定 -->
     <div class="bg-white rounded-4 border border-gray-200 p-5 transition-all duration-200 ease-soft hover:shadow-elevate">
       <div class="flex items-center gap-2 mb-3">
         <i data-lucide="id-card" class="w-4 h-4 text-black"></i>
-        <h3 class="text-base font-semibold text-black">基本设定</h3>
+        <h3 class="text-base font-semibold text-black">{{ t('detail.character.basicInfo') }}</h3>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label class="block text-sm font-medium text-black mb-2">角色名称</label>
-          <input 
-            v-model="nameDraft" 
-            @blur="saveMeta" 
-            class="w-full px-3 py-2 border border-gray-300 rounded-4 text-sm focus:outline-none focus:ring-2 focus:ring-gray-800" 
+          <label class="block text-sm font-medium text-black mb-2">{{ t('detail.character.characterName') }}</label>
+          <input
+            v-model="nameDraft"
+            @blur="saveMeta"
+            class="w-full px-3 py-2 border border-gray-300 rounded-4 text-sm focus:outline-none focus:ring-2 focus:ring-gray-800"
           />
         </div>
         <div class="md:col-span-2">
-          <label class="block text-sm font-medium text-black mb-2">角色描述</label>
-          <textarea 
-            v-model="descDraft" 
-            @blur="saveMeta" 
-            rows="3" 
-            class="w-full px-3 py-2 border border-gray-300 rounded-4 text-sm focus:outline-none focus:ring-2 focus:ring-gray-800" 
+          <label class="block text-sm font-medium text-black mb-2">{{ t('detail.character.characterDesc') }}</label>
+          <textarea
+            v-model="descDraft"
+            @blur="saveMeta"
+            rows="3"
+            class="w-full px-3 py-2 border border-gray-300 rounded-4 text-sm focus:outline-none focus:ring-2 focus:ring-gray-800"
           />
         </div>
       </div>
@@ -448,48 +451,48 @@ watch([
       <div class="flex items-center justify-between mb-3">
         <div class="flex items-center gap-2">
           <i data-lucide="message-square" class="w-4 h-4 text-black"></i>
-          <h3 class="text-base font-semibold text-black">初始消息 ({{ messageEdits.length }})</h3>
+          <h3 class="text-base font-semibold text-black">{{ t('detail.character.messages.title') }} ({{ messageEdits.length }})</h3>
         </div>
-        <button 
+        <button
           class="px-2 py-1 rounded-4 bg-transparent border border-gray-900 text-black text-xs hover:bg-gray-100 active:bg-gray-200 transition-all duration-200 ease-soft"
           @click="addMessage"
         >
-          新增消息
+          {{ t('detail.character.messages.addNew') }}
         </button>
       </div>
 
       <div v-if="messageEdits.length === 0" class="text-center py-8 text-black/50 text-sm">
-        暂无初始消息，点击右上角"新增消息"按钮添加
+        {{ t('detail.character.messages.empty') }}
       </div>
 
       <div class="space-y-3">
-        <div 
-          v-for="(m, i) in messageEdits" 
-          :key="i" 
+        <div
+          v-for="(m, i) in messageEdits"
+          :key="i"
           class="border border-gray-200 rounded-4 p-3 bg-white transition-all duration-200 ease-soft hover:shadow-elevate"
         >
           <div class="flex items-center justify-between gap-2 mb-2">
-            <div class="text-xs text-black/60">消息 #{{ i + 1 }} · 字符数：{{ (m || '').length }}</div>
+            <div class="text-xs text-black/60">{{ t('detail.character.messages.messageNum', { num: i + 1 }) }} · {{ t('detail.character.messages.charCount') }}：{{ (m || '').length }}</div>
             <div class="flex items-center gap-2">
               <template v-if="editingMsgIndex === i">
-                <button 
+                <button
                   class="px-2 py-1 rounded-4 bg-transparent border border-gray-900 text-black text-xs hover:bg-gray-100"
                   @click="onSaveMsg(i)"
-                >保存</button>
-                <button 
+                >{{ t('common.save') }}</button>
+                <button
                   class="px-2 py-1 rounded-4 bg-transparent border border-gray-900 text-black text-xs hover:bg-gray-100"
                   @click="onCancelMsg(i)"
-                >取消</button>
+                >{{ t('common.cancel') }}</button>
               </template>
               <template v-else>
-                <button 
+                <button
                   class="px-2 py-1 rounded-4 bg-transparent border border-gray-900 text-black text-xs hover:bg-gray-100"
                   @click="onEditMsg(i)"
-                >编辑</button>
-                <button 
+                >{{ t('common.edit') }}</button>
+                <button
                   class="px-2 py-1 rounded-4 bg-transparent border border-gray-900 text-black text-xs hover:bg-gray-100"
                   @click="removeMessage(i)"
-                >删除</button>
+                >{{ t('common.delete') }}</button>
               </template>
             </div>
           </div>
@@ -512,24 +515,24 @@ watch([
       <div class="flex items-center justify-between mb-3">
         <div class="flex items-center gap-2">
           <i data-lucide="book-open" class="w-4 h-4 text-black"></i>
-          <h3 class="text-base font-semibold text-black">内嵌世界书</h3>
+          <h3 class="text-base font-semibold text-black">{{ t('detail.character.worldBook.title') }}</h3>
         </div>
         <div class="flex items-center gap-2">
-          <input 
-            v-model="newWbId" 
-            placeholder="id" 
-            class="w-32 px-3 py-2 border border-gray-300 rounded-4 text-xs focus:outline-none focus:ring-2 focus:ring-gray-800" 
+          <input
+            v-model="newWbId"
+            :placeholder="t('detail.character.worldBook.idPlaceholder')"
+            class="w-32 px-3 py-2 border border-gray-300 rounded-4 text-xs focus:outline-none focus:ring-2 focus:ring-gray-800"
           />
-          <input 
-            v-model="newWbName" 
-            placeholder="名称" 
-            class="w-40 px-3 py-2 border border-gray-300 rounded-4 text-xs focus:outline-none focus:ring-2 focus:ring-gray-800" 
+          <input
+            v-model="newWbName"
+            :placeholder="t('detail.character.worldBook.namePlaceholder')"
+            class="w-40 px-3 py-2 border border-gray-300 rounded-4 text-xs focus:outline-none focus:ring-2 focus:ring-gray-800"
           />
-          <button 
+          <button
             class="px-2 py-1 rounded-4 bg-transparent border border-gray-900 text-black text-xs hover:bg-gray-100 active:bg-gray-200 transition-all duration-200 ease-soft"
             @click="addWorldEntry"
           >
-            添加
+            {{ t('common.add') }}
           </button>
         </div>
       </div>
@@ -553,13 +556,13 @@ watch([
             draggable="true"
             @dragstart="onDragStartWb(w.id, $event)"
             @dragend="onDragEndWb"
-            title="拖拽排序"
+            :title="t('detail.preset.prompts.dragToSort')"
           >
             <i data-lucide="grip-vertical" class="icon-grip w-4 h-4 text-black opacity-60 group-hover:opacity-100"></i>
           </div>
           <div class="flex-1">
-            <WorldBookCard 
-              :entry="w" 
+            <WorldBookCard
+              :entry="w"
               @update="onWbUpdate"
               @delete="onWbDelete"
             />
@@ -574,7 +577,7 @@ watch([
       </div>
 
       <div v-if="(currentData.world_book?.entries || []).length === 0" class="text-center py-8 text-black/50 text-sm">
-        暂无世界书条目
+        {{ t('detail.character.worldBook.empty') }}
       </div>
     </div>
 
@@ -583,24 +586,24 @@ watch([
       <div class="flex items-center justify-between mb-3">
         <div class="flex items-center gap-2">
           <i data-lucide="code" class="w-4 h-4 text-black"></i>
-          <h3 class="text-base font-semibold text-black">正则规则</h3>
+          <h3 class="text-base font-semibold text-black">{{ t('detail.character.regexRules.title') }}</h3>
         </div>
         <div class="flex items-center gap-2">
-          <input 
-            v-model="newRuleId" 
-            placeholder="规则 id" 
-            class="w-32 px-3 py-2 border border-gray-300 rounded-4 text-xs focus:outline-none focus:ring-2 focus:ring-gray-800" 
+          <input
+            v-model="newRuleId"
+            :placeholder="t('detail.character.regexRules.idPlaceholder')"
+            class="w-32 px-3 py-2 border border-gray-300 rounded-4 text-xs focus:outline-none focus:ring-2 focus:ring-gray-800"
           />
-          <input 
-            v-model="newRuleName" 
-            placeholder="规则名称" 
-            class="w-40 px-3 py-2 border border-gray-300 rounded-4 text-xs focus:outline-none focus:ring-2 focus:ring-gray-800" 
+          <input
+            v-model="newRuleName"
+            :placeholder="t('detail.character.regexRules.namePlaceholder')"
+            class="w-40 px-3 py-2 border border-gray-300 rounded-4 text-xs focus:outline-none focus:ring-2 focus:ring-gray-800"
           />
-          <button 
+          <button
             class="px-2 py-1 rounded-4 bg-transparent border border-gray-900 text-black text-xs hover:bg-gray-100 active:bg-gray-200 transition-all duration-200 ease-soft"
             @click="addRegexRule"
           >
-            添加
+            {{ t('common.add') }}
           </button>
         </div>
       </div>
@@ -624,13 +627,13 @@ watch([
             draggable="true"
             @dragstart="onDragStartRx(r.id, $event)"
             @dragend="onDragEndRx"
-            title="拖拽排序"
+            :title="t('detail.preset.prompts.dragToSort')"
           >
             <i data-lucide="grip-vertical" class="icon-grip w-4 h-4 text-black opacity-60 group-hover:opacity-100"></i>
           </div>
           <div class="flex-1">
-            <RegexRuleCard 
-              :rule="r" 
+            <RegexRuleCard
+              :rule="r"
               @update="onRegexUpdate"
               @delete="onRegexDelete"
             />
@@ -645,7 +648,7 @@ watch([
       </div>
 
       <div v-if="(currentData.regex_rules || []).length === 0" class="text-center py-8 text-black/50 text-sm">
-        暂无正则规则
+        {{ t('detail.character.regexRules.empty') }}
       </div>
     </div>
   </section>

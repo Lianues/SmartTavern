@@ -1,4 +1,8 @@
 <script setup>
+import { useI18n } from '@/locales'
+
+const { t } = useI18n()
+
 /**
  * 背景图片管理（开始页/楼层对话/沙盒）
  * - 使用 CSS 变量：--st-bg-start / --st-bg-threaded / --st-bg-sandbox
@@ -45,43 +49,43 @@ function onFileChange(type, e) {
 
 <template>
   <div class="st-tab-panel" data-scope="settings-backgrounds">
-    <h3>背景图片</h3>
-    <p class="muted">为开始页面、楼层对话页面、沙盒页面设置背景图。可覆盖默认图片并即时预览。</p>
+    <h3>{{ t('appearance.backgrounds.title') }}</h3>
+    <p class="muted">{{ t('appearance.backgrounds.desc') }}</p>
 
     <div class="bg-grid">
       <div class="bg-card">
-        <div class="bg-title">开始页面</div>
+        <div class="bg-title">{{ t('appearance.backgrounds.startPage') }}</div>
         <div class="bg-preview bg-start" />
         <div class="bg-actions">
           <label class="bg-upload">
             <input type="file" accept="image/*" @change="onFileChange('start', $event)" />
-            选择图片
+            {{ t('appearance.backgrounds.selectImage') }}
           </label>
-          <button class="st-settings-close" type="button" @click="resetBg('start')">重置默认</button>
+          <button class="st-settings-close" type="button" @click="resetBg('start')">{{ t('appearance.backgrounds.resetDefault') }}</button>
         </div>
       </div>
 
       <div class="bg-card">
-        <div class="bg-title">楼层对话页面</div>
+        <div class="bg-title">{{ t('appearance.backgrounds.threadedPage') }}</div>
         <div class="bg-preview bg-threaded" />
         <div class="bg-actions">
           <label class="bg-upload">
             <input type="file" accept="image/*" @change="onFileChange('threaded', $event)" />
-            选择图片
+            {{ t('appearance.backgrounds.selectImage') }}
           </label>
-          <button class="st-settings-close" type="button" @click="resetBg('threaded')">重置默认</button>
+          <button class="st-settings-close" type="button" @click="resetBg('threaded')">{{ t('appearance.backgrounds.resetDefault') }}</button>
         </div>
       </div>
 
       <div class="bg-card">
-        <div class="bg-title">沙盒页面</div>
+        <div class="bg-title">{{ t('appearance.backgrounds.sandboxPage') }}</div>
         <div class="bg-preview bg-sandbox" />
         <div class="bg-actions">
           <label class="bg-upload">
             <input type="file" accept="image/*" @change="onFileChange('sandbox', $event)" />
-            选择图片
+            {{ t('appearance.backgrounds.selectImage') }}
           </label>
-          <button class="st-settings-close" type="button" @click="resetBg('sandbox')">重置默认</button>
+          <button class="st-settings-close" type="button" @click="resetBg('sandbox')">{{ t('appearance.backgrounds.resetDefault') }}</button>
         </div>
       </div>
     </div>

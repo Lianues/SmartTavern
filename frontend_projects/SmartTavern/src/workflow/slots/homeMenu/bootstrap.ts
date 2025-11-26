@@ -1,12 +1,14 @@
 // SmartTavern Workflow - HomeMenu Bootstrap (v1)
 // 作用：注册开始页(home-menu)的内置按钮（New / Load / Gallery / Options）
 // 注意：仅注册数据与动作标识，点击后由上层监听 actionId 后映射到既有行为。
+// 使用 labelKey 而非直接翻译，支持语言切换时动态更新
 
 import Host from '../../core/host'
 import type { HomeMenuContext } from './contract'
 
 /**
  * 注册开始页内置按钮
+ * 使用 labelKey 存储翻译 key，由渲染组件动态翻译
  * @returns {() => void} disposer - 撤销全部内置按钮
  */
 export function registerHomeMenuBuiltins(): () => void {
@@ -14,7 +16,8 @@ export function registerHomeMenuBuiltins(): () => void {
 
   registeredIds.push(Host.registerHomeButton({
     id: 'home.new',
-    label: 'New Game',
+    label: 'New Game',  // fallback
+    labelKey: 'slots.homeMenu.newGame',
     icon: 'swords',
     order: 10,
     actionId: 'ui.home.newGame',
@@ -22,7 +25,8 @@ export function registerHomeMenuBuiltins(): () => void {
 
   registeredIds.push(Host.registerHomeButton({
     id: 'home.load',
-    label: 'Load Game',
+    label: 'Load Game',  // fallback
+    labelKey: 'slots.homeMenu.loadGame',
     icon: 'history',
     order: 20,
     actionId: 'ui.home.openLoad',
@@ -33,7 +37,8 @@ export function registerHomeMenuBuiltins(): () => void {
 
   registeredIds.push(Host.registerHomeButton({
     id: 'home.gallery',
-    label: 'Gallery',
+    label: 'Gallery',  // fallback
+    labelKey: 'slots.homeMenu.gallery',
     icon: 'image',
     order: 30,
     actionId: 'ui.home.openGallery',
@@ -41,7 +46,8 @@ export function registerHomeMenuBuiltins(): () => void {
 
   registeredIds.push(Host.registerHomeButton({
     id: 'home.options',
-    label: 'Options',
+    label: 'Options',  // fallback
+    labelKey: 'slots.homeMenu.options',
     icon: 'settings',
     order: 40,
     actionId: 'ui.home.openOptions',

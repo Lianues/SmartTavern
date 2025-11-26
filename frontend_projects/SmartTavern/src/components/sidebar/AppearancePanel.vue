@@ -4,6 +4,9 @@ import ThreadedAppearanceTab from '@/components/sidebar/tabs/ThreadedAppearance.
 import SandboxAppearanceTab from '@/components/sidebar/tabs/SandboxAppearance.vue'
 import BackgroundsManagerTab from '@/components/sidebar/tabs/BackgroundsManager.vue'
 import ThemeManagerTab from '@/components/sidebar/tabs/ThemeManager.vue'
+import { useI18n } from '@/locales'
+
+const { t } = useI18n()
 
 /**
  * 外观面板（容器）
@@ -19,17 +22,16 @@ const props = defineProps({
   anchorLeft: { type: Number, default: 308 }, // 左侧锚定像素（默认=12+280+16）
   width: { type: Number, default: 560 },      // 面板宽度
   zIndex: { type: Number, default: 59 },      // 与 Sidebar 同层（> 背景模糊 58）
-  title: { type: String, default: '外观 Appearance' },
 })
 const emit = defineEmits(['close'])
 
-const tabs = [
-  { key: 'home', label: '主页', icon: 'home' },
-  { key: 'threaded', label: '楼层对话', icon: 'message-square' },
-  { key: 'sandbox', label: '全屏沙盒', icon: 'monitor' },
-  { key: 'backgrounds', label: '背景图片', icon: 'image' },
-  { key: 'theme', label: '主题', icon: 'palette' },
-]
+const tabs = computed(() => [
+  { key: 'home', label: t('appearance.tabs.home'), icon: 'home' },
+  { key: 'threaded', label: t('appearance.tabs.threaded'), icon: 'message-square' },
+  { key: 'sandbox', label: t('appearance.tabs.sandbox'), icon: 'monitor' },
+  { key: 'backgrounds', label: t('appearance.tabs.backgrounds'), icon: 'image' },
+  { key: 'theme', label: t('appearance.tabs.theme'), icon: 'palette' },
+])
 const active = ref('threaded')
 
 const panelStyle = computed(() => ({
@@ -57,7 +59,7 @@ onMounted(() => {
       :style="panelStyle"
     >
       <header class="st-settings-header">
-        <div class="st-settings-title">
+        <div class="st-settings-title st-panel-title">
           <span class="st-settings-icon">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
                  viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -70,12 +72,12 @@ onMounted(() => {
               <circle cx="8.5" cy="7.5" r=".5" fill="currentColor"></circle>
             </svg>
           </span>
-          {{ props.title }}
+          {{ t('appearance.title') }}
         </div>
-        <button class="st-settings-close" type="button" title="关闭" @click="close">✕</button>
+        <button class="st-settings-close" type="button" :title="t('common.close')" @click="close">✕</button>
       </header>
 
-      <nav class="st-settings-tabs" role="tablist" aria-label="外观页签">
+      <nav class="st-settings-tabs" role="tablist" :aria-label="t('appearance.title')">
         <button
           v-for="t in tabs"
           :key="t.key"
@@ -94,8 +96,8 @@ onMounted(() => {
 
       <CustomScrollbar class="st-settings-body">
         <div v-if="active === 'home'" class="st-tab-panel">
-          <h3>主页</h3>
-          <p class="muted">此为占位页面，用于配置应用主页相关选项。</p>
+          <h3>{{ t('appearance.tabs.home') }}</h3>
+          <p class="muted">{{ t('appearance.placeholder') }}</p>
         </div>
 
         <ThreadedAppearanceTab v-else-if="active === 'threaded'" />
@@ -107,8 +109,8 @@ onMounted(() => {
         <ThemeManagerTab v-else-if="active === 'theme'" />
 
         <div v-else class="st-tab-panel">
-          <h3>未知页签</h3>
-          <p class="muted">占位内容</p>
+          <h3>{{ t('appearance.unknownTab') }}</h3>
+          <p class="muted">{{ t('appearance.placeholderContent') }}</p>
         </div>
       </CustomScrollbar>
     </div>

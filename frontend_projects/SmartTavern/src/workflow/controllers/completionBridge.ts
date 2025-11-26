@@ -6,6 +6,7 @@
 // 依赖：Host 单例与 RouterClient 路由器（通过 window.STPromptRouter 注入）
 import Host from '@/workflow/core/host'
 import * as Completion from '@/workflow/channels/completion'
+import { i18n } from '@/locales'
 
 // 类型定义
 interface RouterProvider {
@@ -71,7 +72,7 @@ export function initCompletionBridge(): DisposerFn {
       Host.events.emit(Completion.EVT_COMPLETION_ERROR, { message: String(message || 'Unknown error'), detail, ...info })
     } catch (_) {}
     try {
-      Host.pushToast?.({ type: 'error', message: String(message || '补全失败'), timeout: 2500 })
+      Host.pushToast?.({ type: 'error', message: String(message || i18n.t('workflow.controllers.completion.completionFail')), timeout: 2500 })
     } catch (_) {}
   }
 
@@ -107,7 +108,7 @@ export function initCompletionBridge(): DisposerFn {
     try {
       // 路由器严格模式：必须存在
       if (!__router || typeof __router.call !== 'function') {
-        emitError('Prompt Router 未注入或不支持调用', null, info)
+        emitError(i18n.t('workflow.controllers.completion.routerNotInjected'), null, info)
         callbacks.onEnd?.()
         return
       }
@@ -136,7 +137,7 @@ export function initCompletionBridge(): DisposerFn {
     try { rec.abort?.() } catch (_) {}
     try { Host.events.emit(Completion.EVT_COMPLETION_ABORTED, { tag: rec.info?.tag, conversationFile: rec.info?.conversationFile }) } catch (_) {}
     release(key)
-    try { Host.pushToast?.({ type: 'warning', message: '补全已取消', timeout: 1500 }) } catch (_) {}
+    try { Host.pushToast?.({ type: 'warning', message: i18n.t('workflow.controllers.completion.completionCancelled'), timeout: 1500 }) } catch (_) {}
   }))
 
   return () => {

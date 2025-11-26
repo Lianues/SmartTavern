@@ -7,6 +7,8 @@ import './styles/tokens.css'
 import ThemeManager from '@/features/themes/manager'
 // @ts-ignore - JS module without types
 import Host from '@/workflow/core/host'
+// 国际化系统
+import { i18n } from '@/locales'
 import { registerHomeMenuBuiltins } from '@/workflow/slots/homeMenu/bootstrap'
 import { registerSidebarBuiltins } from '@/workflow/slots/sidebar/bootstrap'
 import { createPinia, setActivePinia } from 'pinia'
@@ -107,7 +109,15 @@ async function bootstrapApp(): Promise<void> {
     }
   })()
 
-  // 6. 初始化主题运行时后再挂载，减少样式闪烁
+  // 6. 初始化国际化系统
+  try {
+    i18n.init()
+    console.log('[bootstrap] i18n initialized, locale:', i18n.getLocale())
+  } catch (e) {
+    console.warn('[bootstrap] i18n init failed', e)
+  }
+
+  // 7. 初始化主题运行时后再挂载，减少样式闪烁
   ThemeManager.init().finally(() => {
   // 初始化工作流 Host 并注册开始页内置按钮与侧边栏项
   Host.init({ exposeToWindow: true })

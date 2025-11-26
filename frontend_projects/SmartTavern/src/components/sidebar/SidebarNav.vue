@@ -1,6 +1,9 @@
 <script setup>
 import { computed, onMounted, onUpdated } from 'vue'
 import PreviewCard from './PreviewCard.vue'
+import { useI18n } from '@/locales'
+
+const { t } = useI18n()
 
 const emit = defineEmits(['update:view','update:theme'])
 
@@ -10,6 +13,7 @@ const props = defineProps({
 })
 
 // 从 Host 获取侧边栏项（动态）
+// 使用 labelKey/descKey 进行动态翻译，支持语言切换
 const items = computed(() => {
   if (typeof window === 'undefined' || !window.STHost) return []
   try {
@@ -20,11 +24,12 @@ const items = computed(() => {
     }
     const list = window.STHost.listSidebarItems(ctx)
     // 转换为组件需要的格式
+    // 优先使用 labelKey/descKey 动态翻译，若无则使用静态 label/desc
     return list.map(item => ({
       key: item.id,
       icon: item.icon,
-      title: item.label,
-      desc: item.desc || '',
+      title: item.labelKey ? t(item.labelKey) : item.label,
+      desc: item.descKey ? t(item.descKey) : (item.desc || ''),
       disabled: item.disabled || false,
       actionId: item.actionId,
       params: item.params || {},
@@ -69,15 +74,15 @@ onUpdated(() => window.lucide?.createIcons?.())
       </button>
       <button class="ctrl-btn" type="button" @click="toggleMode">
         <i :data-lucide="props.view === 'threaded' ? 'app-window' : 'message-square'" class="icon-16" aria-hidden="true"></i>
-        <span class="ctrl-label">{{ props.view === 'threaded' ? '楼层' : '前端' }}</span>
+        <span class="ctrl-label">{{ props.view === 'threaded' ? t('sidebar.viewMode.threaded') : t('sidebar.viewMode.sandbox') }}</span>
       </button>
       <button class="ctrl-btn" type="button" @click="toggleTheme" :aria-label="`Theme: ${props.theme}`">
         <i :data-lucide="props.theme === 'dark' ? 'moon' : (props.theme === 'light' ? 'sun' : 'circle-dot')" class="icon-16" aria-hidden="true"></i>
-        <span class="ctrl-label">{{ props.theme === 'dark' ? '深色' : (props.theme === 'light' ? '浅色' : '系统') }}</span>
+        <span class="ctrl-label">{{ props.theme === 'dark' ? t('sidebar.theme.dark') : (props.theme === 'light' ? t('sidebar.theme.light') : t('sidebar.theme.system')) }}</span>
       </button>
     </div>
 
-    <div class="st-sidebar-title">配置预览</div>
+    <div class="st-sidebar-title">{{ t('sidebar.configPreview') }}</div>
 
     <div class="st-preview-grid">
       <PreviewCard
@@ -93,7 +98,7 @@ onUpdated(() => window.lucide?.createIcons?.())
     </div>
 
     <div class="st-sidebar-hint">
-      在聊天页面右侧展示的配置入口（预览占位）
+      {{ t('sidebar.configPreviewHint') }}
     </div>
   </div>
 </template>

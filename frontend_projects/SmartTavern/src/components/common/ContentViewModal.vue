@@ -1,11 +1,16 @@
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
+import { useI18n } from '@/locales'
+
+const { t } = useI18n()
 
 const props = defineProps({
   show: { type: Boolean, default: false },
-  title: { type: String, default: '详细内容' },
+  title: { type: String, default: '' },
   icon: { type: String, default: '' }, // lucide icon name
 })
+
+const effectiveTitle = computed(() => props.title || t('components.modal.defaultTitle'))
 
 const emit = defineEmits(['close', 'update:show'])
 
@@ -41,9 +46,9 @@ watch(() => props.show, (v) => {
           <header class="modal-header">
             <div class="modal-title">
               <i v-if="icon" :data-lucide="icon" class="modal-icon icon-20" aria-hidden="true"></i>
-              {{ title }}
+              {{ effectiveTitle }}
             </div>
-            <button class="modal-close" type="button" title="关闭 (ESC)" @click="close">✕</button>
+            <button class="modal-close" type="button" :title="t('components.modal.closeEsc')" @click="close">✕</button>
           </header>
 
           <!-- 内容区域 -->

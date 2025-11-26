@@ -13,6 +13,10 @@ import * as Branch from '@/workflow/channels/branch'
 import { useMessagesStore } from '@/stores/chatMessages'
 import { useCharacterStore } from '@/stores/character'
 import { usePersonaStore } from '@/stores/persona'
+import { useI18n } from '@/locales'
+
+const { t } = useI18n()
+
 /**
  * 楼层对话预览（美化版）
  * 布局：头像占位 + 名称/角色 + 对话内容 + 楼层序号（#）
@@ -40,14 +44,8 @@ const msgStore = useMessagesStore()
 const characterStore = useCharacterStore()
 const personaStore = usePersonaStore()
 
-const roleMap = {
-  user: '用户',
-  assistant: '助手',
-  system: '系统',
-}
-
 function roleLabel(role) {
-  return roleMap[role] ?? '未知'
+  return t(`role.${role}`) || t('common.unknown')
 }
 function nameOf(msg) {
   // 名称占位规则：优先角色映射；可拓展为从 msg.meta 中读取昵称
@@ -194,7 +192,7 @@ const userBadge = computed(() => {
  */
 async function loadBranchInfo() {
   if (!props.conversationFile) {
-    console.warn('无对话文件，跳过分支信息加载')
+    console.warn(t('chat.errors.noConversationFile'))
     return
   }
 
@@ -224,7 +222,7 @@ async function loadBranchInfo() {
     })
     const offFail = Host.events.on(Branch.EVT_BRANCH_TABLE_FAIL, ({ conversationFile, message }) => {
       if (conversationFile && conversationFile !== convFile) return
-      console.error('加载分支信息失败(事件):', message)
+      console.error(t('chat.errors.loadBranchFailed') + '(事件):', message)
       try { offOk?.() } catch (_) {}
       try { offFail?.() } catch (_) {}
       resolve(false)
@@ -398,14 +396,14 @@ function attachCompletionHandlersForTag(tagNodeId) {
   })
   const offError = Host.events.on(Completion.EVT_COMPLETION_ERROR, ({ tag, message }) => {
     if (tag !== tagNodeId) return
-    console.error('AI调用失败:', message)
+    console.error(t('chat.errors.aiCallFailed') + ':', message)
     hasReceivedError = true
     if (waitingTimer) { clearInterval(waitingTimer); waitingTimer = null }
     typewriterBuffer = ''
     isTyping = false
     if (nodeStates.value[currentNodeId]) {
       nodeStates.value[currentNodeId].waitingAI = false
-      nodeStates.value[currentNodeId].error = message || 'AI调用失败'
+      nodeStates.value[currentNodeId].error = message || t('chat.errors.aiCallFailed')
     }
     delete streamContentIndex.value[currentNodeId]
     nextTick(() => refreshIcons())
@@ -545,7 +543,7 @@ async function regenerateMessage(msg) {
   console.log('请求重新生成(事件化)：', msg.id, msg.role)
 
   if (!props.conversationFile || !props.conversationDoc) {
-    console.error('缺少对话文件或文档')
+    console.error(t('chat.errors.missingFileOrDoc'))
     return
   }
 
@@ -586,7 +584,7 @@ async function regenerateMessage(msg) {
       })
       const offFail = Host.events.on(Branch.EVT_BRANCH_RETRY_ASSIST_FAIL, ({ conversationFile, message, tag: rtag }) => {
         if (conversationFile !== props.conversationFile || rtag !== tag) return
-        console.error('助手消息重试失败:', message)
+        console.error(t('chat.errors.retryFailed') + ':', message)
         try { offOk?.() } catch (_) {}
         try { offFail?.() } catch (_) {}
       })
@@ -650,7 +648,7 @@ async function regenerateMessage(msg) {
       })
       const offFail = Host.events.on(Branch.EVT_BRANCH_RETRY_USER_FAIL, ({ conversationFile, message, tag: rtag }) => {
         if (conversationFile !== props.conversationFile || rtag !== tag) return
-        console.error('用户消息智能重试失败:', message)
+        console.error(t('chat.errors.retryFailed') + ':', message)
         try { offOk?.() } catch (_) {}
         try { offFail?.() } catch (_) {}
       })
@@ -663,7 +661,7 @@ async function regenerateMessage(msg) {
       })
     }
   } catch (error) {
-    console.error('重试失败:', error)
+    console.error(t('chat.errors.retryFailed') + ':', error)
   }
 }
 
@@ -681,12 +679,12 @@ let sendSuccessTimer = null
  * 失败时保留输入框内容让用户重试
  */
 async function onSubmit(text) {
-  const t = (text ?? '').trim()
-  if (!t) return
+  const inputText = (text ?? '').trim()
+  if (!inputText) return
   if (isSending.value) return
 
   if (!props.conversationFile || !props.conversationDoc) {
-    console.error('没有对话文件或文档，无法发送消息')
+    console.error(t('chat.errors.noConversationDoc'))
     return
   }
 
@@ -702,7 +700,7 @@ async function onSubmit(text) {
     : null
   if (!parentId) {
     isSending.value = false
-    sendErrorMsg.value = '无法确定父节点ID'
+    sendErrorMsg.value = t('chat.errors.cannotDetermineParentId')
     return
   }
 
@@ -713,7 +711,7 @@ async function onSubmit(text) {
   const offOk = Host.events.on(Message.EVT_MESSAGE_SEND_OK, async ({ conversationFile, nodeId, role, content, doc, tag: rtag }) => {
     if (conversationFile !== props.conversationFile || nodeId !== newNodeId || rtag !== tag) return
 
-    const newMessage = { id: newNodeId, role: 'user', content: t }
+    const newMessage = { id: newNodeId, role: 'user', content: inputText }
     props.messages.push(newMessage)
     ensurePaletteFor(newMessage)
 
@@ -783,7 +781,7 @@ async function onSubmit(text) {
     if (rtag && rtag !== tag) return
 
     isSending.value = false
-    sendErrorMsg.value = message || '发送失败'
+    sendErrorMsg.value = message || t('chat.errors.sendFailed')
 
     if (sendErrorTimer) clearTimeout(sendErrorTimer)
     sendErrorTimer = setTimeout(() => {
@@ -805,20 +803,20 @@ async function onSubmit(text) {
     parentId,
     nodeId: newNodeId,
     role: 'user',
-    content: t,
+    content: inputText,
     tag,
   })
 }
 
 function onMessageUpdate(msg) {
   // 消息更新后的回调（可选）
-  console.log('消息已更新:', msg.id)
+  console.log('Message updated:', msg.id)
   refreshIcons()
 }
 
 async function onBranchSwitched(data) {
   // 分支切换后的回调
-  console.log('分支已切换:', data)
+  console.log('Branch switched:', data)
   
   // 更新本地文档
   if (data.doc && props.conversationDoc) {
@@ -924,7 +922,7 @@ function getDisplayParts(msg) {
               :waiting-seconds="nodeStates[m.id]?.waitingSeconds || 0"
               :node-error="nodeStates[m.id]?.error || null"
               :send-status="m.id === lastSentMessageId ? 'success' : null"
-              :send-message="m.id === lastSentMessageId ? '发送成功' : ''"
+              :send-message="m.id === lastSentMessageId ? t('chat.message.sendSuccess') : ''"
               :conversation-file="props.conversationFile"
               :branch-info="branchInfoMap[m.id] || null"
               :avatar-url="m.role === 'assistant' ? assistantAvatarUrl : (m.role === 'user' ? userAvatarUrl : null)"

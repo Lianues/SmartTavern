@@ -1,15 +1,22 @@
 <script setup>
+import { computed } from 'vue'
+import { useI18n } from '@/locales'
+
+const { t } = useI18n()
+
 const props = defineProps({
   modelValue: { type: String, default: 'threaded' }, // 'threaded' | 'sandbox'
   options: {
     type: Array,
-    default: () => ([
-      { key: 'threaded', label: '对话楼层' },
-      { key: 'sandbox', label: '全局沙盒（占位）' },
-    ])
+    default: null
   },
 })
 const emit = defineEmits(['update:modelValue'])
+
+const effectiveOptions = computed(() => props.options || [
+  { key: 'threaded', label: t('components.modeSwitch.threaded') },
+  { key: 'sandbox', label: t('components.modeSwitch.sandbox') },
+])
 
 function selectMode(key) {
   if (key !== props.modelValue) emit('update:modelValue', key)
@@ -19,7 +26,7 @@ function selectMode(key) {
 <template>
   <div class="st-mode-switch">
     <button
-      v-for="opt in props.options"
+      v-for="opt in effectiveOptions"
       :key="opt.key"
       type="button"
       class="st-switch-btn"

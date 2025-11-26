@@ -2,6 +2,9 @@
 import { ref, reactive, computed, onMounted, watch, nextTick, onBeforeUnmount } from 'vue'
 import Host from '@/workflow/core/host'
 import * as Catalog from '@/workflow/channels/catalog'
+import { useI18n } from '@/locales'
+
+const { t } = useI18n()
 
 const props = defineProps({
   llmConfigData: { type: Object, default: null },
@@ -144,7 +147,7 @@ function parseJsonStrings() {
   try {
     currentData.value.custom_params = JSON.parse(customParamsStr.value || '{}')
   } catch (e) {
-    customParamsError.value = 'JSON 格式错误'
+    customParamsError.value = t('detail.llmConfig.errors.jsonFormatError')
   }
   
   // Gemini stopSequences
@@ -158,7 +161,7 @@ function parseJsonStrings() {
   try {
     currentData.value.gemini_config.safetySettings = JSON.parse(geminiSafetySettingsStr.value || '{}')
   } catch (e) {
-    geminiSafetyError.value = 'JSON 格式错误'
+    geminiSafetyError.value = t('detail.llmConfig.errors.jsonFormatError')
   }
   
   // Gemini customParams
@@ -166,7 +169,7 @@ function parseJsonStrings() {
   try {
     currentData.value.gemini_config.customParams = JSON.parse(geminiCustomParamsStr.value || '{}')
   } catch (e) {
-    geminiCustomError.value = 'JSON 格式错误'
+    geminiCustomError.value = t('detail.llmConfig.errors.jsonFormatError')
   }
   
   // Anthropic stop_sequences
@@ -227,7 +230,7 @@ onBeforeUnmount(() => {
 async function save() {
   const file = props.file
   if (!file) {
-    try { alert('缺少文件路径，无法保存'); } catch (_) {}
+    try { alert(t('error.missingFilePath')); } catch (_) {}
     return
   }
   
@@ -236,7 +239,7 @@ async function save() {
   
   // 检查是否有JSON错误
   if (customParamsError.value || geminiSafetyError.value || geminiCustomError.value) {
-    try { alert('请修正 JSON 格式错误后再保存'); } catch (_) {}
+    try { alert(t('detail.llmConfig.errors.fixJsonErrors')); } catch (_) {}
     return
   }
   
@@ -286,7 +289,7 @@ async function save() {
     if (resFile && resFile !== file) return
     if (resTag && resTag !== tag) return
     console.error('[LLMConfigDetailView] 保存失败（事件）:', message)
-    try { alert('保存失败：' + message) } catch (_) {}
+    try { alert(t('detail.llmConfig.saveFailed') + '：' + message) } catch (_) {}
     saving.value = false
     try { offOk?.() } catch (_) {}
     try { offFail?.() } catch (_) {}
@@ -312,45 +315,45 @@ async function save() {
       <div class="flex items-center justify-between gap-3">
         <div class="flex items-center gap-2">
           <i data-lucide="plug" class="w-5 h-5 text-black"></i>
-          <h2 class="text-lg font-bold text-black">{{ currentData.name || 'AI配置详情' }}</h2>
+          <h2 class="text-lg font-bold text-black">{{ currentData.name || t('detail.llmConfig.title') }}</h2>
         </div>
         <div class="flex items-center gap-2">
           <!-- 保存状态：左侧提示区 -->
           <div class="save-indicator min-w-[72px] h-7 flex items-center justify-center">
-            <span v-if="saving" class="save-spinner" aria-label="保存中"></span>
-            <span v-else-if="savedOk" class="save-done"><strong>已保存！</strong></span>
+            <span v-if="saving" class="save-spinner" :aria-label="t('common.saving')"></span>
+            <span v-else-if="savedOk" class="save-done"><strong>{{ t('common.saved') }}</strong></span>
           </div>
           <button
             type="button"
             class="px-3 py-1 rounded-4 bg-transparent border border-gray-900 text-black text-sm hover:bg-gray-100 active:bg-gray-200 transition-all duration-200 ease-soft disabled:opacity-50"
             :disabled="saving"
             @click="save"
-            title="保存到后端"
-          >保存</button>
+            :title="t('detail.preset.saveToBackend')"
+          >{{ t('common.save') }}</button>
           <div class="px-3 py-1 rounded-4 bg-gray-100 border border-gray-300 text-black text-sm">
-            编辑模式
+            {{ t('detail.llmConfig.editMode') }}
           </div>
         </div>
       </div>
-      <p class="mt-2 text-xs text-black/60">此页面支持完整编辑AI配置参数</p>
+      <p class="mt-2 text-xs text-black/60">{{ t('detail.llmConfig.editHint') }}</p>
     </div>
 
     <!-- 基本信息 -->
     <div class="bg-white rounded-4 border border-gray-200 p-5 transition-all duration-200 ease-soft hover:shadow-elevate">
       <div class="flex items-center gap-2 mb-3">
         <i data-lucide="id-card" class="w-4 h-4 text-black"></i>
-        <h3 class="text-base font-semibold text-black">基本信息</h3>
+        <h3 class="text-base font-semibold text-black">{{ t('detail.llmConfig.basicInfo') }}</h3>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label class="block text-sm font-medium text-black mb-2">名称</label>
+          <label class="block text-sm font-medium text-black mb-2">{{ t('common.name') }}</label>
           <input
             v-model="currentData.name"
             class="w-full px-3 py-2 border border-gray-300 rounded-4 text-sm focus:outline-none focus:ring-2 focus:ring-gray-800"
           />
         </div>
         <div class="md:col-span-2">
-          <label class="block text-sm font-medium text-black mb-2">描述</label>
+          <label class="block text-sm font-medium text-black mb-2">{{ t('common.description') }}</label>
           <textarea
             v-model="currentData.description"
             rows="2"
@@ -364,42 +367,42 @@ async function save() {
     <div class="bg-white rounded-4 border border-gray-200 p-5 transition-all duration-200 ease-soft hover:shadow-elevate">
       <div class="flex items-center gap-2 mb-3">
         <i data-lucide="plug" class="w-4 h-4 text-black"></i>
-        <h3 class="text-base font-semibold text-black">基础配置</h3>
+        <h3 class="text-base font-semibold text-black">{{ t('detail.llmConfig.baseConfig') }}</h3>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label class="block text-sm font-medium text-black mb-2">Provider</label>
+          <label class="block text-sm font-medium text-black mb-2">{{ t('detail.llmConfig.provider') }}</label>
           <select v-model="currentData.provider" class="w-full px-3 py-2 border border-gray-300 rounded-4 text-sm focus:outline-none focus:ring-2 focus:ring-gray-800">
             <option v-for="p in providers" :key="p" :value="p">{{ p }}</option>
           </select>
         </div>
         <div>
-          <label class="block text-sm font-medium text-black mb-2">Base URL</label>
+          <label class="block text-sm font-medium text-black mb-2">{{ t('detail.llmConfig.baseUrl') }}</label>
           <input v-model="currentData.base_url" class="w-full px-3 py-2 border border-gray-300 rounded-4 text-sm focus:outline-none focus:ring-2 focus:ring-gray-800" placeholder="https://api.openai.com/v1" />
         </div>
         <div>
-          <label class="block text-sm font-medium text-black mb-2">API Key</label>
+          <label class="block text-sm font-medium text-black mb-2">{{ t('detail.llmConfig.apiKey') }}</label>
           <input v-model="currentData.api_key" type="password" class="w-full px-3 py-2 border border-gray-300 rounded-4 text-sm focus:outline-none focus:ring-2 focus:ring-gray-800" placeholder="sk-..." />
         </div>
         <div>
-          <label class="block text-sm font-medium text-black mb-2">模型(model)</label>
+          <label class="block text-sm font-medium text-black mb-2">{{ t('detail.llmConfig.model') }}</label>
           <div class="relative flex gap-2">
             <input
               v-model="currentData.model"
               class="flex-1 px-3 py-2 border border-gray-300 rounded-4 text-sm focus:outline-none focus:ring-2 focus:ring-gray-800"
-              placeholder="如 gpt-4o-mini"
+              :placeholder="t('detail.llmConfig.modelPlaceholder')"
             />
             <button
               type="button"
               class="px-3 py-2 border border-gray-300 rounded-4 bg-gray-50 hover:bg-gray-100"
               @click="toggleModelDropdown"
-              title="选择模型"
+              :title="t('detail.llmConfig.selectModel')"
             >
               <i data-lucide="chevron-down" class="w-4 h-4"></i>
             </button>
             <div v-if="showModelDropdown" class="absolute top-full right-0 mt-1 w-64 bg-white border border-gray-300 rounded-4 shadow-lg z-10 max-h-64 overflow-y-auto">
               <div class="p-2 border-b border-gray-200 text-xs text-gray-600">
-                选择模型（占位）
+                {{ t('detail.llmConfig.modelListPlaceholder') }}
               </div>
               <div
                 v-for="model in modelListPlaceholder"
@@ -419,70 +422,70 @@ async function save() {
     <div class="bg-white rounded-4 border border-gray-200 p-5 transition-all duration-200 ease-soft hover:shadow-elevate">
       <div class="flex items-center gap-2 mb-3">
         <i data-lucide="sliders-horizontal" class="w-4 h-4 text-black"></i>
-        <h3 class="text-base font-semibold text-black">请求参数</h3>
+        <h3 class="text-base font-semibold text-black">{{ t('detail.llmConfig.requestParams.title') }}</h3>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <div class="flex items-center justify-between mb-2">
-            <label class="text-sm font-medium text-black">max_tokens</label>
+            <label class="text-sm font-medium text-black">{{ t('detail.llmConfig.requestParams.maxTokens') }}</label>
             <label class="inline-flex items-center gap-2 text-xs">
               <input type="checkbox" v-model="apiToggles.max_tokens" class="w-4 h-4" />
-              <span>启用</span>
+              <span>{{ t('common.enable') }}</span>
             </label>
           </div>
           <input v-model.number="currentData.max_tokens" type="number" min="1" class="w-full px-3 py-2 border border-gray-300 rounded-4 text-sm focus:outline-none focus:ring-2 focus:ring-gray-800" :disabled="!apiToggles.max_tokens" />
         </div>
         <div>
           <div class="flex items-center justify-between mb-2">
-            <label class="text-sm font-medium text-black">temperature</label>
+            <label class="text-sm font-medium text-black">{{ t('detail.llmConfig.requestParams.temperature') }}</label>
             <label class="inline-flex items-center gap-2 text-xs">
               <input type="checkbox" v-model="apiToggles.temperature" class="w-4 h-4" />
-              <span>启用</span>
+              <span>{{ t('common.enable') }}</span>
             </label>
           </div>
           <input v-model.number="currentData.temperature" type="number" step="0.01" min="0" class="w-full px-3 py-2 border border-gray-300 rounded-4 text-sm focus:outline-none focus:ring-2 focus:ring-gray-800" :disabled="!apiToggles.temperature" />
         </div>
         <div>
           <div class="flex items-center justify-between mb-2">
-            <label class="text-sm font-medium text-black">top_p</label>
+            <label class="text-sm font-medium text-black">{{ t('detail.llmConfig.requestParams.topP') }}</label>
             <label class="inline-flex items-center gap-2 text-xs">
               <input type="checkbox" v-model="apiToggles.top_p" class="w-4 h-4" />
-              <span>启用</span>
+              <span>{{ t('common.enable') }}</span>
             </label>
           </div>
           <input v-model.number="currentData.top_p" type="number" step="0.01" min="0" max="1" class="w-full px-3 py-2 border border-gray-300 rounded-4 text-sm focus:outline-none focus:ring-2 focus:ring-gray-800" :disabled="!apiToggles.top_p" />
         </div>
         <div>
           <div class="flex items-center justify-between mb-2">
-            <label class="text-sm font-medium text-black">presence_penalty</label>
+            <label class="text-sm font-medium text-black">{{ t('detail.llmConfig.requestParams.presencePenalty') }}</label>
             <label class="inline-flex items-center gap-2 text-xs">
               <input type="checkbox" v-model="apiToggles.presence_penalty" class="w-4 h-4" />
-              <span>启用</span>
+              <span>{{ t('common.enable') }}</span>
             </label>
           </div>
           <input v-model.number="currentData.presence_penalty" type="number" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-4 text-sm focus:outline-none focus:ring-2 focus:ring-gray-800" :disabled="!apiToggles.presence_penalty" />
         </div>
         <div>
           <div class="flex items-center justify-between mb-2">
-            <label class="text-sm font-medium text-black">frequency_penalty</label>
+            <label class="text-sm font-medium text-black">{{ t('detail.llmConfig.requestParams.frequencyPenalty') }}</label>
             <label class="inline-flex items-center gap-2 text-xs">
               <input type="checkbox" v-model="apiToggles.frequency_penalty" class="w-4 h-4" />
-              <span>启用</span>
+              <span>{{ t('common.enable') }}</span>
             </label>
           </div>
           <input v-model.number="currentData.frequency_penalty" type="number" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-4 text-sm focus:outline-none focus:ring-2 focus:ring-gray-800" :disabled="!apiToggles.frequency_penalty" />
         </div>
         <div>
           <div class="flex items-center justify-between mb-2">
-            <label class="text-sm font-medium text-black">流式输出</label>
+            <label class="text-sm font-medium text-black">{{ t('detail.llmConfig.requestParams.stream') }}</label>
             <label class="inline-flex items-center gap-2 text-xs">
               <input type="checkbox" v-model="apiToggles.stream" class="w-4 h-4" />
-              <span>启用</span>
+              <span>{{ t('common.enable') }}</span>
             </label>
           </div>
           <label class="inline-flex items-center gap-2">
             <input type="checkbox" v-model="currentData.stream" :disabled="!apiToggles.stream" class="w-5 h-5" />
-            <span class="text-sm">开启</span>
+            <span class="text-sm">{{ t('detail.llmConfig.requestParams.on') }}</span>
           </label>
         </div>
       </div>
@@ -492,22 +495,22 @@ async function save() {
     <div class="bg-white rounded-4 border border-gray-200 p-5 transition-all duration-200 ease-soft hover:shadow-elevate">
       <div class="flex items-center gap-2 mb-3">
         <i data-lucide="network" class="w-4 h-4 text-black"></i>
-        <h3 class="text-base font-semibold text-black">网络与日志</h3>
+        <h3 class="text-base font-semibold text-black">{{ t('detail.llmConfig.network.title') }}</h3>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label class="block text-sm font-medium text-black mb-2">连接超时（秒）</label>
+          <label class="block text-sm font-medium text-black mb-2">{{ t('detail.llmConfig.network.connectTimeout') }}</label>
           <input v-model.number="currentData.connect_timeout" type="number" min="0" class="w-full px-3 py-2 border border-gray-300 rounded-4 text-sm focus:outline-none focus:ring-2 focus:ring-gray-800" />
         </div>
         <div>
-          <label class="block text-sm font-medium text-black mb-2">请求超时（秒）</label>
+          <label class="block text-sm font-medium text-black mb-2">{{ t('detail.llmConfig.network.requestTimeout') }}</label>
           <input v-model.number="currentData.timeout" type="number" min="0" class="w-full px-3 py-2 border border-gray-300 rounded-4 text-sm focus:outline-none focus:ring-2 focus:ring-gray-800" />
         </div>
         <div>
-          <label class="block text-sm font-medium text-black mb-2">启用日志</label>
+          <label class="block text-sm font-medium text-black mb-2">{{ t('detail.llmConfig.network.enableLogging') }}</label>
           <label class="inline-flex items-center gap-2">
             <input type="checkbox" v-model="currentData.enable_logging" class="w-5 h-5" />
-            <span class="text-sm">开启</span>
+            <span class="text-sm">{{ t('detail.llmConfig.requestParams.on') }}</span>
           </label>
         </div>
       </div>
@@ -517,7 +520,7 @@ async function save() {
     <div class="bg-white rounded-4 border border-gray-200 p-5 transition-all duration-200 ease-soft hover:shadow-elevate">
       <div class="flex items-center gap-2 mb-3">
         <i data-lucide="code" class="w-4 h-4 text-black"></i>
-        <h3 class="text-base font-semibold text-black">自定义参数（JSON）</h3>
+        <h3 class="text-base font-semibold text-black">{{ t('detail.llmConfig.customParams.title') }}</h3>
       </div>
       <div>
         <label class="block text-sm font-medium text-black mb-2">custom_params</label>
@@ -527,7 +530,7 @@ async function save() {
           class="w-full px-3 py-2 border border-gray-300 rounded-4 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-gray-800"
           placeholder='{"key": "value"}'
         ></textarea>
-        <p class="mt-2 text-xs text-black/60">输入 JSON 格式的自定义参数，将合并到请求中</p>
+        <p class="mt-2 text-xs text-black/60">{{ t('detail.llmConfig.customParams.hint') }}</p>
         <p v-if="customParamsError" class="mt-1 text-xs text-red-600">{{ customParamsError }}</p>
       </div>
     </div>
@@ -536,7 +539,7 @@ async function save() {
     <div v-if="showGemini" class="bg-white rounded-4 border border-gray-200 p-5 transition-all duration-200 ease-soft hover:shadow-elevate">
       <div class="flex items-center gap-2 mb-3">
         <i data-lucide="orbit" class="w-4 h-4 text-black"></i>
-        <h3 class="text-base font-semibold text-black">Gemini 高级配置</h3>
+        <h3 class="text-base font-semibold text-black">{{ t('detail.llmConfig.gemini.title') }}</h3>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
@@ -556,7 +559,7 @@ async function save() {
           <input v-model.number="currentData.gemini_config.candidateCount" type="number" min="1" class="w-full px-3 py-2 border border-gray-300 rounded-4 text-sm focus:outline-none focus:ring-2 focus:ring-gray-800" />
         </div>
         <div class="md:col-span-2">
-          <label class="block text-sm font-medium text-black mb-2">stopSequences (逗号分隔)</label>
+          <label class="block text-sm font-medium text-black mb-2">{{ t('detail.llmConfig.gemini.stopSequences') }}</label>
           <input v-model="geminiStopSequencesStr" class="w-full px-3 py-2 border border-gray-300 rounded-4 text-sm focus:outline-none focus:ring-2 focus:ring-gray-800" placeholder="stop1, stop2" />
         </div>
         <div class="md:col-span-2">
@@ -564,12 +567,12 @@ async function save() {
           <input v-model="currentData.gemini_config.responseMimeType" class="w-full px-3 py-2 border border-gray-300 rounded-4 text-sm focus:outline-none focus:ring-2 focus:ring-gray-800" placeholder="text/plain" />
         </div>
         <div class="md:col-span-2">
-          <label class="block text-sm font-medium text-black mb-2">safetySettings (JSON)</label>
+          <label class="block text-sm font-medium text-black mb-2">{{ t('detail.llmConfig.gemini.safetySettings') }}</label>
           <textarea v-model="geminiSafetySettingsStr" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-4 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-gray-800" placeholder='{"HARASSMENT": "BLOCK_MEDIUM_AND_ABOVE"}'></textarea>
           <p v-if="geminiSafetyError" class="mt-1 text-xs text-red-600">{{ geminiSafetyError }}</p>
         </div>
         <div class="md:col-span-2">
-          <label class="block text-sm font-medium text-black mb-2">customParams (JSON)</label>
+          <label class="block text-sm font-medium text-black mb-2">{{ t('detail.llmConfig.gemini.customParams') }}</label>
           <textarea v-model="geminiCustomParamsStr" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-4 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-gray-800" placeholder='{"responseLogprobs": false}'></textarea>
           <p v-if="geminiCustomError" class="mt-1 text-xs text-red-600">{{ geminiCustomError }}</p>
         </div>
@@ -580,22 +583,22 @@ async function save() {
     <div v-if="showAnthropic" class="bg-white rounded-4 border border-gray-200 p-5 transition-all duration-200 ease-soft hover:shadow-elevate">
       <div class="flex items-center gap-2 mb-3">
         <i data-lucide="brain" class="w-4 h-4 text-black"></i>
-        <h3 class="text-base font-semibold text-black">Anthropic 高级配置</h3>
+        <h3 class="text-base font-semibold text-black">{{ t('detail.llmConfig.anthropic.title') }}</h3>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div class="md:col-span-2">
-          <label class="block text-sm font-medium text-black mb-2">stop_sequences (逗号分隔)</label>
+          <label class="block text-sm font-medium text-black mb-2">{{ t('detail.llmConfig.anthropic.stopSequences') }}</label>
           <input v-model="anthropicStopSequencesStr" class="w-full px-3 py-2 border border-gray-300 rounded-4 text-sm focus:outline-none focus:ring-2 focus:ring-gray-800" placeholder="stop1, stop2" />
         </div>
         <div>
-          <label class="block text-sm font-medium text-black mb-2">enable_thinking</label>
+          <label class="block text-sm font-medium text-black mb-2">{{ t('detail.llmConfig.anthropic.enableThinking') }}</label>
           <label class="inline-flex items-center gap-2">
             <input type="checkbox" v-model="currentData.anthropic_config.enable_thinking" class="w-5 h-5" />
-            <span class="text-sm">启用</span>
+            <span class="text-sm">{{ t('common.enable') }}</span>
           </label>
         </div>
         <div>
-          <label class="block text-sm font-medium text-black mb-2">thinking_budget</label>
+          <label class="block text-sm font-medium text-black mb-2">{{ t('detail.llmConfig.anthropic.thinkingBudget') }}</label>
           <input v-model.number="currentData.anthropic_config.thinking_budget" type="number" min="0" class="w-full px-3 py-2 border border-gray-300 rounded-4 text-sm focus:outline-none focus:ring-2 focus:ring-gray-800" :disabled="!currentData.anthropic_config.enable_thinking" />
         </div>
       </div>

@@ -5,6 +5,7 @@
 import Host from '@/workflow/core/host'
 import * as Msg from '@/workflow/channels/message'
 import ChatBranches from '@/services/chatBranches'
+import { i18n } from '@/locales'
 
 // 类型定义
 type MessageRole = 'user' | 'assistant' | 'system'
@@ -94,7 +95,7 @@ export function initMessageBridge(): DisposerFn {
           tag: payload?.tag,
         })
       } catch (_) {}
-      Host.pushToast?.({ type: 'error', message: '发送失败：参数不完整', timeout: 2200 })
+      Host.pushToast?.({ type: 'error', message: i18n.t('workflow.controllers.message.sendFailIncompleteParam'), timeout: 2200 })
       return
     }
 
@@ -117,18 +118,18 @@ export function initMessageBridge(): DisposerFn {
         doc: updatedDoc,
         tag: req.tag,
       })
-      Host.pushToast?.({ type: 'success', message: '消息已发送', timeout: 1600 })
+      Host.pushToast?.({ type: 'success', message: i18n.t('workflow.controllers.message.sendSuccess'), timeout: 1600 })
     } catch (e: any) {
       // 广播失败
       try {
         Host.events.emit(Msg.EVT_MESSAGE_SEND_FAIL, {
           conversationFile: req.conversationFile,
-          message: e?.message || '发送失败',
+          message: e?.message || i18n.t('workflow.controllers.message.sendFail'),
           detail: e,
           tag: req.tag,
         })
       } catch (_) {}
-      Host.pushToast?.({ type: 'error', message: '消息发送失败', timeout: 2200 })
+      Host.pushToast?.({ type: 'error', message: i18n.t('workflow.controllers.message.sendFail'), timeout: 2200 })
     }
   }))
 
@@ -147,7 +148,7 @@ export function initMessageBridge(): DisposerFn {
           tag: payload?.tag,
         })
       } catch (_) {}
-      Host.pushToast?.({ type: 'error', message: '编辑失败：参数不完整', timeout: 2200 })
+      Host.pushToast?.({ type: 'error', message: i18n.t('workflow.controllers.message.editFailIncompleteParam'), timeout: 2200 })
       return
     }
 
@@ -167,19 +168,19 @@ export function initMessageBridge(): DisposerFn {
         doc: updatedDoc,
         tag: req.tag,
       })
-      Host.pushToast?.({ type: 'success', message: '消息已保存', timeout: 1600 })
+      Host.pushToast?.({ type: 'success', message: i18n.t('workflow.controllers.message.editSuccess'), timeout: 1600 })
     } catch (e: any) {
       // 广播失败
       try {
         Host.events.emit(Msg.EVT_MESSAGE_EDIT_FAIL, {
           conversationFile: req.conversationFile,
           nodeId: req.nodeId,
-          message: e?.message || '保存失败',
+          message: e?.message || i18n.t('workflow.controllers.message.editFail'),
           detail: e,
           tag: req.tag,
         })
       } catch (_) {}
-      Host.pushToast?.({ type: 'error', message: '消息保存失败', timeout: 2200 })
+      Host.pushToast?.({ type: 'error', message: i18n.t('workflow.controllers.message.editFail'), timeout: 2200 })
     }
   }))
 

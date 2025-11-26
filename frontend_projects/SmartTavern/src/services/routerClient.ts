@@ -6,6 +6,8 @@
  * - prompt.process_view
  */
 
+import { i18n } from '@/locales'
+
 // 类型定义
 interface RouterCallbacks {
   onChunk?: (content: string) => void
@@ -70,7 +72,7 @@ const RouterClient = {
   async call(action: string, payload: any = {}, callbacks: RouterCallbacks = {}): Promise<any> {
     const router = getRouter()
     if (!router || typeof router.call !== 'function') {
-      throw new Error('RouterClient: 路由器未注入或不支持 call(action, ...)')
+      throw new Error(`RouterClient: ${i18n.t('services.routerClient.routerNotInjected')}`)
     }
     return router.call(String(action || ''), payload, callbacks)
   },

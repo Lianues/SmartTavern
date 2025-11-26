@@ -1,13 +1,19 @@
 <script setup>
+import { computed } from 'vue'
 import ContentViewModal from '@/components/common/ContentViewModal.vue'
 import OptionsView from '@/components/home/OptionsView.vue'
+import { useI18n } from '@/locales'
+
+const { t } = useI18n()
 
 const props = defineProps({
   show: { type: Boolean, default: false },
-  title: { type: String, default: '选项' },
+  title: { type: String, default: '' },
   icon: { type: String, default: '' },
   theme: { type: String, default: 'system' },
 })
+
+const effectiveTitle = computed(() => props.title || t('home.options.title'))
 
 const emit = defineEmits(['update:show', 'close', 'update:theme'])
 
@@ -24,7 +30,7 @@ function onThemeUpdate(t) {
 <template>
   <ContentViewModal
     :show="props.show"
-    :title="props.title"
+    :title="effectiveTitle"
     :icon="props.icon"
     @update:show="(v) => emit('update:show', v)"
     @close="onClose"

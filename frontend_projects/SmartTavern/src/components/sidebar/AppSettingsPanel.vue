@@ -1,5 +1,8 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
+import { useI18n } from '@/locales'
+
+const { t, locale, setLocale, availableLocales } = useI18n()
 
 const props = defineProps({
   anchorLeft: { type: Number, default: 308 },
@@ -7,11 +10,10 @@ const props = defineProps({
   zIndex: { type: Number, default: 59 },
   top: { type: Number, default: 64 },
   bottom: { type: Number, default: 12 },
-  title: { type: String, default: '应用设置 App Settings' },
   theme: { type: String, default: 'system' } // 同步主页 Options 主题状态
 })
 
-const emit = defineEmits(['close', 'update:theme'])
+const emit = defineEmits(['close', 'update:theme', 'update:lang'])
 
 const panelStyle = computed(() => ({
   position: 'fixed',
@@ -25,7 +27,6 @@ const panelStyle = computed(() => ({
 function close(){ emit('close') }
 
 // OptionsView 同步：主题切换逻辑
-const lang = ref('zh-CN')
 const currentTheme = ref(props.theme || 'system')
 
 function applyThemeToRoot(t) {
@@ -46,7 +47,7 @@ function setTheme(t) {
 }
 
 const activeIndex = computed(() => currentTheme.value === 'system' ? 0 : (currentTheme.value === 'light' ? 1 : 2))
-const themeLabel = computed(() => currentTheme.value === 'system' ? '系统' : (currentTheme.value === 'light' ? '浅色' : '深色'))
+const themeLabel = computed(() => currentTheme.value === 'system' ? t('sidebar.theme.system') : (currentTheme.value === 'light' ? t('sidebar.theme.light') : t('sidebar.theme.dark')))
 
 // ============== 后端 API 地址（持久化 + 全局可用） ==============
 const defaultBackend = (import.meta?.env?.VITE_API_BASE) || 'http://localhost:8050'
@@ -86,6 +87,12 @@ watch(() => props.theme, (v) => {
   applyThemeToRoot(v)
 })
 
+// 语言切换处理
+function handleLangChange(newLang) {
+  setLocale(newLang)
+  emit('update:lang', newLang)
+}
+
 onMounted(() => {
   window.lucide?.createIcons?.()
   // 打开面板时，根据当前主题同步到根节点
@@ -102,35 +109,43 @@ onMounted(() => {
     :style="panelStyle"
   >
       <header class="as-header">
-        <div class="as-title">
+        <div class="as-title st-panel-title">
           <span class="as-icon"><i data-lucide="settings"></i></span>
-          {{ props.title }}
+          {{ t('appSettings.title') }}
         </div>
-        <button class="as-close" type="button" title="关闭" @click="close">✕</button>
+        <button class="as-close" type="button" :title="t('common.close')" @click="close">✕</button>
       </header>
 
       <CustomScrollbar class="as-body">
         <section class="home-modal-section">
           <div class="hm-title">
             <i data-lucide="settings" class="icon-20" aria-hidden="true"></i>
-            <h2>选项</h2>
+            <h2>{{ t('appSettings.optionsTitle') }}</h2>
           </div>
-          <p class="hm-desc">与主页 Options 完全一致的设置项：主题切换为“系统/浅色/深色”。</p>
+          <p class="hm-desc">{{ t('appSettings.optionsDesc') }}</p>
 
           <div class="opt-panel">
-            <!-- 语言（占位，保持禁用态） -->
+            <!-- 语言选择 -->
             <div class="opt-row">
-              <label class="opt-label">语言</label>
-              <select class="opt-input" v-model="lang" disabled>
-                <option value="zh-CN">简体中文</option>
-                <option value="en-US">English</option>
-                <option value="ja-JP">日本語</option>
+              <label class="opt-label">{{ t('appSettings.language.label') }}</label>
+              <select
+                class="opt-input opt-select"
+                :value="locale"
+                @change="handleLangChange($event.target.value)"
+              >
+                <option
+                  v-for="loc in availableLocales"
+                  :key="loc.code"
+                  :value="loc.code"
+                >
+                  {{ loc.meta.nativeName }}
+                </option>
               </select>
             </div>
 
             <!-- 主题：三段按钮切换（与 OptionsView 同步实现） -->
             <div class="opt-row">
-              <label class="opt-label">主题</label>
+              <label class="opt-label">{{ t('appSettings.theme.label') }}</label>
               <div class="theme-group" role="group" aria-label="Theme Switch" :style="{ '--active-index': activeIndex }">
                 <div class="seg-indicator" aria-hidden="true"></div>
 
@@ -141,7 +156,7 @@ onMounted(() => {
                   @click="setTheme('system')"
                 >
                   <i data-lucide="monitor" class="icon-16" aria-hidden="true"></i>
-                  <span>系统</span>
+                  <span>{{ t('sidebar.theme.system') }}</span>
                 </button>
 
                 <button
@@ -151,7 +166,7 @@ onMounted(() => {
                   @click="setTheme('light')"
                 >
                   <i data-lucide="sun" class="icon-16" aria-hidden="true"></i>
-                  <span>浅色</span>
+                  <span>{{ t('sidebar.theme.light') }}</span>
                 </button>
 
                 <button
@@ -161,25 +176,27 @@ onMounted(() => {
                   @click="setTheme('dark')"
                 >
                   <i data-lucide="moon" class="icon-16" aria-hidden="true"></i>
-                  <span>深色</span>
+                  <span>{{ t('sidebar.theme.dark') }}</span>
                 </button>
               </div>
 
               <div class="theme-current">
                 <i data-lucide="badge-check" class="icon-16" aria-hidden="true"></i>
-                <span>正在使用：{{ themeLabel }}</span>
+                <span>{{ t('appSettings.theme.current') }}：{{ themeLabel }}</span>
               </div>
             </div>
             <!-- 后端 API 地址（持久化到 localStorage，键：st.backend_base） -->
             <div class="opt-row">
-              <label class="opt-label">后端 API 地址</label>
-              <div style="display:flex; gap:8px; align-items:center;">
-                <input class="opt-input" v-model="backendBase" placeholder="http://localhost:8050" />
-                <button class="seg-btn" type="button" @click="saveBackendBase">
-                  <i data-lucide="save" class="icon-16" aria-hidden="true"></i><span>保存</span>
+              <label class="opt-label">{{ t('appSettings.backend.label') }}</label>
+              <div class="backend-input-row">
+                <input class="opt-input backend-input" v-model="backendBase" :placeholder="t('appSettings.backend.placeholder')" />
+                <button class="action-btn" type="button" @click="saveBackendBase">
+                  <i data-lucide="save" class="icon-16" aria-hidden="true"></i>
+                  <span>{{ t('common.save') }}</span>
                 </button>
-                <button class="seg-btn" type="button" @click="resetBackendBase">
-                  <i data-lucide="refresh-cw" class="icon-16" aria-hidden="true"></i><span>重置</span>
+                <button class="action-btn" type="button" @click="resetBackendBase">
+                  <i data-lucide="refresh-cw" class="icon-16" aria-hidden="true"></i>
+                  <span>{{ t('common.reset') }}</span>
                 </button>
               </div>
             </div>
@@ -316,17 +333,31 @@ onMounted(() => {
   border: 1px solid rgb(var(--st-border));
   background: rgb(var(--st-surface-2));
   color: rgb(var(--st-color-text));
-  opacity: .7;
 }
 
-/* 主题三段按钮（胶囊分段），含滑动指示器与动效 */
+.opt-select {
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.opt-select:hover {
+  border-color: rgba(96, 165, 250, 0.6);
+}
+
+.opt-select:focus {
+  outline: none;
+  border-color: rgb(96, 165, 250);
+  box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.2);
+}
+
+/* 主题三段按钮（遵循 UI 规范：中性色 + 小圆角） */
 .theme-group {
   position: relative;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   border: 1px solid rgba(var(--st-border), .9);
   background: rgba(var(--st-surface), .85);
-  border-radius: 999px;
+  border-radius: 3px; /* 规范要求 border-radius < 4px */
   overflow: hidden;
   box-shadow: var(--st-shadow-sm);
   isolation: isolate;
@@ -337,13 +368,19 @@ onMounted(() => {
   inset: 2px;
   width: calc((100% - 4px) / 3);
   height: calc(100% - 4px);
-  border-radius: 999px;
-  background: linear-gradient(135deg, #60a5fa, #a78bfa);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.35), 0 6px 18px rgba(96,165,250,.35);
+  border-radius: 2px; /* 内部指示器使用更小圆角 */
+  /* 使用中性灰色，遵循 60-30-10 法则 */
+  background: rgba(60, 60, 70, 0.12);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.2), 0 2px 6px rgba(0,0,0,.08);
   transform: translateX(calc(var(--active-index, 0) * 100%));
   transition: transform .28s cubic-bezier(.22,.61,.36,1), background .28s ease, box-shadow .28s ease;
   z-index: 0;
   pointer-events: none;
+}
+/* 暗色主题指示器 */
+[data-theme="dark"] .seg-indicator {
+  background: rgba(180, 180, 190, 0.16);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.1), 0 2px 6px rgba(0,0,0,.15);
 }
 
 .seg-btn {
@@ -363,6 +400,54 @@ onMounted(() => {
 }
 .seg-btn:hover { transform: translateY(-1px); }
 .seg-btn.active { color: rgb(var(--st-color-text)); font-weight: 700; }
+
+/* 后端地址输入行 */
+.backend-input-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: nowrap; /* 不换行，强制在一行 */
+}
+.backend-input {
+  flex: 1 1 auto; /* 可伸缩 */
+  min-width: 120px; /* 降低最小宽度，允许被压缩 */
+}
+
+/* 独立操作按钮（保存/重置） */
+.action-btn {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 12px;
+  flex-shrink: 0; /* 按钮不被压缩 */
+  white-space: nowrap; /* 防止文字换行 */
+  font-size: 12px;
+  font-weight: 500;
+  color: rgb(var(--st-color-text));
+  background: rgb(var(--st-surface-2));
+  border: 1px solid rgba(var(--st-border), 0.9);
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background .18s ease, border-color .18s ease, transform .18s ease, box-shadow .18s ease;
+}
+.action-btn:hover {
+  background: rgb(var(--st-surface));
+  border-color: rgba(var(--st-border), 1);
+  transform: translateY(-1px);
+  box-shadow: var(--st-shadow-sm);
+}
+.action-btn:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+[data-theme="dark"] .action-btn {
+  background: rgba(var(--st-surface-2), 0.8);
+}
+[data-theme="dark"] .action-btn:hover {
+  background: rgb(var(--st-surface));
+}
 
 .theme-current {
   margin-top: 8px;

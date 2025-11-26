@@ -2,6 +2,9 @@
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 import ThemeManager from '@/features/themes/manager'
 import { registerDemoShadowFollowExtension } from '@/features/themes/extensions/demoShadowFollow'
+import { useI18n } from '@/locales'
+
+const { t } = useI18n()
 
 const themeInfo = ref(null)
 let off = null
@@ -75,59 +78,59 @@ async function onToggleDemoExtension(e) {
 
 <template>
   <div class="st-tab-panel" data-scope="settings-theme">
-    <h3>主题管理</h3>
-    <p class="muted">导入外部主题包（.json/.sttheme.json），或重置为内置风格。</p>
+    <h3>{{ t('appearance.theme.title') }}</h3>
+    <p class="muted">{{ t('appearance.theme.desc') }}</p>
 
     <div class="st-control" data-slider="themeImport">
       <label class="st-control-label">
-        <span class="label-text">导入主题包</span>
+        <span class="label-text">{{ t('appearance.theme.importTitle') }}</span>
         <div class="value-group">
           <span class="unit">JSON</span>
         </div>
       </label>
       <label class="bg-upload">
         <input type="file" accept=".json,application/json" @change="onThemeFileSelected" />
-        选择 .json / .sttheme.json
+        {{ t('appearance.theme.selectFile') }}
       </label>
       <div class="st-control-hint">
-        <span class="muted" style="font-size:12px;">主题包包含 tokens 与可选 CSS；应用后会持久化于浏览器。</span>
+        <span class="muted" style="font-size:12px;">{{ t('appearance.theme.importHint') }}</span>
       </div>
     </div>
 
     <div class="st-control" data-slider="themeDemo">
       <label class="st-control-label">
-        <span class="label-text">快速体验</span>
+        <span class="label-text">{{ t('appearance.theme.quickTry') }}</span>
         <div class="value-group">
           <span class="unit">Demo</span>
         </div>
       </label>
       <div style="display:flex; gap:8px; flex-wrap:wrap;">
-        <button class="st-settings-close" type="button" @click="onApplyDemoTheme">一键应用 Demo 主题</button>
+        <button class="st-settings-close" type="button" @click="onApplyDemoTheme">{{ t('appearance.theme.applyDemo') }}</button>
         <label style="display:inline-flex; align-items:center; gap:6px;">
           <input type="checkbox" :checked="extEnabled" @change="onToggleDemoExtension" />
-          启用示例扩展：圆角跟随阴影
+          {{ t('appearance.theme.enableExtension') }}
         </label>
       </div>
       <div class="st-control-hint">
-        <span class="muted" style="font-size:12px;">扩展仅联动样式 Token，不执行外部脚本；可随时停用。</span>
+        <span class="muted" style="font-size:12px;">{{ t('appearance.theme.extensionHint') }}</span>
       </div>
     </div>
 
     <div class="st-control" data-slider="themeStatus">
       <label class="st-control-label">
-        <span class="label-text">当前主题</span>
+        <span class="label-text">{{ t('appearance.theme.currentTheme') }}</span>
         <div class="value-group">
-          <span class="unit" v-if="themeInfo">已应用</span>
-          <span class="unit" v-else>未应用</span>
+          <span class="unit" v-if="themeInfo">{{ t('appearance.theme.applied') }}</span>
+          <span class="unit" v-else>{{ t('appearance.theme.notApplied') }}</span>
         </div>
       </label>
       <div class="theme-info" v-if="themeInfo">
-        <div>名称：{{ themeInfo.name || '未命名' }}</div>
-        <div>ID：{{ themeInfo.id || '-' }}</div>
-        <div>版本：{{ themeInfo.version || '-' }}</div>
+        <div>{{ t('appearance.theme.name') }}：{{ themeInfo.name || t('appearance.theme.unnamed') }}</div>
+        <div>{{ t('appearance.theme.id') }}：{{ themeInfo.id || '-' }}</div>
+        <div>{{ t('appearance.theme.version') }}：{{ themeInfo.version || '-' }}</div>
       </div>
       <div class="theme-actions" style="margin-top:8px; display:flex; gap:8px;">
-        <button class="st-settings-close" type="button" @click="onThemeReset">重置为默认主题</button>
+        <button class="st-settings-close" type="button" @click="onThemeReset">{{ t('appearance.theme.resetDefault') }}</button>
       </div>
     </div>
   </div>

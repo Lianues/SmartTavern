@@ -1,6 +1,9 @@
 <script setup>
 import { ref, watch } from 'vue'
 import DataCatalog from '@/services/dataCatalog'
+import { useI18n } from '@/locales'
+
+const { t } = useI18n()
 
 const props = defineProps({
   show: { type: Boolean, default: false },
@@ -35,7 +38,7 @@ async function handleRename() {
   const targetName = customName.value.trim()
   
   if (!targetName) {
-    customNameError.value = '请输入名称'
+    customNameError.value = t('importConflict.errors.emptyName')
     return
   }
   
@@ -46,7 +49,7 @@ async function handleRename() {
     const checkResult = await DataCatalog.checkNameExists(props.dataType, targetName)
     
     if (checkResult.success && checkResult.exists) {
-      customNameError.value = `名称 "${checkResult.folder_name}" 已存在，请使用其他名称`
+      customNameError.value = t('importConflict.errors.nameExists', { name: checkResult.folder_name })
       checkingName.value = false
       return
     }
@@ -68,15 +71,15 @@ function handleClose() {
     <div v-if="show" class="import-conflict-overlay" @click.self="handleClose">
       <div class="import-conflict-modal">
         <header class="import-conflict-header">
-          <h3>⚠️ 名称冲突</h3>
+          <h3>{{ t('importConflict.title') }}</h3>
           <button class="import-conflict-close" @click="handleClose">✕</button>
         </header>
         
         <div class="import-conflict-body">
           <p class="import-conflict-message">
-            已存在名为 <strong>{{ existingName }}</strong> 的{{ dataTypeName }}文件目录（非{{ dataTypeName }}名冲突）。
+            {{ t('importConflict.message', { name: existingName, type: dataTypeName }) }}
           </p>
-          <p class="import-conflict-hint">请选择处理方式：</p>
+          <p class="import-conflict-hint">{{ t('importConflict.hint') }}</p>
           
           <div class="import-conflict-options">
             <div class="import-conflict-option" @click="handleOverwrite">
@@ -87,8 +90,8 @@ function handleClose() {
                 </svg>
               </div>
               <div class="import-conflict-option-text">
-                <div class="import-conflict-option-title">覆盖原有{{ dataTypeName }}</div>
-                <div class="import-conflict-option-desc">删除旧{{ dataTypeName }}，使用新导入的内容替换</div>
+                <div class="import-conflict-option-title">{{ t('importConflict.overwrite.title', { type: dataTypeName }) }}</div>
+                <div class="import-conflict-option-desc">{{ t('importConflict.overwrite.desc', { type: dataTypeName }) }}</div>
               </div>
             </div>
             
@@ -102,15 +105,15 @@ function handleClose() {
                 </svg>
               </div>
               <div class="import-conflict-option-text">
-                <div class="import-conflict-option-title">保留两者（重命名）</div>
-                <div class="import-conflict-option-desc">自定义新{{ dataTypeName }}的名称：</div>
+                <div class="import-conflict-option-title">{{ t('importConflict.rename.title') }}</div>
+                <div class="import-conflict-option-desc">{{ t('importConflict.rename.desc', { type: dataTypeName }) }}</div>
                 <div class="import-conflict-rename-input-row">
                   <input
                     type="text"
                     class="import-conflict-rename-input"
                     :class="{ error: customNameError }"
                     v-model="customName"
-                    placeholder="输入新名称"
+                    :placeholder="t('importConflict.rename.placeholder')"
                     @click.stop
                     @keydown.enter.prevent="handleRename"
                   />
@@ -119,7 +122,7 @@ function handleClose() {
                     @click.stop="handleRename"
                     :disabled="checkingName || !customName.trim()"
                   >
-                    {{ checkingName ? '检查中...' : '确认' }}
+                    {{ checkingName ? t('common.checking') : t('importConflict.rename.button') }}
                   </button>
                 </div>
                 <div v-if="customNameError" class="import-conflict-rename-error">
@@ -131,7 +134,7 @@ function handleClose() {
         </div>
         
         <footer class="import-conflict-footer">
-          <button class="import-conflict-btn-cancel" @click="handleClose">取消导入</button>
+          <button class="import-conflict-btn-cancel" @click="handleClose">{{ t('importConflict.cancelButton') }}</button>
         </footer>
       </div>
     </div>

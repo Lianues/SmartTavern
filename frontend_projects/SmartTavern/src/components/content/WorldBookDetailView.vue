@@ -3,6 +3,9 @@ import { ref, computed, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import WorldBookCard from './cards/WorldBookCard.vue'
 import Host from '@/workflow/core/host'
 import * as Catalog from '@/workflow/channels/catalog'
+import { useI18n } from '@/locales'
+
+const { t } = useI18n()
 
 const props = defineProps({
   worldbookData: { type: Object, default: null },
@@ -66,16 +69,16 @@ async function addEntry() {
   const id = newId.value.trim()
   const name = newName.value.trim()
   if (!id) {
-    addError.value = '请填写 id'
+    addError.value = t('detail.worldBook.errors.idRequired')
     return
   }
   if (!name) {
-    addError.value = '请填写 名称'
+    addError.value = t('detail.worldBook.errors.nameRequired')
     return
   }
   const list = currentData.value.world_books || []
   if (list.some(e => e.id === id)) {
-    addError.value = 'id 已存在'
+    addError.value = t('detail.worldBook.errors.idExists')
     return
   }
   const entry = {
@@ -237,7 +240,7 @@ onBeforeUnmount(() => {
 async function save() {
   const file = props.file
   if (!file) {
-    try { alert('缺少文件路径，无法保存'); } catch (_) {}
+    try { alert(t('error.missingFilePath')); } catch (_) {}
     return
   }
   // 将内部 world_books 转换为 entries
@@ -274,7 +277,7 @@ async function save() {
     if (resFile && resFile !== file) return
     if (resTag && resTag !== tag) return
     console.error('[WorldBookDetailView] 保存失败（事件）:', message)
-    try { alert('保存失败：' + message) } catch (_) {}
+    try { alert(t('detail.worldBook.saveFailed') + '：' + message) } catch (_) {}
     saving.value = false
     try { offOk?.() } catch (_) {}
     try { offFail?.() } catch (_) {}
@@ -300,7 +303,7 @@ async function save() {
       <div class="flex items-center justify-between gap-3">
         <div class="flex items-center gap-2">
           <i data-lucide="book-open" class="w-5 h-5 text-black"></i>
-          <h2 class="text-lg font-bold text-black">{{ currentData.name || '世界书详情' }}</h2>
+          <h2 class="text-lg font-bold text-black">{{ currentData.name || t('detail.worldBook.pageTitle') }}</h2>
         </div>
         <div class="flex items-center gap-2">
           <button
@@ -308,32 +311,32 @@ async function save() {
             class="px-3 py-1 rounded-4 bg-transparent border border-gray-900 text-black text-sm hover:bg-gray-100 active:bg-gray-200 transition-all duration-200 ease-soft disabled:opacity-50"
             :disabled="saving"
             @click="save"
-            title="保存到后端"
-          >{{ saving ? '保存中...' : '保存' }}</button>
+            :title="t('detail.preset.saveToBackend')"
+          >{{ saving ? t('common.saving') : t('common.save') }}</button>
           <div class="px-3 py-1 rounded-4 bg-gray-100 border border-gray-300 text-black text-sm">
-            编辑模式
+            {{ t('detail.worldBook.editMode') }}
           </div>
         </div>
       </div>
-      <p class="mt-2 text-xs text-black/60">此页面支持完整编辑、新增、删除和拖拽排序功能</p>
+      <p class="mt-2 text-xs text-black/60">{{ t('detail.worldBook.editHint') }}</p>
     </div>
 
     <!-- 基本信息（名称/描述） -->
     <div class="bg-white rounded-4 border border-gray-200 p-5 transition-all duration-200 ease-soft hover:shadow-elevate">
       <div class="flex items-center gap-2 mb-3">
         <i data-lucide="id-card" class="w-4 h-4 text-black"></i>
-        <h3 class="text-base font-semibold text-black">基本信息</h3>
+        <h3 class="text-base font-semibold text-black">{{ t('detail.worldBook.basicInfo') }}</h3>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label class="block text-sm font-medium text-black mb-2">名称</label>
+          <label class="block text-sm font-medium text-black mb-2">{{ t('common.name') }}</label>
           <input
             v-model="currentData.name"
             class="w-full px-3 py-2 border border-gray-300 rounded-4 text-sm focus:outline-none focus:ring-2 focus:ring-gray-800"
           />
         </div>
         <div class="md:col-span-2">
-          <label class="block text-sm font-medium text-black mb-2">描述</label>
+          <label class="block text-sm font-medium text-black mb-2">{{ t('common.description') }}</label>
           <textarea
             v-model="currentData.description"
             rows="2"
@@ -347,24 +350,24 @@ async function save() {
     <div class="bg-white rounded-4 border border-gray-200 p-4 transition-all duration-200 ease-soft hover:shadow-elevate">
       <div class="flex items-center justify-between gap-3">
         <div class="text-sm text-black/70">
-          条目数量：{{ (currentData.world_books || []).length }}
+          {{ t('detail.worldBook.toolbar.entryCount') }}：{{ (currentData.world_books || []).length }}
         </div>
         <div class="flex items-center gap-2">
           <input
             v-model="newId"
-            placeholder="id"
+            :placeholder="t('detail.worldBook.toolbar.idPlaceholder')"
             class="w-32 px-3 py-2 border border-gray-300 rounded-4 text-xs focus:outline-none focus:ring-2 focus:ring-gray-800"
           />
           <input
             v-model="newName"
-            placeholder="名称"
+            :placeholder="t('detail.worldBook.toolbar.namePlaceholder')"
             class="w-40 px-3 py-2 border border-gray-300 rounded-4 text-xs focus:outline-none focus:ring-2 focus:ring-gray-800"
           />
           <button
             class="px-2 py-1 rounded-4 bg-transparent border border-gray-900 text-black text-xs hover:bg-gray-100 active:bg-gray-200 transition-all duration-200 ease-soft"
             @click="addEntry"
           >
-            添加
+            {{ t('common.add') }}
           </button>
         </div>
       </div>
@@ -375,7 +378,7 @@ async function save() {
     <div class="bg-white rounded-4 border border-gray-200 p-5 transition-all duration-200 ease-soft hover:shadow-elevate">
       <div class="flex items-center gap-2 mb-3">
         <i data-lucide="settings-2" class="w-4 h-4 text-black"></i>
-        <h3 class="text-base font-semibold text-black">世界书编辑</h3>
+        <h3 class="text-base font-semibold text-black">{{ t('detail.worldBook.editor.title') }}</h3>
       </div>
 
       <!-- 列表（可拖拽排序） -->
@@ -397,13 +400,13 @@ async function save() {
             draggable="true"
             @dragstart="onDragStart(w.id, $event)"
             @dragend="onDragEnd"
-            title="拖拽排序"
+            :title="t('detail.preset.prompts.dragToSort')"
           >
             <i data-lucide="grip-vertical" class="icon-grip w-4 h-4 text-black opacity-60 group-hover:opacity-100"></i>
           </div>
           <div class="flex-1">
-            <WorldBookCard 
-              :entry="w" 
+            <WorldBookCard
+              :entry="w"
               @update="onEntryUpdate"
               @delete="onEntryDelete"
             />
@@ -419,7 +422,7 @@ async function save() {
       </div>
 
       <div v-if="(currentData.world_books || []).length === 0" class="text-center py-8 text-black/50 text-sm">
-        暂无世界书条目，请在右上角输入后点击添加
+        {{ t('detail.worldBook.editor.empty') }}
       </div>
     </div>
   </section>

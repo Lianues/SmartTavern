@@ -5,6 +5,9 @@ import { PluginLoader } from '@/workflow/loader.js'
 import DataCatalog from '@/services/dataCatalog'
 import ImportConflictModal from '@/components/common/ImportConflictModal.vue'
 import ExportModal from '@/components/common/ExportModal.vue'
+import { useI18n } from '@/locales'
+
+const { t } = useI18n()
 
 const props = defineProps({
   anchorLeft: { type: Number, default: 308 },
@@ -12,7 +15,6 @@ const props = defineProps({
   zIndex: { type: Number, default: 59 },
   top: { type: Number, default: 64 },
   bottom: { type: Number, default: 12 },
-  title: { type: String, default: '插件 Plugins' },
   conversationFile: { type: String, default: null },
 })
 
@@ -239,7 +241,7 @@ async function handleFileSelect(event) {
   const validTypes = ['.json', '.zip', '.png']
   const ext = '.' + (file.name.split('.').pop() || '').toLowerCase()
   if (!validTypes.includes(ext)) {
-    importError.value = `不支持的文件类型: ${ext}，请选择 .json、.zip 或 .png 文件`
+    importError.value = t('error.invalidFileType', { ext })
     event.target.value = ''
     return
   }
@@ -288,11 +290,11 @@ async function doImport(file, overwrite = false, targetName = null) {
       
       emit('import', result)
     } else {
-      importError.value = result.message || result.error || '导入失败'
+      importError.value = result.message || result.error || t('error.importFailed')
     }
   } catch (err) {
     console.error('[PluginsPanel] Import error:', err)
-    importError.value = err.message || '导入失败'
+    importError.value = err.message || t('error.importFailed')
   } finally {
     importing.value = false
   }
@@ -344,29 +346,29 @@ function handleExportComplete(result) {
     :style="panelStyle"
   >
     <header class="wf-header">
-      <div class="wf-title">
+      <div class="wf-title st-panel-title">
         <span class="wf-icon"><i data-lucide="puzzle"></i></span>
-        {{ props.title }}
+        {{ t('panel.plugins.title') }}
       </div>
       <div class="wf-header-actions">
-        <button class="wf-action-btn" type="button" title="导入插件 (支持 .json, .zip, .png)" @click="triggerImport" :disabled="importing">
-          <i data-lucide="download"></i><span>导入</span>
+        <button class="wf-action-btn st-btn-shrinkable" type="button" :title="t('panel.plugins.importTitle')" @click="triggerImport" :disabled="importing">
+          <i data-lucide="download"></i><span class="st-btn-text">{{ t('common.import') }}</span>
         </button>
-        <button class="wf-action-btn" type="button" title="导出插件" @click="openExportModal" :disabled="plugins.length === 0">
-          <i data-lucide="upload"></i><span>导出</span>
+        <button class="wf-action-btn st-btn-shrinkable" type="button" :title="t('panel.plugins.exportTitle')" @click="openExportModal" :disabled="plugins.length === 0">
+          <i data-lucide="upload"></i><span class="st-btn-text">{{ t('common.export') }}</span>
         </button>
-        <button class="wf-close" type="button" title="关闭" @click="close">✕</button>
+        <button class="wf-close" type="button" :title="t('common.close')" @click="close">✕</button>
       </div>
     </header>
     <input ref="fileInputRef" type="file" accept=".json,.zip,.png" style="display: none;" @change="handleFileSelect" />
 
     <CustomScrollbar class="wf-body">
-      <div v-if="importing" class="wf-loading">正在导入...</div>
+      <div v-if="importing" class="wf-loading">{{ t('common.importing') }}</div>
       <div v-else-if="importError" class="wf-error">
         {{ importError }}
         <button class="wf-error-dismiss" @click="importError = null">×</button>
       </div>
-      <div class="wf-hint">用于管理插件（后端 plugins 目录）：加载 / 卸载。导入新插件后将自动启用。</div>
+      <div class="wf-hint">{{ t('panel.plugins.hint') }}</div>
 
       <div class="wf-list">
         <div
@@ -395,13 +397,13 @@ function handleExportComplete(result) {
 
           <div class="wf-actions">
             <button
-              class="wf-btn"
+              class="wf-btn st-btn-shrinkable"
               :class="{ active: it.enabled }"
               type="button"
               :disabled="pending[mkId(it.key)]"
               @click="onToggle(it)"
             >
-              {{ it.enabled ? '已启用' : '启用' }}
+              {{ it.enabled ? t('common.enabled') : t('common.enable') }}
             </button>
           </div>
         </div>
@@ -412,7 +414,7 @@ function handleExportComplete(result) {
     <ImportConflictModal
       :show="showImportConflictModal"
       data-type="plugin"
-      data-type-name="插件"
+      :data-type-name="t('panel.plugins.typeName')"
       :existing-name="importConflictExistingName"
       :suggested-name="importConflictSuggestedName"
       @close="closeImportConflictModal"
@@ -424,7 +426,7 @@ function handleExportComplete(result) {
     <ExportModal
       :show="showExportModal"
       data-type="plugin"
-      data-type-name="插件"
+      :data-type-name="t('panel.plugins.typeName')"
       :items="plugins"
       default-icon="puzzle"
       :use-key-as-path="true"

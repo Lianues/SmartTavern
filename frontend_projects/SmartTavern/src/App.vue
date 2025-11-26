@@ -41,6 +41,9 @@ import OptionsPanel from '@/components/common/OptionsPanel.vue'
 import Host from '@/workflow/core/host'
 import * as Chat from '@/workflow/channels/chat'
 import * as Conversation from '@/workflow/channels/conversation'
+import { useI18n } from '@/locales'
+
+const { t } = useI18n()
 import { useMessagesStore } from '@/stores/chatMessages'
 import { useChatSettingsStore, registerGlobalFunctions as registerChatSettingsFunctions } from '@/stores/chatSettings'
 import { useCharacterStore, registerGlobalFunctions as registerCharacterFunctions } from '@/stores/character'
@@ -288,13 +291,13 @@ onMounted(() => {
       if (payload && payload.file) {
         await onLoadGameConfirm(payload.file)
         try { Host.events.emit(Chat.EVT_CHAT_LOAD_OK, { file: payload.file }) } catch (_) {}
-        try { Host.pushToast?.({ type: 'success', message: '已加载对话', timeout: 2000 }) } catch (_) {}
+        try { Host.pushToast?.({ type: 'success', message: t('app.toast.loadSuccess'), timeout: 2000 }) } catch (_) {}
       } else {
         openHomeModal('load')
       }
     } catch (e) {
       try { Host.events.emit(Chat.EVT_CHAT_LOAD_FAIL, { error: String(e), detail: e }) } catch (_) {}
-      try { Host.pushToast?.({ type: 'error', message: '读取对话失败', timeout: 2500 }) } catch (_) {}
+      try { Host.pushToast?.({ type: 'error', message: t('app.toast.loadFailed'), timeout: 2500 }) } catch (_) {}
     }
   }))
   __chatOffs.push(Host.events.on(Chat.EVT_CHAT_CREATE_REQ, async (payload) => {
@@ -348,8 +351,8 @@ async function onLoadGameConfirm(file) {
       
       try {
         if (!doc) {
-          throw new Error('获取对话内容失败')
-        }
+            throw new Error(t('app.error.getContentFailed'))
+          }
         
         // 后端API返回的数据结构：{ file, name, description, content: { nodes, children, active_path, ... } }
         // 需要从 content 字段中提取对话数据
@@ -370,7 +373,7 @@ async function onLoadGameConfirm(file) {
         // 更新状态（改为通过 Pinia Store 管理并自动处理 user_view）
         messagesStore.loadConversation(
           file,
-          mapped.length ? mapped : [{ id: 'empty', role: 'system', content: '（空对话）' }]
+          mapped.length ? mapped : [{ id: 'empty', role: 'system', content: t('app.empty.conversation') }]
         )
         currentConversationFile.value = file
         currentConversationDoc.value = conversationContent // 保存对话内容部分（而非完整响应）
@@ -388,7 +391,7 @@ async function onLoadGameConfirm(file) {
         view.value = 'threaded'
         nextTick(() => refreshIcons())
       } catch (e) {
-        console.error('处理对话数据失败:', e)
+        console.error(t('app.error.loadFailed') + ':', e)
         closeHomeModal()
       } finally {
         try { offOk?.() } catch (_) {}
@@ -400,7 +403,7 @@ async function onLoadGameConfirm(file) {
       if (resFile && resFile !== file) return
       if (resTag && resTag !== tag) return
       
-      console.error('加载对话失败（事件）:', message)
+      console.error(t('app.error.loadFailed') + ':', message)
       closeHomeModal()
       try { offOk?.() } catch (_) {}
       try { offFail?.() } catch (_) {}
@@ -415,7 +418,7 @@ async function onLoadGameConfirm(file) {
       tag
     })
   } catch (e) {
-    console.error('加载对话失败:', e)
+    console.error(t('app.error.loadFailed') + ':', e)
     closeHomeModal()
   }
 }
@@ -433,10 +436,24 @@ async function onNewChatConfirm(payload) {
       onNewChatConfirmRaw(payload)
     }
   } catch (e) {
-    console.error('create_conversation 后处理失败:', e)
+    console.error(t('app.error.createFailed') + ':', e)
     // 兜底：仍然按原逻辑切换视图
     onNewChatConfirmRaw(payload)
   }
+}
+
+// 计算详情弹窗标题
+function getDetailTitle(type, key) {
+  const titleMap = {
+    preset: 'app.detail.preset',
+    worldbook: 'app.detail.worldbook',
+    character: 'app.detail.character',
+    persona: 'app.detail.persona',
+    regex: 'app.detail.regex',
+    aiconfig: 'app.detail.aiconfig',
+  }
+  const titleKey = titleMap[type]
+  return titleKey ? t(titleKey, { name: key }) : key
 }
 
 </script>
@@ -482,7 +499,7 @@ async function onNewChatConfirm(payload) {
           v-if="showSidebar && presetsOpen"
           :conversationFile="currentConversationFile"
           @close="presetsOpen = false"
-          @view="(key) => openViewModal('preset', '预设详情 - ' + key, key)"
+          @view="(key) => openViewModal('preset', getDetailTitle('preset', key), key)"
         />
       </transition>
 
@@ -492,7 +509,7 @@ async function onNewChatConfirm(payload) {
           v-if="showSidebar && worldbooksOpen"
           :conversationFile="currentConversationFile"
           @close="worldbooksOpen = false"
-          @view="(key) => openViewModal('worldbook', '世界书详情 - ' + key, key)"
+          @view="(key) => openViewModal('worldbook', getDetailTitle('worldbook', key), key)"
         />
       </transition>
 
@@ -502,7 +519,7 @@ async function onNewChatConfirm(payload) {
           v-if="showSidebar && charactersOpen"
           :conversationFile="currentConversationFile"
           @close="charactersOpen = false"
-          @view="(key) => openViewModal('character', '角色卡详情 - ' + key, key)"
+          @view="(key) => openViewModal('character', getDetailTitle('character', key), key)"
         />
       </transition>
 
@@ -512,7 +529,7 @@ async function onNewChatConfirm(payload) {
           v-if="showSidebar && personasOpen"
           :conversationFile="currentConversationFile"
           @close="personasOpen = false"
-          @view="(key) => openViewModal('persona', '用户信息详情 - ' + key, key)"
+          @view="(key) => openViewModal('persona', getDetailTitle('persona', key), key)"
         />
       </transition>
 
@@ -522,7 +539,7 @@ async function onNewChatConfirm(payload) {
           v-if="showSidebar && regexrulesOpen"
           :conversationFile="currentConversationFile"
           @close="regexrulesOpen = false"
-          @view="(key) => openViewModal('regex', '正则规则详情 - ' + key, key)"
+          @view="(key) => openViewModal('regex', getDetailTitle('regex', key), key)"
         />
       </transition>
 
@@ -532,7 +549,7 @@ async function onNewChatConfirm(payload) {
           v-if="showSidebar && llmconfigsOpen"
           :conversationFile="currentConversationFile"
           @close="llmconfigsOpen = false"
-          @view="(key) => openViewModal('aiconfig', 'AI配置详情 - ' + key, key)"
+          @view="(key) => openViewModal('aiconfig', getDetailTitle('aiconfig', key), key)"
         />
       </transition>
 
@@ -575,8 +592,8 @@ async function onNewChatConfirm(payload) {
       :title="viewModalTitle"
       @close="closeViewModal"
     >
-      <div v-if="viewModalLoading" class="modal-loading">读取中...</div>
-      <div v-else-if="viewModalError" class="modal-error">读取失败：{{ viewModalError }}</div>
+      <div v-if="viewModalLoading" class="modal-loading">{{ t('common.loading') }}</div>
+      <div v-else-if="viewModalError" class="modal-error">{{ t('error.loadFailed', { error: viewModalError }) }}</div>
       <PresetDetailView
         v-else-if="viewModalType === 'preset'"
         :presetData="viewModalData"
@@ -609,15 +626,15 @@ async function onNewChatConfirm(payload) {
       />
       <div v-else class="modal-placeholder">
         <div class="placeholder-icon">📋</div>
-        <div class="placeholder-text">内容查看</div>
-        <div class="placeholder-desc">视图类型：{{ viewModalType }}</div>
+        <div class="placeholder-text">{{ t('components.modal.defaultTitle') }}</div>
+        <div class="placeholder-desc">{{ t('common.type') }}：{{ viewModalType }}</div>
       </div>
     </ContentViewModal>
 
     
     <NewChatModal
       v-model:show="newGameOpen"
-      title="新建对话"
+      :title="t('app.modal.newChat')"
       icon="swords"
       @confirm="onNewChatConfirm"
       @close="cancelNewGame"
@@ -626,7 +643,7 @@ async function onNewChatConfirm(payload) {
     
     <LoadGameModal
       :show="homeModalOpen && homeModalType === 'load'"
-      :title="homeModalTitle || '读取存档'"
+      :title="homeModalTitle || t('app.modal.loadGame')"
       icon="history"
       @confirm="onLoadGameConfirm"
       @update:show="(v) => { if (!v) closeHomeModal() }"
@@ -634,14 +651,14 @@ async function onNewChatConfirm(payload) {
     />
     <GalleryModal
       :show="homeModalOpen && homeModalType === 'gallery'"
-      :title="homeModalTitle || '画廊'"
+      :title="homeModalTitle || t('app.modal.gallery')"
       icon="image"
       @update:show="(v) => { if (!v) closeHomeModal() }"
       @close="closeHomeModal"
     />
     <OptionsModal
       :show="homeModalOpen && homeModalType === 'options'"
-      :title="homeModalTitle || '选项'"
+      :title="homeModalTitle || t('app.modal.options')"
       icon="settings"
       :theme="theme"
       @update:theme="onThemeUpdate"

@@ -1,5 +1,8 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
+import { useI18n } from '@/locales'
+
+const { t } = useI18n()
 
 const props = defineProps({
   item: { type: Object, required: true }
@@ -17,7 +20,7 @@ const fromTri = (s) => (s === 'true' ? true : s === 'false' ? false : null)
 const isInChat = computed(() => props.item.position === 'in-chat')
 const hasContent = computed(() => 'content' in props.item)
 
-const enabledLabel = (v) => (v === true ? '已启用' : v === false ? '未启用' : '未设置')
+const enabledLabel = (v) => (v === true ? t('cards.common.enabled') : v === false ? t('cards.common.disabled') : t('cards.common.notSet'))
 
 // draft fields
 const draftName = ref(props.item.name)
@@ -109,14 +112,14 @@ function onSave() {
           class="px-2 py-1 rounded-4 bg-transparent border border-gray-900 text-black hover:bg-gray-100 active:bg-gray-200 transition-all duration-200 ease-soft text-xs"
           @click="onDelete"
         >
-          删除
+          {{ t('cards.common.delete') }}
         </button>
         <button
           v-if="!editing"
           class="px-2 py-1 rounded-4 bg-transparent border border-gray-900 text-black hover:bg-gray-100 active:bg-gray-200 transition-all duration-200 ease-soft text-xs"
           @click="onEdit"
         >
-          编辑
+          {{ t('cards.common.edit') }}
         </button>
 
         <!-- 编辑态：保存 + 取消 -->
@@ -125,13 +128,13 @@ function onSave() {
             class="px-2 py-1 rounded-4 bg-transparent border border-gray-900 text-black hover:bg-gray-100 active:bg-gray-200 transition-all duration-200 ease-soft text-xs"
             @click="onSave"
           >
-            保存
+            {{ t('cards.common.save') }}
           </button>
           <button
             class="px-2 py-1 rounded-4 bg-transparent border border-gray-900 text-black hover:bg-gray-100 active:bg-gray-200 transition-all duration-200 ease-soft text-xs"
             @click="onCancel"
           >
-            取消
+            {{ t('cards.common.cancel') }}
           </button>
         </div>
       </div>
@@ -154,7 +157,7 @@ function onSave() {
     <div v-else class="mt-3 space-y-3">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div>
-          <label class="block text-xs text-black/60 mb-1">名称</label>
+          <label class="block text-xs text-black/60 mb-1">{{ t('cards.presetPrompt.name') }}</label>
           <input
             type="text"
             v-model="draftName"
@@ -163,19 +166,19 @@ function onSave() {
         </div>
 
         <div>
-          <label class="block text-xs text-black/60 mb-1">启用状态</label>
+          <label class="block text-xs text-black/60 mb-1">{{ t('cards.presetPrompt.enabledStatus') }}</label>
           <select
             v-model="draftEnabled"
             class="w-full px-3 py-2 border border-gray-300 rounded-4 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-gray-800"
           >
-            <option value="true">已启用</option>
-            <option value="false">未启用</option>
-            <option value="null">未设置</option>
+            <option value="true">{{ t('cards.common.enabled') }}</option>
+            <option value="false">{{ t('cards.common.disabled') }}</option>
+            <option value="null">{{ t('cards.common.notSet') }}</option>
           </select>
         </div>
 
         <div>
-          <label class="block text-xs text-black/60 mb-1">角色（role）</label>
+          <label class="block text-xs text-black/60 mb-1">{{ t('cards.presetPrompt.role') }}</label>
           <select
             v-model="draftRole"
             class="w-full px-3 py-2 border border-gray-300 rounded-4 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-gray-800"
@@ -187,7 +190,7 @@ function onSave() {
         </div>
 
         <div v-if="isInChat">
-          <label class="block text-xs text-black/60 mb-1">深度（depth）</label>
+          <label class="block text-xs text-black/60 mb-1">{{ t('cards.presetPrompt.depth') }}</label>
           <input
             type="number"
             v-model.number="draftDepth"
@@ -196,7 +199,7 @@ function onSave() {
         </div>
 
         <div v-if="isInChat">
-          <label class="block text-xs text-black/60 mb-1">顺序（order）</label>
+          <label class="block text-xs text-black/60 mb-1">{{ t('cards.presetPrompt.order') }}</label>
           <input
             type="number"
             v-model.number="draftOrder"
@@ -206,7 +209,7 @@ function onSave() {
       </div>
 
       <div v-if="hasContent">
-        <label class="block text-xs text-black/60 mb-1">内容（content）</label>
+        <label class="block text-xs text-black/60 mb-1">{{ t('cards.presetPrompt.content') }}</label>
         <textarea
           v-model="draftContent"
           rows="4"

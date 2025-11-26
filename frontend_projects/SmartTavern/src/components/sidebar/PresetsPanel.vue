@@ -6,6 +6,9 @@ import * as SettingsChannel from '@/workflow/channels/settings'
 import DataCatalog from '@/services/dataCatalog'
 import ImportConflictModal from '@/components/common/ImportConflictModal.vue'
 import ExportModal from '@/components/common/ExportModal.vue'
+import { useI18n } from '@/locales'
+
+const { t } = useI18n()
 
 const props = defineProps({
   anchorLeft: { type: Number, default: 308 },
@@ -13,7 +16,6 @@ const props = defineProps({
   zIndex: { type: Number, default: 59 },
   top: { type: Number, default: 64 },
   bottom: { type: Number, default: 12 },
-  title: { type: String, default: '预设 Presets' },
   conversationFile: { type: String, default: null },
 })
 
@@ -186,7 +188,7 @@ async function handleFileSelect(event) {
   const validTypes = ['.json', '.zip', '.png']
   const ext = '.' + (file.name.split('.').pop() || '').toLowerCase()
   if (!validTypes.includes(ext)) {
-    importError.value = `不支持的文件类型: ${ext}，请选择 .json、.zip 或 .png 文件`
+    importError.value = t('error.invalidFileType', { ext })
     event.target.value = ''
     return
   }
@@ -218,11 +220,11 @@ async function doImport(file, overwrite = false, targetName = null) {
       refreshPresets()
       emit('import', result)
     } else {
-      importError.value = result.message || result.error || '导入失败'
+      importError.value = result.message || result.error || t('error.importFailed')
     }
   } catch (err) {
     console.error('[PresetsPanel] Import error:', err)
-    importError.value = err.message || '导入失败'
+    importError.value = err.message || t('error.importFailed')
   } finally {
     importing.value = false
   }
@@ -278,32 +280,32 @@ function handleExportComplete(result) {
     :style="panelStyle"
   >
       <header class="pr-header">
-        <div class="pr-title">
+        <div class="pr-title st-panel-title">
           <span class="pr-icon"><i data-lucide="sliders-horizontal"></i></span>
-          {{ props.title }}
+          {{ t('panel.presets.title') }}
         </div>
         <div class="pr-header-actions">
           <button
-            class="pr-action-btn"
+            class="pr-action-btn st-btn-shrinkable"
             type="button"
-            title="导入预设 (支持 .json, .zip, .png)"
+            :title="t('panel.presets.importTitle')"
             @click="triggerImport"
             :disabled="importing"
           >
             <i data-lucide="download"></i>
-            <span>导入</span>
+            <span class="st-btn-text">{{ t('common.import') }}</span>
           </button>
-          <button 
-            class="pr-action-btn" 
-            type="button" 
-            title="导出预设"
+          <button
+            class="pr-action-btn st-btn-shrinkable"
+            type="button"
+            :title="t('panel.presets.exportTitle')"
             @click="openExportModal"
             :disabled="presets.length === 0"
           >
             <i data-lucide="upload"></i>
-            <span>导出</span>
+            <span class="st-btn-text">{{ t('common.export') }}</span>
           </button>
-          <button class="pr-close" type="button" title="关闭" @click="close">✕</button>
+          <button class="pr-close" type="button" :title="t('common.close')" @click="close">✕</button>
         </div>
       </header>
 
@@ -317,10 +319,10 @@ function handleExportComplete(result) {
 
       <CustomScrollbar class="pr-body">
         <div v-if="loading" class="pr-loading">
-          {{ importing ? '正在导入...' : '加载中...' }}
+          {{ importing ? t('common.importing') : t('common.loading') }}
         </div>
         <div v-else-if="error" class="pr-error">
-          {{ importError ? importError : `加载失败：${error}` }}
+          {{ importError ? importError : t('error.loadFailed', { error }) }}
           <button v-if="importError" class="pr-error-dismiss" @click="importError = null">×</button>
         </div>
         <div v-else class="pr-list">
@@ -348,16 +350,16 @@ function handleExportComplete(result) {
             </div>
             <div class="pr-actions">
               <button
-                class="pr-btn"
+                class="pr-btn st-btn-shrinkable"
                 :class="{ active: usingKey === it.key }"
                 type="button"
                 @click="onUse(it.key)"
                 :aria-pressed="usingKey === it.key"
-              >{{ usingKey === it.key ? '使用中' : '使用' }}</button>
+              >{{ usingKey === it.key ? t('common.using') : t('common.use') }}</button>
 
-              <button class="pr-btn" type="button" @click="onView(it.key)">查看</button>
+              <button class="pr-btn st-btn-shrinkable" type="button" @click="onView(it.key)">{{ t('common.view') }}</button>
 
-              <button class="pr-btn pr-danger" type="button" @click="onDelete(it.key)">删除</button>
+              <button class="pr-btn pr-danger st-btn-shrinkable" type="button" @click="onDelete(it.key)">{{ t('common.delete') }}</button>
             </div>
           </div>
         </div>
@@ -367,7 +369,7 @@ function handleExportComplete(result) {
       <ImportConflictModal
         :show="showImportConflictModal"
         data-type="preset"
-        data-type-name="预设"
+        :data-type-name="t('panel.presets.typeName')"
         :existing-name="importConflictExistingName"
         :suggested-name="importConflictSuggestedName"
         @close="closeImportConflictModal"
@@ -379,7 +381,7 @@ function handleExportComplete(result) {
       <ExportModal
         :show="showExportModal"
         data-type="preset"
-        data-type-name="预设"
+        :data-type-name="t('panel.presets.typeName')"
         :items="presets"
         default-icon="sliders-horizontal"
         @close="closeExportModal"

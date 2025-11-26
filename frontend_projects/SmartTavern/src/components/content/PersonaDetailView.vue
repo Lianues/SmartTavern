@@ -1,5 +1,8 @@
 <script setup>
 import { ref, computed, watch, onMounted, nextTick } from 'vue'
+import { useI18n } from '@/locales'
+
+const { t } = useI18n()
 
 const props = defineProps({
   personaData: { type: Object, default: null }
@@ -62,13 +65,13 @@ onMounted(() => {
       <div class="flex items-center justify-between gap-3">
         <div class="flex items-center gap-2">
           <i data-lucide="id-card" class="w-5 h-5 text-black"></i>
-          <h2 class="text-lg font-bold text-black">用户信息编辑</h2>
+          <h2 class="text-lg font-bold text-black">{{ t('detail.persona.pageTitle') }}</h2>
         </div>
         <div class="px-3 py-1 rounded-4 bg-gray-100 border border-gray-300 text-black text-sm">
-          编辑模式
+          {{ t('detail.persona.editMode') }}
         </div>
       </div>
-      <p class="mt-2 text-xs text-black/60">此页面用于编辑用户的基本信息，包括名称和描述</p>
+      <p class="mt-2 text-xs text-black/60">{{ t('detail.persona.editHint') }}</p>
     </div>
 
     <!-- 基本信息 -->
@@ -76,41 +79,41 @@ onMounted(() => {
       <div class="flex items-center justify-between mb-4">
         <div class="flex items-center gap-2">
           <i data-lucide="user" class="w-4 h-4 text-black"></i>
-          <span class="text-sm font-medium text-black">基本信息</span>
+          <span class="text-sm font-medium text-black">{{ t('detail.persona.basicInfo') }}</span>
         </div>
         <div class="flex items-center gap-2">
           <button
             class="px-3 py-1 rounded-4 bg-transparent border border-gray-900 text-black hover:bg-gray-100 active:bg-gray-200 transition-all duration-200 ease-soft text-sm"
             @click="resetAll"
           >
-            重置
+            {{ t('common.reset') }}
           </button>
         </div>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label class="block text-sm font-medium text-black mb-2">用户名称</label>
+          <label class="block text-sm font-medium text-black mb-2">{{ t('detail.persona.userName') }}</label>
           <input
             v-model="nameDraft"
             @blur="saveName"
             type="text"
-            placeholder="输入用户名称"
+            :placeholder="t('detail.persona.userNamePlaceholder')"
             class="w-full px-3 py-2 border border-gray-300 rounded-4 text-sm focus:outline-none focus:ring-2 focus:ring-gray-800"
           />
-          <p class="text-xs text-black/50 mt-1">当前：{{ currentData.name || '(未设置)' }}</p>
+          <p class="text-xs text-black/50 mt-1">{{ t('detail.persona.currentValue') }}：{{ currentData.name || t('detail.persona.notSet') }}</p>
         </div>
 
         <div class="md:col-span-2">
-          <label class="block text-sm font-medium text-black mb-2">用户描述</label>
+          <label class="block text-sm font-medium text-black mb-2">{{ t('detail.persona.userDesc') }}</label>
           <textarea
             v-model="descDraft"
             @blur="saveDesc"
             rows="6"
-            placeholder="输入用户描述，可以包含用户的偏好、背景、对话风格等..."
+            :placeholder="t('detail.persona.userDescPlaceholder')"
             class="w-full px-3 py-2 border border-gray-300 rounded-4 text-sm focus:outline-none focus:ring-2 focus:ring-gray-800"
           ></textarea>
-          <p class="text-xs text-black/50 mt-1">字符数：{{ (descDraft || '').length }}</p>
+          <p class="text-xs text-black/50 mt-1">{{ t('detail.persona.charCount') }}：{{ (descDraft || '').length }}</p>
         </div>
       </div>
     </div>
@@ -119,12 +122,12 @@ onMounted(() => {
     <div class="bg-white rounded-4 border border-gray-200 p-5 transition-all duration-200 ease-soft hover:shadow-elevate">
       <div class="flex items-center gap-2 mb-3">
         <i data-lucide="info" class="w-4 h-4 text-black"></i>
-        <h3 class="text-sm font-semibold text-black">说明</h3>
+        <h3 class="text-sm font-semibold text-black">{{ t('detail.persona.notes.title') }}</h3>
       </div>
       <div class="text-xs text-black/60 leading-relaxed space-y-2">
-        <p>• 用户信息（Persona）用于定义用户的身份、偏好和对话风格</p>
-        <p>• 输入框失焦时会自动保存</p>
-        <p>• 点击"重置"按钮可以恢复到当前保存的内容</p>
+        <p>• {{ t('detail.persona.notes.line1') }}</p>
+        <p>• {{ t('detail.persona.notes.line2') }}</p>
+        <p>• {{ t('detail.persona.notes.line3') }}</p>
       </div>
     </div>
 
@@ -132,7 +135,7 @@ onMounted(() => {
     <div class="bg-white rounded-4 border border-gray-200 p-5 transition-all duration-200 ease-soft hover:shadow-elevate">
       <div class="flex items-center gap-2 mb-3">
         <i data-lucide="eye" class="w-4 h-4 text-black"></i>
-        <h3 class="text-sm font-semibold text-black">当前保存的数据</h3>
+        <h3 class="text-sm font-semibold text-black">{{ t('detail.persona.preview.title') }}</h3>
       </div>
       <div class="bg-gray-50 rounded-4 p-4 border border-gray-200">
         <pre class="text-xs text-black/70 font-mono whitespace-pre-wrap">{{ JSON.stringify(currentData, null, 2) }}</pre>

@@ -1,7 +1,9 @@
 <script setup>
 import { computed } from 'vue'
 import { useOptionsStore } from '@/stores/workflow/options'
+import { useI18n } from '@/locales'
 
+const { t } = useI18n()
 const store = useOptionsStore()
 const currentOption = computed(() => store.current)
 
@@ -110,14 +112,14 @@ function handleCancel() {
             class="st-action-button st-action-cancel"
             @click="handleCancel"
           >
-            取消
+            {{ t('components.optionsPanel.cancel') }}
           </button>
           <button
             type="button"
             class="st-action-button st-action-confirm"
             @click="handleConfirm"
           >
-            确定
+            {{ t('components.optionsPanel.confirm') }}
           </button>
         </div>
       </div>

@@ -3,6 +3,9 @@ import { ref, computed, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import RegexRuleCard from './cards/RegexRuleCard.vue'
 import Host from '@/workflow/core/host'
 import * as Catalog from '@/workflow/channels/catalog'
+import { useI18n } from '@/locales'
+
+const { t } = useI18n()
 
 const props = defineProps({
   regexData: { type: Object, default: null },
@@ -47,16 +50,16 @@ async function addRule() {
   const id = newId.value.trim()
   const name = newName.value.trim()
   if (!id) {
-    error.value = '请填写 id'
+    error.value = t('detail.regexRule.errors.idRequired')
     return
   }
   if (!name) {
-    error.value = '请填写 名称'
+    error.value = t('detail.regexRule.errors.nameRequired')
     return
   }
   const rules = currentData.value.regex_rules || []
   if (rules.some(r => r.id === id)) {
-    error.value = 'id 已存在'
+    error.value = t('detail.regexRule.errors.idExists')
     return
   }
   const rule = {
@@ -216,7 +219,7 @@ onBeforeUnmount(() => {
 async function save() {
   const file = props.file
   if (!file) {
-    try { alert('缺少文件路径，无法保存'); } catch (_) {}
+    try { alert(t('error.missingFilePath')); } catch (_) {}
     return
   }
   const content = {
@@ -241,7 +244,7 @@ async function save() {
     if (resFile && resFile !== file) return
     if (resTag && resTag !== tag) return
     console.error('[RegexRuleDetailView] 保存失败（事件）:', message)
-    try { alert('保存失败：' + message) } catch (_) {}
+    try { alert(t('detail.regexRule.saveFailed') + '：' + message) } catch (_) {}
     saving.value = false
     try { offOk?.() } catch (_) {}
     try { offFail?.() } catch (_) {}
@@ -267,7 +270,7 @@ async function save() {
       <div class="flex items-center justify-between gap-3">
         <div class="flex items-center gap-2">
           <i data-lucide="code" class="w-5 h-5 text-black"></i>
-          <h2 class="text-lg font-bold text-black">正则规则编辑</h2>
+          <h2 class="text-lg font-bold text-black">{{ t('detail.regexRule.pageTitle') }}</h2>
         </div>
         <div class="flex items-center gap-2">
           <button
@@ -275,32 +278,32 @@ async function save() {
             class="px-3 py-1 rounded-4 bg-transparent border border-gray-900 text-black text-sm hover:bg-gray-100 active:bg-gray-200 transition-all duration-200 ease-soft disabled:opacity-50"
             :disabled="saving"
             @click="save"
-            title="保存到后端"
-          >{{ saving ? '保存中...' : '保存' }}</button>
+            :title="t('detail.preset.saveToBackend')"
+          >{{ saving ? t('common.saving') : t('common.save') }}</button>
           <div class="px-3 py-1 rounded-4 bg-gray-100 border border-gray-300 text-black text-sm">
-            编辑模式
+            {{ t('detail.regexRule.editMode') }}
           </div>
         </div>
       </div>
-      <p class="mt-2 text-xs text-black/60">此页面用于编辑独立的正则规则集，支持新增、编辑、删除和拖拽排序</p>
+      <p class="mt-2 text-xs text-black/60">{{ t('detail.regexRule.editHint') }}</p>
     </div>
 
     <!-- 基本信息（名称/描述） -->
     <div class="bg-white rounded-4 border border-gray-200 p-5 transition-all duration-200 ease-soft hover:shadow-elevate">
       <div class="flex items-center gap-2 mb-3">
         <i data-lucide="id-card" class="w-4 h-4 text-black"></i>
-        <h3 class="text-base font-semibold text-black">基本信息</h3>
+        <h3 class="text-base font-semibold text-black">{{ t('detail.regexRule.basicInfo') }}</h3>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label class="block text-sm font-medium text-black mb-2">名称</label>
+          <label class="block text-sm font-medium text-black mb-2">{{ t('common.name') }}</label>
           <input
             v-model="currentData.name"
             class="w-full px-3 py-2 border border-gray-300 rounded-4 text-sm focus:outline-none focus:ring-2 focus:ring-gray-800"
           />
         </div>
         <div class="md:col-span-2">
-          <label class="block text-sm font-medium text-black mb-2">描述</label>
+          <label class="block text-sm font-medium text-black mb-2">{{ t('common.description') }}</label>
           <textarea
             v-model="currentData.description"
             rows="2"
@@ -314,24 +317,24 @@ async function save() {
     <div class="bg-white rounded-4 border border-gray-200 p-4 transition-all duration-200 ease-soft hover:shadow-elevate">
       <div class="flex items-center justify-between gap-3">
         <div class="text-sm text-black/70">
-          规则数量：{{ (currentData.regex_rules || []).length }}
+          {{ t('detail.regexRule.toolbar.ruleCount') }}：{{ (currentData.regex_rules || []).length }}
         </div>
         <div class="flex items-center gap-2">
           <input
             v-model="newId"
-            placeholder="id"
+            :placeholder="t('detail.regexRule.toolbar.idPlaceholder')"
             class="w-32 px-3 py-2 border border-gray-300 rounded-4 text-xs focus:outline-none focus:ring-2 focus:ring-gray-800"
           />
           <input
             v-model="newName"
-            placeholder="名称"
+            :placeholder="t('detail.regexRule.toolbar.namePlaceholder')"
             class="w-40 px-3 py-2 border border-gray-300 rounded-4 text-xs focus:outline-none focus:ring-2 focus:ring-gray-800"
           />
           <button
             class="px-2 py-1 rounded-4 bg-transparent border border-gray-900 text-black text-xs hover:bg-gray-100 active:bg-gray-200 transition-all duration-200 ease-soft"
             @click="addRule"
           >
-            添加
+            {{ t('common.add') }}
           </button>
         </div>
       </div>
@@ -342,7 +345,7 @@ async function save() {
     <div class="bg-white rounded-4 border border-gray-200 p-5 transition-all duration-200 ease-soft hover:shadow-elevate">
       <div class="flex items-center gap-2 mb-3">
         <i data-lucide="sliders" class="w-4 h-4 text-black"></i>
-        <h3 class="text-base font-semibold text-black">正则规则列表</h3>
+        <h3 class="text-base font-semibold text-black">{{ t('detail.regexRule.list.title') }}</h3>
       </div>
 
       <!-- 列表（可拖拽排序） -->
@@ -364,13 +367,13 @@ async function save() {
             draggable="true"
             @dragstart="onDragStart(r.id, $event)"
             @dragend="onDragEnd"
-            title="拖拽排序"
+            :title="t('detail.preset.prompts.dragToSort')"
           >
             <i data-lucide="grip-vertical" class="icon-grip w-4 h-4 text-black opacity-60 group-hover:opacity-100"></i>
           </div>
           <div class="flex-1">
-            <RegexRuleCard 
-              :rule="r" 
+            <RegexRuleCard
+              :rule="r"
               @update="onRegexUpdate"
               @delete="onRegexDelete"
             />
@@ -386,7 +389,7 @@ async function save() {
       </div>
 
       <div v-if="(currentData.regex_rules || []).length === 0" class="text-center py-8 text-black/50 text-sm">
-        暂无正则规则，请在右上角输入后点击添加
+        {{ t('detail.regexRule.list.empty') }}
       </div>
     </div>
 
@@ -394,14 +397,14 @@ async function save() {
     <div class="bg-white rounded-4 border border-gray-200 p-5 transition-all duration-200 ease-soft hover:shadow-elevate">
       <div class="flex items-center gap-2 mb-3">
         <i data-lucide="info" class="w-4 h-4 text-black"></i>
-        <h3 class="text-sm font-semibold text-black">使用说明</h3>
+        <h3 class="text-sm font-semibold text-black">{{ t('detail.regexRule.notes.title') }}</h3>
       </div>
       <div class="text-xs text-black/60 leading-relaxed space-y-2">
-        <p>• 正则规则用于文本后处理，支持查找和替换操作</p>
-        <p>• 每个规则可以设置目标（targets）和视图（views）</p>
-        <p>• 支持深度过滤（min_depth / max_depth）</p>
-        <p>• 点击"编辑"按钮展开完整的编辑表单</p>
-        <p>• 使用左侧握把图标拖拽可以调整规则执行顺序</p>
+        <p>• {{ t('detail.regexRule.notes.line1') }}</p>
+        <p>• {{ t('detail.regexRule.notes.line2') }}</p>
+        <p>• {{ t('detail.regexRule.notes.line3') }}</p>
+        <p>• {{ t('detail.regexRule.notes.line4') }}</p>
+        <p>• {{ t('detail.regexRule.notes.line5') }}</p>
       </div>
     </div>
   </section>

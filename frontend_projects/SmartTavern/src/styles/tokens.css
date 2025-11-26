@@ -495,3 +495,178 @@ select::-webkit-scrollbar-corner {
   background: rgba(160, 160, 180, 0.5);
   background-clip: content-box;
 }
+
+/* ========================== */
+/* 语言自适应样式（i18n）       */
+/* ========================== */
+
+/**
+ * 为翻译文字提供自适应样式
+ * - 自动缩小：当文字过长时自动缩小字体
+ * - 文字溢出：使用省略号处理
+ * - 最小字体：确保文字可读性
+ */
+
+/* 按钮文字自适应 */
+.st-btn-text,
+[data-i18n-shrink] {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+/* 标签文字自适应 */
+.st-label-text,
+[data-i18n-label] {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.4;
+}
+
+/* 多行文字截断 */
+.st-multiline-clamp,
+[data-i18n-clamp] {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* 3行截断 */
+.st-multiline-clamp-3,
+[data-i18n-clamp="3"] {
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+}
+
+/* 标题文字：可适当缩小 */
+.st-title-shrink,
+[data-i18n-title] {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+  /* 使用 CSS clamp 实现响应式字体 */
+  font-size: clamp(12px, 1em, 18px);
+}
+
+/* 面板头部标题 */
+.st-panel-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+  min-width: 0; /* flex 子元素需要 */
+}
+
+/* 按钮内文字自适应（用于可能较长的翻译文字） */
+.st-btn-shrinkable {
+  padding-left: 8px;
+  padding-right: 8px;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  /* 字体缩放：最小 10px，默认继承，最大 14px */
+  font-size: clamp(10px, 0.9em, 14px);
+}
+
+/* 菜单项文字 */
+.st-menu-item-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+
+/* 卡片标题 */
+.st-card-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+  min-width: 0;
+  font-weight: 700;
+}
+
+/* 卡片描述 */
+.st-card-desc {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 12px;
+  line-height: 1.4;
+  color: rgba(var(--st-color-text), 0.75);
+}
+
+/* 弹窗标题 */
+.st-modal-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: calc(100% - 40px); /* 为关闭按钮留出空间 */
+  min-width: 0;
+}
+
+/* 错误/警告消息：允许换行但限制行数 */
+.st-message-text {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-word;
+}
+
+/* ========================== */
+/* 特定语言适配                */
+/* ========================== */
+
+/* 日语：可能需要更紧凑的行高 */
+html[lang="ja-JP"] {
+  --st-line-height-compact: 1.35;
+}
+
+html[lang="ja-JP"] .st-compact-text {
+  line-height: var(--st-line-height-compact);
+}
+
+/* 阿拉伯语/希伯来语：RTL 支持 */
+html[dir="rtl"] {
+  direction: rtl;
+}
+
+html[dir="rtl"] .st-btn-text,
+html[dir="rtl"] .st-label-text,
+html[dir="rtl"] .st-card-title {
+  text-align: right;
+}
+
+/* ========================== */
+/* 响应式字体缩放              */
+/* ========================== */
+
+/* 小屏幕上缩小字体 */
+@media (max-width: 640px) {
+  .st-btn-shrinkable {
+    font-size: clamp(9px, 0.85em, 12px);
+    padding-left: 6px;
+    padding-right: 6px;
+  }
+  
+  .st-title-shrink,
+  [data-i18n-title] {
+    font-size: clamp(11px, 0.9em, 16px);
+  }
+  
+  .st-panel-title {
+    font-size: 14px;
+  }
+}

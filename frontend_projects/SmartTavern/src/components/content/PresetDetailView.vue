@@ -4,6 +4,9 @@ import PresetPromptCard from './cards/PresetPromptCard.vue'
 import RegexRuleCard from './cards/RegexRuleCard.vue'
 import Host from '@/workflow/core/host'
 import * as Catalog from '@/workflow/channels/catalog'
+import { useI18n } from '@/locales'
+
+const { t } = useI18n()
 
 const props = defineProps({
   presetData: { type: Object, default: null },
@@ -168,10 +171,10 @@ async function addSelectedSpecial() {
   relError.value = null
   const sel = specialSelect.value
   if (!sel) return
-  const tpl = SPECIAL_RELATIVE_TEMPLATES.find(t => t.identifier === sel)
+  const tpl = SPECIAL_RELATIVE_TEMPLATES.find(tp => tp.identifier === sel)
   if (!tpl) return
   if ((currentData.value.prompts || []).some(p => p.identifier === tpl.identifier)) {
-    relError.value = '该一次性组件已存在'
+    relError.value = t('detail.preset.errors.specialExists')
     return
   }
   const item = { ...tpl }
@@ -186,23 +189,23 @@ async function addCustomRelative() {
   const id = newRelId.value.trim()
   const name = newRelName.value.trim()
   if (!id) {
-    relError.value = '请填写 id'
+    relError.value = t('detail.preset.errors.idRequired')
     return
   }
   if (!name) {
-    relError.value = '请填写名称'
+    relError.value = t('detail.preset.errors.nameRequired')
     return
   }
   if (reservedIdSet.has(id) || reservedNameSet.has(name)) {
-    relError.value = 'id 或 名称 与保留组件重复'
+    relError.value = t('detail.preset.errors.reservedConflict')
     return
   }
   if ((currentData.value.prompts || []).some(p => p.identifier === id)) {
-    relError.value = 'id 已存在'
+    relError.value = t('detail.preset.errors.idExists')
     return
   }
   if ((currentData.value.prompts || []).some(p => p.name === name)) {
-    relError.value = '名称已存在'
+    relError.value = t('detail.preset.errors.nameExists')
     return
   }
   const item = {
@@ -230,19 +233,19 @@ async function addCustomInChat() {
   const id = newChatId.value.trim()
   const name = newChatName.value.trim()
   if (!id) {
-    chatError.value = '请填写 id'
+    chatError.value = t('detail.preset.errors.idRequired')
     return
   }
   if (!name) {
-    chatError.value = '请填写名称'
+    chatError.value = t('detail.preset.errors.nameRequired')
     return
   }
   if ((currentData.value.prompts || []).some(p => p.identifier === id)) {
-    chatError.value = 'id 已存在'
+    chatError.value = t('detail.preset.errors.idExists')
     return
   }
   if ((currentData.value.prompts || []).filter(p => p.position === 'in-chat').some(p => p.name === name)) {
-    chatError.value = '名称已存在'
+    chatError.value = t('detail.preset.errors.nameExists')
     return
   }
   const item = {
@@ -272,16 +275,16 @@ async function addCustomRegex() {
   const id = newRegexId.value.trim()
   const name = newRegexName.value.trim()
   if (!id) {
-    regexError.value = '请填写 id'
+    regexError.value = t('detail.preset.errors.idRequired')
     return
   }
   if (!name) {
-    regexError.value = '请填写 名称'
+    regexError.value = t('detail.preset.errors.nameRequired')
     return
   }
   const rules = currentData.value.regex_rules || []
   if (rules.some(r => r.id === id)) {
-    regexError.value = 'id 已存在'
+    regexError.value = t('detail.preset.errors.idExists')
     return
   }
   const rule = {
@@ -536,7 +539,7 @@ onBeforeUnmount(() => {
 async function save() {
   const file = props.file
   if (!file) {
-    try { alert('缺少文件路径，无法保存'); } catch (_) {}
+    try { alert(t('error.missingFilePath')); } catch (_) {}
     return
   }
   // 生成 api_config（含 enabled_fields）
@@ -574,7 +577,7 @@ async function save() {
     if (resFile && resFile !== file) return
     if (resTag && resTag !== tag) return
     console.error('[PresetDetailView] 保存失败（事件）:', message)
-    try { alert('保存失败：' + message) } catch (_) {}
+    try { alert(t('detail.preset.saveFailed') + '：' + message) } catch (_) {}
     saving.value = false
     try { offOk?.() } catch (_) {}
     try { offFail?.() } catch (_) {}
@@ -600,45 +603,45 @@ async function save() {
       <div class="flex items-center justify-between gap-3">
         <div class="flex items-center gap-2">
           <i data-lucide="settings-2" class="w-5 h-5 text-black"></i>
-          <h2 class="text-lg font-bold text-black">{{ currentData.name || '预设详情' }}</h2>
+          <h2 class="text-lg font-bold text-black">{{ currentData.name || t('detail.preset.title') }}</h2>
         </div>
         <div class="flex items-center gap-2">
           <!-- 保存状态：左侧提示区 -->
           <div class="save-indicator min-w-[72px] h-7 flex items-center justify-center">
-            <span v-if="saving" class="save-spinner" aria-label="保存中"></span>
-            <span v-else-if="savedOk" class="save-done"><strong>已保存！</strong></span>
+            <span v-if="saving" class="save-spinner" :aria-label="t('detail.preset.saving')"></span>
+            <span v-else-if="savedOk" class="save-done"><strong>{{ t('detail.preset.saved') }}</strong></span>
           </div>
           <button
             type="button"
             class="px-3 py-1 rounded-4 bg-transparent border border-gray-900 text-black text-sm hover:bg-gray-100 active:bg-gray-200 transition-all duration-200 ease-soft disabled:opacity-50"
             :disabled="saving"
             @click="save"
-            title="保存到后端"
-          >保存</button>
+            :title="t('detail.preset.saveToBackend')"
+          >{{ t('common.save') }}</button>
           <div class="px-3 py-1 rounded-4 bg-gray-100 border border-gray-300 text-black text-sm">
-            编辑模式
+            {{ t('detail.preset.editMode') }}
           </div>
         </div>
       </div>
-      <p class="mt-2 text-xs text-black/60">此页面支持完整编辑、新增、删除和拖拽排序功能</p>
+      <p class="mt-2 text-xs text-black/60">{{ t('detail.preset.editHint') }}</p>
     </div>
 
     <!-- 基本信息（名称/描述） -->
     <div class="bg-white rounded-4 border border-gray-200 p-5 transition-all duration-200 ease-soft hover:shadow-elevate">
       <div class="flex items-center gap-2 mb-3">
         <i data-lucide="id-card" class="w-4 h-4 text-black"></i>
-        <h3 class="text-base font-semibold text-black">基本信息</h3>
+        <h3 class="text-base font-semibold text-black">{{ t('detail.preset.basicInfo') }}</h3>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label class="block text-sm font-medium text-black mb-2">名称</label>
+          <label class="block text-sm font-medium text-black mb-2">{{ t('common.name') }}</label>
           <input
             v-model="currentData.name"
             class="w-full px-3 py-2 border border-gray-300 rounded-4 text-sm focus:outline-none focus:ring-2 focus:ring-gray-800"
           />
         </div>
         <div class="md:col-span-2">
-          <label class="block text-sm font-medium text-black mb-2">描述</label>
+          <label class="block text-sm font-medium text-black mb-2">{{ t('common.description') }}</label>
           <textarea
             v-model="currentData.description"
             rows="2"
@@ -657,7 +660,7 @@ async function save() {
       >
         <div class="flex items-center gap-2">
           <i data-lucide="server-cog" class="w-4 h-4 text-black"></i>
-          <span class="text-sm font-medium text-black">API 配置</span>
+          <span class="text-sm font-medium text-black">{{ t('detail.preset.apiConfig.title') }}</span>
         </div>
         <i
           data-lucide="chevron-down"
@@ -669,14 +672,14 @@ async function save() {
       <div v-show="apiOpen" class="border-t border-gray-200 p-5">
         <!-- 全局启用开关 -->
         <div class="mb-4 flex items-center justify-between">
-          <div class="text-sm font-medium text-black">启用 API 配置</div>
+          <div class="text-sm font-medium text-black">{{ t('detail.preset.apiConfig.enableTitle') }}</div>
           <label class="inline-flex items-center gap-2 select-none">
             <input
               type="checkbox"
               v-model="currentData.api_config.enabled"
               class="w-5 h-5 border border-gray-400 rounded-4 accent-black"
             />
-            <span class="text-sm text-black/80">{{ currentData.api_config.enabled ? '已启用' : '未启用' }}</span>
+            <span class="text-sm text-black/80">{{ currentData.api_config.enabled ? t('detail.preset.apiConfig.enabled') : t('detail.preset.apiConfig.notEnabled') }}</span>
           </label>
         </div>
 
@@ -684,10 +687,10 @@ async function save() {
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <div class="flex items-center justify-between mb-2">
-              <label class="text-sm font-medium text-black">Temperature</label>
+              <label class="text-sm font-medium text-black">{{ t('detail.preset.apiConfig.temperature') }}</label>
               <label class="inline-flex items-center gap-2 select-none">
                 <input type="checkbox" v-model="apiToggles.temperature" class="w-4 h-4 border border-gray-400 rounded-4 accent-black" />
-                <span class="text-xs text-black/60">启用</span>
+                <span class="text-xs text-black/60">{{ t('detail.preset.apiConfig.enable') }}</span>
               </label>
             </div>
             <input
@@ -703,10 +706,10 @@ async function save() {
 
           <div>
             <div class="flex items-center justify-between mb-2">
-              <label class="text-sm font-medium text-black">Top P</label>
+              <label class="text-sm font-medium text-black">{{ t('detail.preset.apiConfig.topP') }}</label>
               <label class="inline-flex items-center gap-2 select-none">
                 <input type="checkbox" v-model="apiToggles.top_p" class="w-4 h-4 border border-gray-400 rounded-4 accent-black" />
-                <span class="text-xs text-black/60">启用</span>
+                <span class="text-xs text-black/60">{{ t('detail.preset.apiConfig.enable') }}</span>
               </label>
             </div>
             <input
@@ -722,10 +725,10 @@ async function save() {
 
           <div>
             <div class="flex items-center justify-between mb-2">
-              <label class="text-sm font-medium text-black">Top K</label>
+              <label class="text-sm font-medium text-black">{{ t('detail.preset.apiConfig.topK') }}</label>
               <label class="inline-flex items-center gap-2 select-none">
                 <input type="checkbox" v-model="apiToggles.top_k" class="w-4 h-4 border border-gray-400 rounded-4 accent-black" />
-                <span class="text-xs text-black/60">启用</span>
+                <span class="text-xs text-black/60">{{ t('detail.preset.apiConfig.enable') }}</span>
               </label>
             </div>
             <input
@@ -739,10 +742,10 @@ async function save() {
 
           <div>
             <div class="flex items-center justify-between mb-2">
-              <label class="text-sm font-medium text-black">Max Context</label>
+              <label class="text-sm font-medium text-black">{{ t('detail.preset.apiConfig.maxContext') }}</label>
               <label class="inline-flex items-center gap-2 select-none">
                 <input type="checkbox" v-model="apiToggles.max_context" class="w-4 h-4 border border-gray-400 rounded-4 accent-black" />
-                <span class="text-xs text-black/60">启用</span>
+                <span class="text-xs text-black/60">{{ t('detail.preset.apiConfig.enable') }}</span>
               </label>
             </div>
             <input
@@ -756,10 +759,10 @@ async function save() {
 
           <div>
             <div class="flex items-center justify-between mb-2">
-              <label class="text-sm font-medium text-black">Max Tokens</label>
+              <label class="text-sm font-medium text-black">{{ t('detail.preset.apiConfig.maxTokens') }}</label>
               <label class="inline-flex items-center gap-2 select-none">
                 <input type="checkbox" v-model="apiToggles.max_tokens" class="w-4 h-4 border border-gray-400 rounded-4 accent-black" />
-                <span class="text-xs text-black/60">启用</span>
+                <span class="text-xs text-black/60">{{ t('detail.preset.apiConfig.enable') }}</span>
               </label>
             </div>
             <input
@@ -773,10 +776,10 @@ async function save() {
 
           <div>
             <div class="flex items-center justify-between mb-2">
-              <label class="text-sm font-medium text-black">流式输出（stream）</label>
+              <label class="text-sm font-medium text-black">{{ t('detail.preset.apiConfig.stream') }}</label>
               <label class="inline-flex items-center gap-2 select-none">
                 <input type="checkbox" v-model="apiToggles.stream" class="w-4 h-4 border border-gray-400 rounded-4 accent-black" />
-                <span class="text-xs text-black/60">启用</span>
+                <span class="text-xs text-black/60">{{ t('detail.preset.apiConfig.enable') }}</span>
               </label>
             </div>
             <label class="inline-flex items-center space-x-2">
@@ -786,16 +789,16 @@ async function save() {
                 :disabled="!currentData.api_config.enabled || !apiToggles.stream"
                 class="w-5 h-5 border border-gray-400 rounded-4 accent-black"
               />
-              <span class="text-sm text-black/80">开启</span>
+              <span class="text-sm text-black/80">{{ t('detail.preset.apiConfig.on') }}</span>
             </label>
           </div>
 
           <div>
             <div class="flex items-center justify-between mb-2">
-              <label class="text-sm font-medium text-black">Frequency Penalty</label>
+              <label class="text-sm font-medium text-black">{{ t('detail.preset.apiConfig.frequencyPenalty') }}</label>
               <label class="inline-flex items-center gap-2 select-none">
                 <input type="checkbox" v-model="apiToggles.frequency_penalty" class="w-4 h-4 border border-gray-400 rounded-4 accent-black" />
-                <span class="text-xs text-black/60">启用</span>
+                <span class="text-xs text-black/60">{{ t('detail.preset.apiConfig.enable') }}</span>
               </label>
             </div>
             <input
@@ -809,10 +812,10 @@ async function save() {
 
           <div>
             <div class="flex items-center justify-between mb-2">
-              <label class="text-sm font-medium text-black">Presence Penalty</label>
+              <label class="text-sm font-medium text-black">{{ t('detail.preset.apiConfig.presencePenalty') }}</label>
               <label class="inline-flex items-center gap-2 select-none">
                 <input type="checkbox" v-model="apiToggles.presence_penalty" class="w-4 h-4 border border-gray-400 rounded-4 accent-black" />
-                <span class="text-xs text-black/60">启用</span>
+                <span class="text-xs text-black/60">{{ t('detail.preset.apiConfig.enable') }}</span>
               </label>
             </div>
             <input
@@ -836,7 +839,7 @@ async function save() {
       >
         <div class="flex items-center gap-2">
           <i data-lucide="edit-3" class="w-4 h-4 text-black"></i>
-          <span class="text-sm font-medium text-black">提示词编辑</span>
+          <span class="text-sm font-medium text-black">{{ t('detail.preset.prompts.title') }}</span>
         </div>
         <i
           data-lucide="chevron-down"
@@ -851,7 +854,7 @@ async function save() {
             <div class="flex items-center justify-between mb-3">
               <div class="flex items-center space-x-2">
                 <i data-lucide="list" class="w-4 h-4 text-black"></i>
-                <span class="text-sm font-medium text-black">提示词条目</span>
+                <span class="text-sm font-medium text-black">{{ t('detail.preset.prompts.items') }}</span>
               </div>
             </div>
             <div class="space-y-6">
@@ -864,7 +867,7 @@ async function save() {
                 >
                   <div class="flex items-center gap-2">
                     <i data-lucide="layers" class="w-4 h-4 text-black"></i>
-                    <span class="text-sm font-medium text-black">Relative 条目</span>
+                    <span class="text-sm font-medium text-black">{{ t('detail.preset.prompts.relative') }}</span>
                   </div>
                   <i
                     data-lucide="chevron-down"
@@ -882,7 +885,7 @@ async function save() {
                         v-model="specialSelect"
                         class="min-w-[220px] px-3 py-2 border border-gray-300 rounded-4 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-gray-800"
                       >
-                        <option value="" disabled>选择一次性组件</option>
+                        <option value="" disabled>{{ t('detail.preset.prompts.selectSpecial') }}</option>
                         <option
                           v-for="sp in availableSpecials"
                           :key="sp.identifier"
@@ -896,7 +899,7 @@ async function save() {
                         :disabled="!specialSelect"
                         @click="addSelectedSpecial"
                       >
-                        添加特殊
+                        {{ t('detail.preset.prompts.addSpecial') }}
                       </button>
                     </div>
 
@@ -909,14 +912,14 @@ async function save() {
                       />
                       <input
                         v-model="newRelName"
-                        placeholder="名称"
+                        :placeholder="t('common.name')"
                         class="w-40 px-3 py-2 border border-gray-300 rounded-4 text-sm focus:outline-none focus:ring-2 focus:ring-gray-800"
                       />
                       <button
                         class="px-2 py-1 rounded-4 bg-transparent border border-gray-900 text-black hover:bg-gray-100 active:bg-gray-200 transition-all duration-200 ease-soft text-xs"
                         @click="addCustomRelative"
                       >
-                        添加
+                        {{ t('common.add') }}
                       </button>
                     </div>
                   </div>
@@ -942,7 +945,7 @@ async function save() {
                       draggable="true"
                       @dragstart="onDragStart('relative', it.identifier, $event)"
                       @dragend="onDragEnd"
-                      title="拖拽排序"
+                      :title="t('detail.preset.prompts.dragToSort')"
                     >
                       <i data-lucide="grip-vertical" class="icon-grip w-4 h-4 text-black opacity-60 group-hover:opacity-100"></i>
                     </div>
@@ -972,7 +975,7 @@ async function save() {
                 >
                   <div class="flex items-center gap-2">
                     <i data-lucide="message-square" class="w-4 h-4 text-black"></i>
-                    <span class="text-sm font-medium text-black">In-Chat 条目</span>
+                    <span class="text-sm font-medium text-black">{{ t('detail.preset.prompts.inChat') }}</span>
                   </div>
                   <i
                     data-lucide="chevron-down"
@@ -990,14 +993,14 @@ async function save() {
                     />
                     <input
                       v-model="newChatName"
-                      placeholder="名称"
+                      :placeholder="t('common.name')"
                       class="w-40 px-3 py-2 border border-gray-300 rounded-4 text-sm focus:outline-none focus:ring-2 focus:ring-gray-800"
                     />
                     <button
                       class="px-2 py-1 rounded-4 bg-transparent border border-gray-900 text-black hover:bg-gray-100 active:bg-gray-200 transition-all duration-200 ease-soft text-xs"
                       @click="addCustomInChat"
                     >
-                      添加
+                      {{ t('common.add') }}
                     </button>
                   </div>
                 </div>
@@ -1021,13 +1024,13 @@ async function save() {
                       draggable="true"
                       @dragstart="onDragStart('in-chat', it.identifier, $event)"
                       @dragend="onDragEnd"
-                      title="拖拽排序"
+                      :title="t('detail.preset.prompts.dragToSort')"
                     >
                       <i data-lucide="grip-vertical" class="icon-grip w-4 h-4 text-black opacity-60 group-hover:opacity-100"></i>
                     </div>
                     <div class="flex-1">
-                      <PresetPromptCard 
-                        :item="it" 
+                      <PresetPromptCard
+                        :item="it"
                         @update="onPromptUpdate"
                         @delete="onPromptDelete"
                       />
@@ -1056,7 +1059,7 @@ async function save() {
       >
         <div class="flex items-center gap-2">
           <i data-lucide="code" class="w-4 h-4 text-black"></i>
-          <span class="text-sm font-medium text-black">正则编辑</span>
+          <span class="text-sm font-medium text-black">{{ t('detail.preset.regex.title') }}</span>
         </div>
         <i
           data-lucide="chevron-down"
@@ -1076,14 +1079,14 @@ async function save() {
             />
             <input
               v-model="newRegexName"
-              placeholder="名称"
+              :placeholder="t('common.name')"
               class="w-40 px-3 py-2 border border-gray-300 rounded-4 text-sm focus:outline-none focus:ring-2 focus:ring-gray-800"
             />
             <button
               class="px-2 py-1 rounded-4 bg-transparent border border-gray-900 text-black hover:bg-gray-100 active:bg-gray-200 transition-all duration-200 ease-soft text-xs"
               @click="addCustomRegex"
             >
-              添加
+              {{ t('common.add') }}
             </button>
           </div>
         </div>
@@ -1108,7 +1111,7 @@ async function save() {
               draggable="true"
               @dragstart="onRegexDragStart(r.id, $event)"
               @dragend="onRegexDragEnd"
-              title="拖拽排序"
+              :title="t('detail.preset.prompts.dragToSort')"
             >
               <i data-lucide="grip-vertical" class="icon-grip w-4 h-4 text-black opacity-60 group-hover:opacity-100"></i>
             </div>
@@ -1129,7 +1132,7 @@ async function save() {
         </div>
 
         <div v-if="(currentData.regex_rules || []).length === 0" class="text-xs text-black/50 px-1 py-1">
-          暂无规则，请在右上角输入后点击添加
+          {{ t('detail.preset.regex.empty') }}
         </div>
       </div>
     </div>

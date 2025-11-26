@@ -3,6 +3,9 @@ import { ref, onMounted, nextTick, onBeforeUnmount } from 'vue'
 import Host from '@/workflow/core/host'
 import * as Conversation from '@/workflow/channels/conversation'
 import ChatBranches from '@/services/chatBranches'
+import { useI18n } from '@/locales'
+
+const { t } = useI18n()
 
 // 通知上层所选文件（由 App 处理 API 调用与页面切换）
 const emit = defineEmits(['confirm'])
@@ -42,10 +45,10 @@ function conversationSlug(file) {
 }
 
 function roleLabel(role) {
-  if (role === 'user') return '用户'
-  if (role === 'assistant') return '助手'
-  if (role === 'system') return '系统'
-  return '未知'
+  if (role === 'user') return t('home.loadGame.roleUser')
+  if (role === 'assistant') return t('home.loadGame.roleAssistant')
+  if (role === 'system') return t('home.loadGame.roleSystem')
+  return t('home.loadGame.roleUnknown')
 }
 
 function truncate(text, max = 160) {
@@ -105,7 +108,7 @@ async function loadData() {
             const offFail = Host.events.on(Conversation.EVT_CONVERSATION_LATEST_MSG_FAIL, ({ file: resFile, message, tag: resTag }) => {
               if (resTag && resTag !== msgTag) return
               
-              combined[idx].error = message || '获取最新消息失败'
+              combined[idx].error = message || t('home.loadGame.getLatestFailed')
               try { offOk?.() } catch (_) {}
               try { offFail?.() } catch (_) {}
               resolve()
@@ -140,7 +143,7 @@ async function loadData() {
           }
         })
       } catch (e) {
-        error.value = e?.message || '加载失败'
+        error.value = e?.message || t('home.loadGame.loadFailed')
       } finally {
         loading.value = false
         try { offOk?.() } catch (_) {}
@@ -151,7 +154,7 @@ async function loadData() {
     const offFail = Host.events.on(Conversation.EVT_CONVERSATION_LIST_FAIL, ({ message, tag: resTag }) => {
       if (resTag && resTag !== tag) return
       
-      error.value = message || '加载失败'
+      error.value = message || t('home.loadGame.loadFailed')
       loading.value = false
       try { offOk?.() } catch (_) {}
       try { offFail?.() } catch (_) {}
@@ -162,7 +165,7 @@ async function loadData() {
     // 发送列表请求事件
     Host.events.emit(Conversation.EVT_CONVERSATION_LIST_REQ, { tag })
   } catch (e) {
-    error.value = e?.message || '加载失败'
+    error.value = e?.message || t('home.loadGame.loadFailed')
     loading.value = false
   }
 }
@@ -214,32 +217,32 @@ onMounted(() => {
                 {{ it.description }}
               </div>
               <div class="lgv-setting" v-if="it.character">
-                <span class="dim">角色卡</span>
-                <span class="badge">{{ characterName(it.character) }}</span>
-              </div>
+                  <span class="dim">{{ t('home.loadGame.characterCard') }}</span>
+                  <span class="badge">{{ characterName(it.character) }}</span>
+                </div>
             </div>
 
             <div v-if="it.error" class="lgv-latest error">
-              <div class="err-badge">获取最新消息失败</div>
+              <div class="err-badge">{{ t('home.loadGame.getLatestFailed') }}</div>
               <div class="err-detail">{{ it.error }}</div>
             </div>
             <div v-else-if="it.latest" class="lgv-latest">
               <div class="latest-meta">
-                <span class="dim">楼层 #{{ it.latest.depth }}</span>
+                <span class="dim">{{ t('home.loadGame.floor') }} #{{ it.latest.depth }}</span>
                 <span class="badge">{{ roleLabel(it.latest.role) }}</span>
               </div>
               <div class="latest-content">
                 {{ truncate(it.latest.content, 220) }}
               </div>
             </div>
-            <div v-else class="lgv-latest muted">无最新消息</div>
+            <div v-else class="lgv-latest muted">{{ t('home.loadGame.noLatestMessage') }}</div>
           </div>
           <div class="lgv-card-actions">
-            <button class="btn primary" :disabled="!!it.error" title="确认" @click="emit('confirm', it.file)">
-              确认
+            <button class="btn primary" :disabled="!!it.error" :title="t('home.loadGame.confirm')" @click="emit('confirm', it.file)">
+              {{ t('home.loadGame.confirm') }}
             </button>
-            <button class="btn danger" title="删除">
-              删除
+            <button class="btn danger" :title="t('home.loadGame.delete')">
+              {{ t('home.loadGame.delete') }}
             </button>
           </div>
         </div>
@@ -247,7 +250,7 @@ onMounted(() => {
 
       <div v-if="items.length === 0" key="empty" class="lgv-empty">
         <div class="empty-icon">📂</div>
-        <div class="empty-text">未找到对话存档</div>
+        <div class="empty-text">{{ t('home.loadGame.notFound') }}</div>
       </div>
     </transition-group>
   </section>

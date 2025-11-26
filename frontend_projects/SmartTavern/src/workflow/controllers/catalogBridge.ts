@@ -7,6 +7,7 @@
 
 import * as CatalogChannel from '@/workflow/channels/catalog'
 import DataCatalog from '@/services/dataCatalog'
+import { i18n } from '@/locales'
 
 // 类型定义
 interface EventBus {
@@ -400,7 +401,7 @@ export function initCatalogBridge(bus: EventBus): void {
       
       const fetcher = categoryMap[category || '']
       if (!fetcher) {
-        throw new Error(`未知的资源类型: ${category}`)
+        throw new Error(i18n.t('workflow.controllers.catalog.unknownResourceType', { category }))
       }
       
       const res = await fetcher.call(DataCatalog)
@@ -437,7 +438,7 @@ export function initCatalogBridge(bus: EventBus): void {
       
       const fetcher = detailFetchers[category || '']
       if (!fetcher) {
-        throw new Error(`未知的资源类型: ${category}`)
+        throw new Error(i18n.t('workflow.controllers.catalog.unknownResourceType', { category }))
       }
       
       const res = await fetcher(file || '')

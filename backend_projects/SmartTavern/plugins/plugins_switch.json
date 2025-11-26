@@ -4,7 +4,8 @@
     "example-backend-client",
     "context-variables",
     "postprocess_orchestrator",
-    "test_toast"
+    "test_toast",
+    "locale-ja-JP"
   ],
   "disabled": []
 }

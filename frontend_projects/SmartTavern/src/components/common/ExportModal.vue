@@ -1,6 +1,9 @@
 <script setup>
 import { ref, watch } from 'vue'
 import DataCatalog from '@/services/dataCatalog'
+import { useI18n } from '@/locales'
+
+const { t } = useI18n()
 
 const props = defineProps({
   show: { type: Boolean, default: false },
@@ -77,7 +80,7 @@ function handleImageSelect(event) {
 // 处理图片文件
 function processImageFile(file) {
   if (!file.type.startsWith('image/png')) {
-    exportError.value = '请选择 PNG 格式的图片'
+    exportError.value = t('exportModal.errors.pngOnly')
     return
   }
   
@@ -120,13 +123,13 @@ function clearEmbedImage() {
 // 执行导出
 async function doExport() {
   if (!selectedItem.value) {
-    exportError.value = `请选择要导出的${props.dataTypeName}`
+    exportError.value = t('exportModal.errors.noSelection', { type: props.dataTypeName })
     return
   }
   
   const folderPath = getFolderPath(selectedItem.value)
   if (!folderPath) {
-    exportError.value = `无法获取${props.dataTypeName}路径`
+    exportError.value = t('exportModal.errors.noPath', { type: props.dataTypeName })
     return
   }
   
@@ -160,7 +163,7 @@ async function doExport() {
     
   } catch (err) {
     console.error('[ExportModal] Export error:', err)
-    exportError.value = err.message || '导出失败'
+    exportError.value = err.message || t('error.exportFailed')
   } finally {
     exporting.value = false
   }
@@ -176,14 +179,14 @@ function handleClose() {
     <div v-if="show" class="export-modal-overlay" @click.self="handleClose">
       <div class="export-modal">
         <header class="export-modal-header">
-          <h3>导出{{ dataTypeName }}</h3>
+          <h3>{{ t('exportModal.title', { type: dataTypeName }) }}</h3>
           <button class="export-modal-close" @click="handleClose">✕</button>
         </header>
         
         <div class="export-modal-body">
           <!-- 左侧：列表 -->
           <div class="export-item-list">
-            <h4>选择{{ dataTypeName }}</h4>
+            <h4>{{ t('exportModal.selectItem', { type: dataTypeName }) }}</h4>
             <CustomScrollbar class="export-item-items-scroll">
               <div
                 v-for="it in items"
@@ -209,7 +212,7 @@ function handleClose() {
                     </svg>
                     <span>{{ getFolderName(it.key) }}</span>
                   </div>
-                  <div class="export-item-desc" :title="it.desc">{{ it.desc || '无描述' }}</div>
+                  <div class="export-item-desc" :title="it.desc">{{ it.desc || t('common.noDescription') }}</div>
                 </div>
               </div>
             </CustomScrollbar>
@@ -217,7 +220,7 @@ function handleClose() {
           
           <!-- 右侧：导出设置 -->
           <div class="export-settings">
-            <h4>导出格式</h4>
+            <h4>{{ t('exportModal.format.title') }}</h4>
             <div class="export-format-cards">
               <div
                 class="export-format-card"
@@ -232,8 +235,8 @@ function handleClose() {
                   </svg>
                 </div>
                 <div class="export-format-card-text">
-                  <div class="export-format-card-title">ZIP 压缩包</div>
-                  <div class="export-format-card-desc">标准压缩格式，便于分享</div>
+                  <div class="export-format-card-title">{{ t('exportModal.format.zip.title') }}</div>
+                  <div class="export-format-card-desc">{{ t('exportModal.format.zip.desc') }}</div>
                 </div>
                 <div class="export-format-card-check">
                   <svg v-if="exportFormat === 'zip'" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
@@ -254,8 +257,8 @@ function handleClose() {
                   </svg>
                 </div>
                 <div class="export-format-card-text">
-                  <div class="export-format-card-title">PNG 图片</div>
-                  <div class="export-format-card-desc">数据嵌入图片中，可直接预览</div>
+                  <div class="export-format-card-title">{{ t('exportModal.format.png.title') }}</div>
+                  <div class="export-format-card-desc">{{ t('exportModal.format.png.desc') }}</div>
                 </div>
                 <div class="export-format-card-check">
                   <svg v-if="exportFormat === 'png'" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
@@ -267,8 +270,8 @@ function handleClose() {
             
             <!-- PNG 模式下的图片上传 -->
             <div v-if="exportFormat === 'png'" class="export-image-upload">
-              <h4>嵌入图片（可选）</h4>
-              <p class="export-image-hint">选择一张 PNG 图片作为载体，数据将嵌入其中</p>
+              <h4>{{ t('exportModal.embedImage.title') }}</h4>
+              <p class="export-image-hint">{{ t('exportModal.embedImage.hint') }}</p>
               
               <input
                 ref="imageInputRef"
@@ -298,8 +301,8 @@ function handleClose() {
                       <polyline points="21 15 16 10 5 21"></polyline>
                     </svg>
                   </div>
-                  <span class="export-image-main-text">点击选择或拖动图片到此处</span>
-                  <span class="export-image-note">仅支持 PNG 格式，如不选择将使用{{ dataTypeName }}的 icon</span>
+                  <span class="export-image-main-text">{{ t('exportModal.embedImage.dropzone') }}</span>
+                  <span class="export-image-note">{{ t('exportModal.embedImage.note', { type: dataTypeName }) }}</span>
                 </template>
               </div>
             </div>
@@ -312,13 +315,13 @@ function handleClose() {
         </div>
         
         <footer class="export-modal-footer">
-          <button class="export-btn-cancel" @click="handleClose">取消</button>
+          <button class="export-btn-cancel" @click="handleClose">{{ t('exportModal.cancelButton') }}</button>
           <button
             class="export-btn-confirm"
             @click="doExport"
             :disabled="!selectedItem || exporting"
           >
-            {{ exporting ? '导出中...' : '确认导出' }}
+            {{ exporting ? t('common.exporting') : t('exportModal.confirmButton') }}
           </button>
         </footer>
       </div>

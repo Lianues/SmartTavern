@@ -1,12 +1,18 @@
 <script setup>
+import { computed } from 'vue'
 import ContentViewModal from '@/components/common/ContentViewModal.vue'
 import GalleryView from '@/components/home/GalleryView.vue'
+import { useI18n } from '@/locales'
+
+const { t } = useI18n()
 
 const props = defineProps({
   show: { type: Boolean, default: false },
-  title: { type: String, default: '画廊' },
+  title: { type: String, default: '' },
   icon: { type: String, default: '' },
 })
+
+const effectiveTitle = computed(() => props.title || t('home.gallery.title'))
 
 const emit = defineEmits(['update:show', 'close'])
 
@@ -19,7 +25,7 @@ function onClose() {
 <template>
   <ContentViewModal
     :show="props.show"
-    :title="props.title"
+    :title="effectiveTitle"
     :icon="props.icon"
     @update:show="(v) => emit('update:show', v)"
     @close="onClose"

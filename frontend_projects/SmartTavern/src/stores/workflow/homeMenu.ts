@@ -12,8 +12,10 @@ import { defineStore } from 'pinia'
 export interface HomeMenuEntry {
   /** 唯一标识 */
   id: string
-  /** 显示标签 */
+  /** 显示标签（静态，作为 fallback） */
   label: string
+  /** 翻译 key（用于动态语言切换，优先级高于 label） */
+  labelKey?: string
   /** 动作 ID */
   actionId: string
   /** 图标名称 */
@@ -36,6 +38,7 @@ export interface HomeMenuEntry {
 export interface NormalizedEntry {
   id: string
   label: string
+  labelKey: string | null
   actionId: string
   icon: string
   order: number
@@ -72,6 +75,7 @@ function normalize(input: HomeMenuEntry): NormalizedEntry {
   return {
     id,
     label,
+    labelKey: input.labelKey ? String(input.labelKey) : null,
     actionId,
     icon: input.icon ? String(input.icon) : '',
     order: Number.isFinite(input.order) ? Number(input.order) : 0,

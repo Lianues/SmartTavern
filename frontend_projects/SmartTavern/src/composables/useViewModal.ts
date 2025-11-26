@@ -1,6 +1,7 @@
 import { ref, nextTick, onBeforeUnmount, type Ref } from 'vue'
 import Host from '@/workflow/core/host'
 import * as Catalog from '@/workflow/channels/catalog'
+import { i18n } from '@/locales'
 
 /**
  * useViewModal：内容查看模态编排（Preset/WorldBook/Character/Persona/Regex）
@@ -105,7 +106,7 @@ export function useViewModal(): UseViewModalAPI {
         
         const category = categoryMap[type]
         if (!category) {
-          throw new Error(`未知类型: ${type}`)
+          throw new Error(i18n.t('error.unknownType', { type }))
         }
         
         const tag = `detail_${type}_${Date.now()}`
@@ -138,7 +139,7 @@ export function useViewModal(): UseViewModalAPI {
         const offFail = Host.events.on(Catalog.EVT_CATALOG_GET_DETAIL_FAIL, ({ category: _resCategory, message, tag: resTag }) => {
           if (resTag && resTag !== tag) return
           
-          viewModalError.value = message || '获取详情失败'
+          viewModalError.value = message || i18n.t('error.getDetailFailed')
           viewModalLoading.value = false
           refreshUI()
           try { offOk?.() } catch (_) {

@@ -2,11 +2,11 @@
   <!-- 输入区（多行文本，玻璃拟态容器 + 工具栏 + Lucide 图标） -->
   <div class="tch-input-row glass">
     <div class="tch-tools-left">
-      <button class="tool-btn round" title="拓展" aria-label="拓展" data-tooltip-target="tt-expand">
+      <button class="tool-btn round" :title="t('chat.input.expand')" :aria-label="t('chat.input.expand')" data-tooltip-target="tt-expand">
         <i data-lucide="plus" class="icon-16" aria-hidden="true"></i>
       </button>
       <div id="tt-expand" role="tooltip" class="absolute z-10 invisible inline-block px-2 py-1 text-xs font-medium text-white bg-gray-900 rounded-md shadow-sm opacity-0 tooltip">
-        拓展
+        {{ t('chat.input.expand') }}
         <div class="tooltip-arrow" data-popper-arrow></div>
       </div>
     </div>
@@ -15,7 +15,7 @@
       ref="inputRef"
       v-model="text"
       class="tch-input"
-      :placeholder="placeholder"
+      :placeholder="effectivePlaceholder"
       :disabled="sending"
       @keydown="onKeydown"
     ></textarea>
@@ -25,15 +25,15 @@
         class="tch-send"
         :disabled="sending || (pendingActive ? false : !text.trim())"
         @click="pendingActive ? onCancel() : onSubmit()"
-        :title="pendingActive ? '停止等待' : sendButtonTitle"
-        :aria-label="pendingActive ? '停止等待' : '发送'"
+        :title="pendingActive ? t('chat.input.stopWaiting') : sendButtonTitle"
+        :aria-label="pendingActive ? t('chat.input.stopWaiting') : t('chat.input.send')"
         data-tooltip-target="tt-send"
       >
         <i :data-lucide="sending ? 'loader-circle' : (pendingActive ? 'square' : 'send')" class="icon-16" :class="{'icon-spin': sending}" aria-hidden="true"></i>
-        <span class="tch-send-text">{{ sending ? '发送中' : (pendingActive ? stopLabel : sendLabel) }}</span>
+        <span class="tch-send-text">{{ sending ? t('chat.input.sending') : (pendingActive ? effectiveStopLabel : effectiveSendLabel) }}</span>
       </button>
       <div id="tt-send" role="tooltip" class="absolute z-10 invisible inline-block px-2 py-1 text-xs font-medium text-white bg-gray-900 rounded-md shadow-sm opacity-0 tooltip">
-        发送
+        {{ t('chat.input.send') }}
         <div class="tooltip-arrow" data-popper-arrow></div>
       </div>
     </div>
@@ -42,13 +42,16 @@
 
 <script setup>
 import { ref, computed, nextTick } from 'vue'
+import { useI18n } from '@/locales'
+
+const { t } = useI18n()
 
 const props = defineProps({
   pendingActive: { type: Boolean, default: false },
   sending: { type: Boolean, default: false },
-  placeholder: { type: String, default: '输入消息... (Enter 发送，Shift+Enter 换行)' },
-  sendLabel: { type: String, default: '发送' },
-  stopLabel: { type: String, default: '停止' }
+  placeholder: { type: String, default: '' },
+  sendLabel: { type: String, default: '' },
+  stopLabel: { type: String, default: '' }
 })
 
 const emit = defineEmits(['submit', 'cancel'])
@@ -56,7 +59,12 @@ const emit = defineEmits(['submit', 'cancel'])
 const inputRef = ref(null)
 const text = ref('')
 
-const sendButtonTitle = computed(() => props.pendingActive ? '停止等待' : '发送 (Enter)')
+// i18n computed
+const effectivePlaceholder = computed(() => props.placeholder || t('chat.input.placeholder'))
+const effectiveSendLabel = computed(() => props.sendLabel || t('chat.input.send'))
+const effectiveStopLabel = computed(() => props.stopLabel || t('chat.input.stop'))
+
+const sendButtonTitle = computed(() => props.pendingActive ? t('chat.input.stopWaiting') : t('chat.input.sendShortcut'))
 
 function onKeydown(e) {
   if (props.pendingActive) {

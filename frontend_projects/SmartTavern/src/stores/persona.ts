@@ -9,6 +9,7 @@ import { ref, watch } from 'vue'
 import { defineStore } from 'pinia'
 import { useChatSettingsStore } from './chatSettings'
 import DataCatalog from '@/services/dataCatalog'
+import { i18n } from '@/locales'
 
 // ========== 类型定义 ==========
 
@@ -46,7 +47,8 @@ function dirname(p: string): string {
 }
 
 /** 生成默认用户头像（圆角卡片字母占位）为 Data URL */
-function buildDefaultUserAvatar(letter: string = '用'): string {
+function buildDefaultUserAvatar(letter?: string): string {
+  const defaultLetter = letter || i18n.t('stores.persona.defaultAvatarLetter')
   const size = 256
   const bg = '#DBEAFE'     // tailwind: blue-100
   const fg = '#1E3A8A'     // tailwind: blue-900
@@ -55,7 +57,7 @@ function buildDefaultUserAvatar(letter: string = '用'): string {
     `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
       <rect x="0" y="0" width="${size}" height="${size}" rx="${Math.round(size*0.18)}" fill="${bg}" />
       <text x="50%" y="54%" text-anchor="middle" dominant-baseline="middle"
-        fill="${fg}" font-size="${fontSize}" font-weight="700" font-family="system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', 'WenQuanYi Micro Hei', sans-serif">${letter}</text>
+        fill="${fg}" font-size="${fontSize}" font-weight="700" font-family="system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', 'WenQuanYi Micro Hei', sans-serif">${defaultLetter}</text>
     </svg>`
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`
 }
@@ -173,7 +175,7 @@ export const usePersonaStore = defineStore('persona', () => {
   }
 
   /** 返回头像 URL（优先实际头像，其次默认头像 DataURL） */
-  function getCurrentPersonaAvatarPathSync(letter: string = '用'): string {
+  function getCurrentPersonaAvatarPathSync(letter?: string): string {
     return avatarUrl.value || buildDefaultUserAvatar(letter)
   }
 
@@ -285,7 +287,7 @@ export function registerGlobalFunctions({ exposeToWindow = true }: RegisterGloba
 }
 
 // 便于外部复用/测试：导出默认头像生成器
-export function getDefaultUserAvatarDataURL(letter: string = '用'): string {
+export function getDefaultUserAvatarDataURL(letter?: string): string {
   return buildDefaultUserAvatar(letter)
 }
 

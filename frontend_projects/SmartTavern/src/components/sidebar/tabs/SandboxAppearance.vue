@@ -1,6 +1,9 @@
 <script setup>
 import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
 import useAppearanceSandbox from '@/composables/appearance/useAppearanceSandbox'
+import { useI18n } from '@/locales'
+
+const { t } = useI18n()
 
 /**
  * 全屏沙盒外观配置（拆分自 AppearancePanel）
@@ -227,26 +230,24 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="st-tab-panel" data-scope="settings-sandbox">
-    <h3>全屏沙盒外观</h3>
-    <p class="muted">配置沙盒舞台的尺寸与长宽比，便于后续嵌入画面/预览对齐。</p>
+    <h3>{{ t('appearance.sandbox.title') }}</h3>
+    <p class="muted">{{ t('appearance.sandbox.desc') }}</p>
 
     <!-- 显示模式（固定 / 自适应 / 由沙盒内代码决定） -->
     <div class="st-control" data-slider="sandboxDisplayMode">
       <label class="st-control-label">
-        <span class="label-text">显示模式</span>
+        <span class="label-text">{{ t('appearance.sandbox.displayMode') }}</span>
         <div class="value-group">
           <select class="st-number-input" v-model="sandboxDisplayModeSel" style="width: 200px;">
-            <option value="auto">自适应高度（默认）</option>
-            <option value="fixed">固定容器（使用宽高比）</option>
-            <option value="inline">由沙盒内代码决定（缺省则自适应）</option>
+            <option value="auto">{{ t('appearance.sandbox.displayModeAuto') }}</option>
+            <option value="fixed">{{ t('appearance.sandbox.displayModeFixed') }}</option>
+            <option value="inline">{{ t('appearance.sandbox.displayModeInline') }}</option>
           </select>
         </div>
       </label>
       <div class="st-control-hint">
         <span class="muted" style="font-size:12px;">
-          使用“由沙盒内代码决定”时，可在 HTML 中加入注释：
-          <!-- st:display-mode=auto|fixed -->
-          若无声明则回退为自适应高度。
+          {{ t('appearance.sandbox.displayModeHint') }}
         </span>
       </div>
     </div>
@@ -254,13 +255,13 @@ onBeforeUnmount(() => {
     <!-- 画面宽高比 -->
     <div class="st-control" data-slider="sandboxAspect">
       <label class="st-control-label">
-        <span class="label-text">画面宽高比</span>
+        <span class="label-text">{{ t('appearance.sandbox.aspectRatio') }}</span>
         <div class="value-group">
           <select class="st-number-input" @change="onSandboxAspectPreset">
-            <option disabled selected value="">预设</option>
+            <option disabled selected value="">{{ t('appearance.sandbox.preset') }}</option>
             <option v-for="p in aspectPresets" :key="p.label" :value="p.v.join(',')">{{ p.label }}</option>
           </select>
-          <span class="unit">或 自定义</span>
+          <span class="unit">{{ t('appearance.sandbox.orCustom') }}</span>
         </div>
       </label>
       <div style="display:flex; gap:8px; align-items:center;">
@@ -273,7 +274,7 @@ onBeforeUnmount(() => {
     <!-- 舞台最大宽度 -->
     <div class="st-control" data-slider="sandboxMaxWidth">
       <label class="st-control-label">
-        <span class="label-text">舞台最大宽度</span>
+        <span class="label-text">{{ t('appearance.sandbox.stageMaxWidth') }}</span>
         <div class="value-group">
           <input type="number" class="st-number-input" :value="sandboxMaxWidth" min="640" :max="sandboxMaxWidthLimit" @input="onSandboxMaxWidthNumberInput" />
           <span class="unit">px</span>
@@ -282,7 +283,7 @@ onBeforeUnmount(() => {
       <input type="range" min="640" :max="sandboxMaxWidthLimit" step="10" :value="sandboxMaxWidth" @pointerdown="onTuningStart('sandboxMaxWidth')" @input="onSandboxMaxWidthRangeInput" />
       <div class="st-control-hint">
         <label class="st-control-label">
-          <span class="label-text" style="font-size: 11px; opacity: 0.8;">滑条最大值</span>
+          <span class="label-text" style="font-size: 11px; opacity: 0.8;">{{ t('appearance.sandbox.sliderMax') }}</span>
           <div class="value-group">
             <input type="number" class="st-number-input" :value="sandboxMaxWidthLimit" min="640" max="3840" @input="onSandboxMaxWidthLimitInput" style="width: 60px;" />
             <span class="unit">px</span>
@@ -294,7 +295,7 @@ onBeforeUnmount(() => {
     <!-- 内边距 -->
     <div class="st-control" data-slider="sandboxPadding">
       <label class="st-control-label">
-        <span class="label-text">舞台内边距</span>
+        <span class="label-text">{{ t('appearance.sandbox.stagePadding') }}</span>
         <div class="value-group">
           <input type="number" class="st-number-input" :value="sandboxPadding" min="0" max="48" @input="onSandboxPaddingNumberInput" />
           <span class="unit">px</span>
@@ -306,7 +307,7 @@ onBeforeUnmount(() => {
     <!-- 圆角 -->
     <div class="st-control" data-slider="sandboxRadius">
       <label class="st-control-label">
-        <span class="label-text">舞台圆角</span>
+        <span class="label-text">{{ t('appearance.sandbox.stageRadius') }}</span>
         <div class="value-group">
           <input type="number" class="st-number-input" :value="sandboxRadius" min="0" max="32" @input="onSandboxRadiusNumberInput" />
           <span class="unit">px</span>
@@ -318,7 +319,7 @@ onBeforeUnmount(() => {
     <!-- 背景图片遮罩不透明度 -->
     <div class="st-control" data-slider="sandboxBgOpacity">
       <label class="st-control-label">
-        <span class="label-text">背景图片遮罩不透明度</span>
+        <span class="label-text">{{ t('appearance.sandbox.bgMaskOpacity') }}</span>
         <div class="value-group">
           <input
             type="number"
@@ -345,7 +346,7 @@ onBeforeUnmount(() => {
     <!-- 背景图片遮罩模糊 -->
     <div class="st-control" data-slider="sandboxBgBlur">
       <label class="st-control-label">
-        <span class="label-text">背景图片遮罩模糊</span>
+        <span class="label-text">{{ t('appearance.sandbox.bgMaskBlur') }}</span>
         <div class="value-group">
           <input
             type="number"
@@ -368,14 +369,14 @@ onBeforeUnmount(() => {
         @input="onSandboxBgBlurRangeInput"
       />
       <div class="st-control-hint">
-        <span class="muted" style="font-size:12px;">通过遮罩层对背景图应用高斯模糊（建议 0~12px，过大可能影响性能）</span>
+        <span class="muted" style="font-size:12px;">{{ t('appearance.sandbox.bgMaskBlurHint') }}</span>
       </div>
     </div>
 
     <!-- 舞台背景不透明度 -->
     <div class="st-control" data-slider="sandboxStageBgOpacity">
       <label class="st-control-label">
-        <span class="label-text">舞台背景不透明度</span>
+        <span class="label-text">{{ t('appearance.sandbox.stageBgOpacity') }}</span>
         <div class="value-group">
           <input
             type="number"
@@ -399,7 +400,7 @@ onBeforeUnmount(() => {
       />
     </div>
 
-    <p class="muted">提示：上述设定实时作用于页面上的"全局沙盒"舞台，并以 CSS 变量方式保存，便于主题或脚本统一接管。</p>
+    <p class="muted">{{ t('appearance.sandbox.tip') }}</p>
   </div>
 </template>
 

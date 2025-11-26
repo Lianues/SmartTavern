@@ -9,6 +9,7 @@ import { ref, watch } from 'vue'
 import { defineStore } from 'pinia'
 import { useChatSettingsStore } from './chatSettings'
 import DataCatalog from '@/services/dataCatalog'
+import { i18n } from '@/locales'
 
 // DataCatalog 是 JS 模块，需要类型断言
 const DataCatalogTyped = DataCatalog as any
@@ -67,7 +68,8 @@ function dirname(p: string): string {
 }
 
 /** 生成默认头像（圆角卡片字母占位）为 Data URL */
-function buildDefaultAssistantAvatar(letter: string = '助'): string {
+function buildDefaultAssistantAvatar(letter?: string): string {
+  const defaultLetter = letter || i18n.t('stores.character.defaultAvatarLetter')
   const size = 256
   const bg = '#E5E7EB'     // tailwind: gray-200
   const fg = '#111827'     // tailwind: gray-900
@@ -76,7 +78,7 @@ function buildDefaultAssistantAvatar(letter: string = '助'): string {
     `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
       <rect x="0" y="0" width="${size}" height="${size}" rx="${Math.round(size*0.18)}" fill="${bg}" />
       <text x="50%" y="54%" text-anchor="middle" dominant-baseline="middle"
-        fill="${fg}" font-size="${fontSize}" font-weight="700" font-family="system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', 'WenQuanYi Micro Hei', sans-serif">${letter}</text>
+        fill="${fg}" font-size="${fontSize}" font-weight="700" font-family="system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', 'WenQuanYi Micro Hei', sans-serif">${defaultLetter}</text>
     </svg>`
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`
 }
@@ -216,7 +218,7 @@ export const useCharacterStore = defineStore('character', () => {
   }
 
   /** 返回头像 URL（优先实际头像，其次默认头像 DataURL） */
-  function getCurrentCharAvatarPathSync(letter: string = '助'): string {
+  function getCurrentCharAvatarPathSync(letter?: string): string {
     return avatarUrl.value || buildDefaultAssistantAvatar(letter)
   }
 
@@ -331,7 +333,7 @@ export function registerGlobalFunctions({ exposeToWindow = true }: RegisterGloba
 }
 
 // 便于外部复用/测试：导出默认头像生成器
-export function getDefaultAssistantAvatarDataURL(letter: string = '助'): string {
+export function getDefaultAssistantAvatarDataURL(letter?: string): string {
   return buildDefaultAssistantAvatar(letter)
 }
 

@@ -6,6 +6,9 @@ import * as SettingsChannel from '@/workflow/channels/settings'
 import DataCatalog from '@/services/dataCatalog'
 import ImportConflictModal from '@/components/common/ImportConflictModal.vue'
 import ExportModal from '@/components/common/ExportModal.vue'
+import { useI18n } from '@/locales'
+
+const { t } = useI18n()
 
 const props = defineProps({
   anchorLeft: { type: Number, default: 308 },
@@ -13,7 +16,6 @@ const props = defineProps({
   zIndex: { type: Number, default: 59 },
   top: { type: Number, default: 64 },
   bottom: { type: Number, default: 12 },
-  title: { type: String, default: 'AI配置 AI Configs' },
   conversationFile: { type: String, default: null },
 })
 
@@ -192,7 +194,7 @@ async function handleFileSelect(event) {
   const validTypes = ['.json', '.zip', '.png']
   const ext = '.' + (file.name.split('.').pop() || '').toLowerCase()
   if (!validTypes.includes(ext)) {
-    importError.value = `不支持的文件类型: ${ext}，请选择 .json、.zip 或 .png 文件`
+    importError.value = t('error.invalidFileType', { ext })
     event.target.value = ''
     return
   }
@@ -224,11 +226,11 @@ async function doImport(file, overwrite = false, targetName = null) {
       refreshLLMConfigs()
       emit('import', result)
     } else {
-      importError.value = result.message || result.error || '导入失败'
+      importError.value = result.message || result.error || t('error.importFailed')
     }
   } catch (err) {
     console.error('[LLMConfigsPanel] Import error:', err)
-    importError.value = err.message || '导入失败'
+    importError.value = err.message || t('error.importFailed')
   } finally {
     importing.value = false
   }
@@ -280,26 +282,26 @@ function handleExportComplete(result) {
     :style="panelStyle"
   >
       <header class="ai-header">
-        <div class="ai-title">
+        <div class="ai-title st-panel-title">
           <span class="ai-icon"><i data-lucide="plug"></i></span>
-          {{ props.title }}
+          {{ t('panel.llmConfigs.title') }}
         </div>
         <div class="ai-header-actions">
-          <button class="ai-action-btn" type="button" title="导入AI配置 (支持 .json, .zip, .png)" @click="triggerImport" :disabled="importing">
-            <i data-lucide="download"></i><span>导入</span>
+          <button class="ai-action-btn st-btn-shrinkable" type="button" :title="t('panel.llmConfigs.importTitle')" @click="triggerImport" :disabled="importing">
+            <i data-lucide="download"></i><span class="st-btn-text">{{ t('common.import') }}</span>
           </button>
-          <button class="ai-action-btn" type="button" title="导出AI配置" @click="openExportModal" :disabled="llmConfigs.length === 0">
-            <i data-lucide="upload"></i><span>导出</span>
+          <button class="ai-action-btn st-btn-shrinkable" type="button" :title="t('panel.llmConfigs.exportTitle')" @click="openExportModal" :disabled="llmConfigs.length === 0">
+            <i data-lucide="upload"></i><span class="st-btn-text">{{ t('common.export') }}</span>
           </button>
-          <button class="ai-close" type="button" title="关闭" @click="close">✕</button>
+          <button class="ai-close" type="button" :title="t('common.close')" @click="close">✕</button>
         </div>
       </header>
       <input ref="fileInputRef" type="file" accept=".json,.zip,.png" style="display: none;" @change="handleFileSelect" />
 
       <CustomScrollbar class="ai-body">
-        <div v-if="loading" class="ai-loading">{{ importing ? '正在导入...' : '加载中...' }}</div>
+        <div v-if="loading" class="ai-loading">{{ importing ? t('common.importing') : t('common.loading') }}</div>
         <div v-else-if="error" class="ai-error">
-          {{ importError ? importError : `加载失败：${error}` }}
+          {{ importError ? importError : t('error.loadFailed', { error }) }}
           <button v-if="importError" class="ai-error-dismiss" @click="importError = null">×</button>
         </div>
         <div v-else class="ai-list">
@@ -326,16 +328,16 @@ function handleExportComplete(result) {
             </div>
             <div class="ai-actions">
               <button
-                class="ai-btn"
+                class="ai-btn st-btn-shrinkable"
                 :class="{ active: usingKey === it.key }"
                 type="button"
                 @click="onUse(it.key)"
                 :aria-pressed="usingKey === it.key"
-              >{{ usingKey === it.key ? '使用中' : '使用' }}</button>
+              >{{ usingKey === it.key ? t('common.using') : t('common.use') }}</button>
 
-              <button class="ai-btn" type="button" @click="onView(it.key)">查看</button>
+              <button class="ai-btn st-btn-shrinkable" type="button" @click="onView(it.key)">{{ t('common.view') }}</button>
 
-              <button class="ai-btn ai-danger" type="button" @click="onDelete(it.key)">删除</button>
+              <button class="ai-btn ai-danger st-btn-shrinkable" type="button" @click="onDelete(it.key)">{{ t('common.delete') }}</button>
             </div>
           </div>
         </div>
@@ -345,7 +347,7 @@ function handleExportComplete(result) {
       <ImportConflictModal
         :show="showImportConflictModal"
         data-type="llmconfig"
-        data-type-name="AI配置"
+        :data-type-name="t('panel.llmConfigs.typeName')"
         :existing-name="importConflictExistingName"
         :suggested-name="importConflictSuggestedName"
         @close="closeImportConflictModal"
@@ -357,7 +359,7 @@ function handleExportComplete(result) {
       <ExportModal
         :show="showExportModal"
         data-type="llmconfig"
-        data-type-name="AI配置"
+        :data-type-name="t('panel.llmConfigs.typeName')"
         :items="llmConfigs"
         default-icon="plug"
         @close="closeExportModal"

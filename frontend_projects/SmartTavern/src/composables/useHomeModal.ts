@@ -1,4 +1,5 @@
 import { ref, nextTick, type Ref } from 'vue'
+import { i18n } from '@/locales'
 
 /**
  * useHomeModal：主页功能模态（load / gallery / options）的集中编排
@@ -29,9 +30,9 @@ export function useHomeModal(): HomeModalAPI {
   function openHomeModal(type: Exclude<HomeModalType, ''>): void {
     homeModalType.value = type
     homeModalTitle.value =
-      type === 'load' ? '读取存档'
-      : type === 'gallery' ? '画廊'
-      : type === 'options' ? '选项'
+      type === 'load' ? i18n.t('app.modal.loadGame')
+      : type === 'gallery' ? i18n.t('app.modal.gallery')
+      : type === 'options' ? i18n.t('app.modal.options')
       : ' '
     homeModalOpen.value = true
 

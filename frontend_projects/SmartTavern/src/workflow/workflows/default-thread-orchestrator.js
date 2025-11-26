@@ -11,6 +11,9 @@ import * as Threaded from '/src/workflow/channels/threaded.js'
 import * as Completion from '/src/workflow/channels/completion.js'
 import * as Branch from '/src/workflow/channels/branch.js'
 
+// 获取 i18n 实例（通过全局暴露的 STI18n）
+const getI18n = () => window.STI18n || { t: (key, params) => key }
+
 /**
  * 激活编排插件
  * 约定：返回一个函数用于解绑（dispose）
@@ -34,7 +37,7 @@ export function activate(host) {
         host.events.emit(Completion.EVT_COMPLETION_REQ, { conversationFile, mode: 'auto', tag: realAssId })
       } catch (e) {
         // 保守兜底：占位失败不影响后续流程
-        host.pushToast?.({ type: 'error', message: `占位/补全触发失败: ${e?.message || e}`, timeout: 2200 })
+        host.pushToast?.({ type: 'error', message: getI18n().t('orchestrator.placeholderCompletionFail', { error: e?.message || e }), timeout: 2200 })
       }
     }, 0)
   }))
@@ -51,7 +54,7 @@ export function activate(host) {
         tag: newNodeId,
       })
     } catch (e) {
-      host.pushToast?.({ type: 'error', message: `重试补全触发失败: ${e?.message || e}`, timeout: 2200 })
+      host.pushToast?.({ type: 'error', message: getI18n().t('orchestrator.retryCompletionFail', { error: e?.message || e }), timeout: 2200 })
     }
   }))
 
@@ -67,7 +70,7 @@ export function activate(host) {
         host.events.emit(Threaded.EVT_THREAD_ASSIST_PLACEHOLDER_CREATE, { conversationFile, tempNodeId: assistantNodeId })
         host.events.emit(Completion.EVT_COMPLETION_REQ, { conversationFile, mode: 'auto', tag: assistantNodeId })
       } catch (e) {
-        host.pushToast?.({ type: 'error', message: `占位/补全触发失败: ${e?.message || e}`, timeout: 2200 })
+        host.pushToast?.({ type: 'error', message: getI18n().t('orchestrator.placeholderCompletionFail', { error: e?.message || e }), timeout: 2200 })
       }
     } else if (action === 'retry_assistant' && assistantNodeId) {
       // 关键修复：创建新分支，然后由 EVT_BRANCH_RETRY_ASSIST_OK 监听器触发AI
@@ -78,7 +81,7 @@ export function activate(host) {
           tag: `retry_user_assist_${Date.now()}`,
         })
       } catch (e) {
-        host.pushToast?.({ type: 'error', message: `创建助手分支失败: ${e?.message || e}`, timeout: 2200 })
+        host.pushToast?.({ type: 'error', message: getI18n().t('orchestrator.createAssistBranchFail', { error: e?.message || e }), timeout: 2200 })
       }
     }
   }))

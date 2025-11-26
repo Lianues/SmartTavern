@@ -16,14 +16,14 @@
           <img
             v-if="avatarUrl"
             :src="avatarUrl"
-            :alt="`${nameOf(msg)}的头像`"
+            :alt="t('chat.message.avatarAlt', { name: nameOf(msg) })"
             class="avatar-image"
             @error="onAvatarError"
           />
           <span v-else class="avatar-letter">{{ nameOf(msg).charAt(0) }}</span>
         </div>
         <div class="role-badge" v-if="badgeText">{{ badgeText }}</div>
-        <div class="floor-index-left" :title="'楼层序号'">#{{ idx + 1 }}</div>
+        <div class="floor-index-left" :title="t('chat.message.floorIndex')">#{{ idx + 1 }}</div>
       </div>
 
       <!-- 右侧：消息内容 -->
@@ -56,7 +56,7 @@
             <!-- 等待占位动画（兼容旧逻辑） -->
             <div v-else-if="pendingActive" class="pending-chip" aria-live="polite">
               <span class="chip-spinner" aria-hidden="true"></span>
-              <span class="chip-text">等待中...{{ pendingSeconds }}s</span>
+              <span class="chip-text">{{ t('chat.message.waiting', { seconds: pendingSeconds }) }}</span>
             </div>
             <!-- 三点菜单按钮 -->
             <div class="menu-wrapper">
@@ -64,18 +64,18 @@
                 class="menu-btn"
                 @click.stop="toggleMenu()"
                 :aria-expanded="menuOpen"
-                aria-label="更多操作"
-                title="更多操作"
+                :aria-label="t('chat.message.moreActions')"
+                :title="t('chat.message.moreActions')"
               >
                 <i data-lucide="more-vertical" class="icon-16" aria-hidden="true"></i>
-                <span class="sr-only">更多</span>
+                <span class="sr-only">{{ t('chat.message.more') }}</span>
               </button>
               <!-- 选项菜单（向左弹出） -->
               <transition name="menu-slide">
                 <div v-if="menuOpen" class="menu-dropdown">
                   <button class="menu-item" @click="copyMessage()">
                     <i data-lucide="copy" class="icon-14" aria-hidden="true"></i>
-                    复制
+                    {{ t('chat.message.copy') }}
                   </button>
                   <button
                     v-if="isLast"
@@ -83,7 +83,7 @@
                     @click="emitDelete()"
                   >
                     <i data-lucide="trash-2" class="icon-14" aria-hidden="true"></i>
-                    删除
+                    {{ t('common.delete') }}
                   </button>
                 </div>
               </transition>
@@ -97,7 +97,7 @@
             v-model="editingContent"
             class="edit-textarea"
             :disabled="saveStatus === 'saving'"
-            placeholder="输入消息内容..."
+            :placeholder="t('chat.message.editPlaceholder')"
             @keydown.ctrl.enter="saveEdit"
             @keydown.meta.enter="saveEdit"
             @keydown.esc="cancelEdit"
@@ -109,14 +109,14 @@
           <!-- 等待AI响应动画 -->
           <div v-if="waitingAI" class="waiting-box">
             <div class="waiting-spinner" aria-hidden="true"></div>
-            <span class="waiting-text">等待AI响应（{{ waitingSeconds }}s）</span>
+            <span class="waiting-text">{{ t('chat.message.waitingAI', { seconds: waitingSeconds }) }}</span>
           </div>
           
           <!-- 错误框（如果节点有错误）-->
           <div v-else-if="nodeError" class="error-box">
             <div class="error-header">
               <i data-lucide="alert-circle" class="icon-16" aria-hidden="true"></i>
-              <span class="error-title">AI调用失败</span>
+              <span class="error-title">{{ t('chat.errors.aiCallFailed') }}</span>
             </div>
             <div class="error-message">{{ nodeError }}</div>
           </div>
@@ -143,8 +143,8 @@
               class="act-btn save-btn"
               @click="saveEdit"
               :disabled="saveStatus === 'saving'"
-              title="保存 (Ctrl+Enter)"
-              aria-label="保存"
+              :title="t('chat.message.saveShortcut')"
+              :aria-label="t('common.save')"
             >
               <i data-lucide="check" class="icon-16" aria-hidden="true"></i>
             </button>
@@ -152,8 +152,8 @@
               class="act-btn cancel-btn"
               @click="cancelEdit"
               :disabled="saveStatus === 'saving'"
-              title="取消 (Esc)"
-              aria-label="取消"
+              :title="t('chat.message.cancelShortcut')"
+              :aria-label="t('common.cancel')"
             >
               <i data-lucide="x" class="icon-16" aria-hidden="true"></i>
             </button>
@@ -163,7 +163,7 @@
           <div v-else class="floor-actions">
             <!-- 错误的 assistant 消息且是最后一条时显示重试按钮 -->
             <template v-if="nodeError && msg.role === 'assistant' && isLastOfRole">
-              <button class="act-btn" @click="emitRegenerate" title="重试" aria-label="重试">
+              <button class="act-btn" @click="emitRegenerate" :title="t('chat.message.retry')" :aria-label="t('chat.message.retry')">
                 <i data-lucide="refresh-cw" class="icon-16" aria-hidden="true"></i>
               </button>
             </template>
@@ -171,22 +171,22 @@
             <!-- assistant 消息（该角色最后一条）显示完整按钮（包括重试） -->
             <template v-else-if="msg.role === 'assistant' && isLastOfRole">
               <transition name="copy-tip">
-                <div v-if="copied" class="copy-tip">已复制</div>
+                <div v-if="copied" class="copy-tip">{{ t('chat.message.copied') }}</div>
               </transition>
 
               <button
                 class="act-btn"
                 :class="{ success: copied }"
                 @click="copyMessage"
-                :title="copied ? '已复制' : '复制'"
-                :aria-label="copied ? '已复制' : '复制'"
+                :title="copied ? t('chat.message.copied') : t('chat.message.copy')"
+                :aria-label="copied ? t('chat.message.copied') : t('chat.message.copy')"
               >
                 <i :data-lucide="copied ? 'check' : 'copy'" class="icon-16" aria-hidden="true"></i>
               </button>
-              <button class="act-btn" @click="emitRegenerate" title="重试" aria-label="重试">
+              <button class="act-btn" @click="emitRegenerate" :title="t('chat.message.retry')" :aria-label="t('chat.message.retry')">
                 <i data-lucide="refresh-cw" class="icon-16" aria-hidden="true"></i>
               </button>
-              <button class="act-btn" @click="emitEdit" title="编辑" aria-label="编辑">
+              <button class="act-btn" @click="emitEdit" :title="t('common.edit')" :aria-label="t('common.edit')">
                 <i data-lucide="pencil" class="icon-16" aria-hidden="true"></i>
               </button>
             </template>
@@ -194,22 +194,22 @@
             <!-- user 消息（该角色最后一条）显示复制、重试和编辑按钮 -->
             <template v-else-if="msg.role === 'user' && isLastOfRole">
               <transition name="copy-tip">
-                <div v-if="copied" class="copy-tip">已复制</div>
+                <div v-if="copied" class="copy-tip">{{ t('chat.message.copied') }}</div>
               </transition>
 
               <button
                 class="act-btn"
                 :class="{ success: copied }"
                 @click="copyMessage"
-                :title="copied ? '已复制' : '复制'"
-                :aria-label="copied ? '已复制' : '复制'"
+                :title="copied ? t('chat.message.copied') : t('chat.message.copy')"
+                :aria-label="copied ? t('chat.message.copied') : t('chat.message.copy')"
               >
                 <i :data-lucide="copied ? 'check' : 'copy'" class="icon-16" aria-hidden="true"></i>
               </button>
-              <button class="act-btn" @click="emitRegenerate" title="重试" aria-label="重试">
+              <button class="act-btn" @click="emitRegenerate" :title="t('chat.message.retry')" :aria-label="t('chat.message.retry')">
                 <i data-lucide="refresh-cw" class="icon-16" aria-hidden="true"></i>
               </button>
-              <button class="act-btn" @click="emitEdit" title="编辑" aria-label="编辑">
+              <button class="act-btn" @click="emitEdit" :title="t('common.edit')" :aria-label="t('common.edit')">
                 <i data-lucide="pencil" class="icon-16" aria-hidden="true"></i>
               </button>
             </template>
@@ -217,19 +217,19 @@
             <!-- 其他消息（非最后一条）只显示复制和编辑按钮 -->
             <template v-else>
               <transition name="copy-tip">
-                <div v-if="copied" class="copy-tip">已复制</div>
+                <div v-if="copied" class="copy-tip">{{ t('chat.message.copied') }}</div>
               </transition>
 
               <button
                 class="act-btn"
                 :class="{ success: copied }"
                 @click="copyMessage"
-                :title="copied ? '已复制' : '复制'"
-                :aria-label="copied ? '已复制' : '复制'"
+                :title="copied ? t('chat.message.copied') : t('chat.message.copy')"
+                :aria-label="copied ? t('chat.message.copied') : t('chat.message.copy')"
               >
                 <i :data-lucide="copied ? 'check' : 'copy'" class="icon-16" aria-hidden="true"></i>
               </button>
-              <button class="act-btn" @click="emitEdit" title="编辑" aria-label="编辑">
+              <button class="act-btn" @click="emitEdit" :title="t('common.edit')" :aria-label="t('common.edit')">
                 <i data-lucide="pencil" class="icon-16" aria-hidden="true"></i>
               </button>
             </template>
@@ -249,8 +249,8 @@
               class="branch-btn"
               @click="switchBranch('left')"
               :disabled="branchInfo.j <= 1 || switchStatus === 'switching'"
-              title="切换到前一个分支"
-              aria-label="前一个分支"
+              :title="t('chat.branch.prevBranch')"
+              :aria-label="t('chat.branch.prevBranch')"
             >
               <i data-lucide="chevron-left" class="icon-14" aria-hidden="true"></i>
             </button>
@@ -261,8 +261,8 @@
               class="branch-btn"
               @click="switchBranch('right')"
               :disabled="switchStatus === 'switching'"
-              :title="branchInfo.j >= branchInfo.n ? '创建新分支（重试）' : '切换到下一个分支'"
-              :aria-label="branchInfo.j >= branchInfo.n ? '创建新分支' : '下一个分支'"
+              :title="branchInfo.j >= branchInfo.n ? t('chat.branch.createNew') : t('chat.branch.nextBranch')"
+              :aria-label="branchInfo.j >= branchInfo.n ? t('chat.branch.createNew') : t('chat.branch.nextBranch')"
             >
               <i data-lucide="chevron-right" class="icon-14" aria-hidden="true"></i>
             </button>
@@ -281,6 +281,9 @@ import Host from '@/workflow/core/host'
 import * as Branch from '@/workflow/channels/branch'
 import * as Message from '@/workflow/channels/message'
 import { useMessagesStore } from '@/stores/chatMessages'
+import { useI18n } from '@/locales'
+
+const { t } = useI18n()
 
 const props = defineProps({
   msg: { type: Object, required: true },
@@ -319,8 +322,9 @@ const props = defineProps({
 const msgStore = useMessagesStore()
 const emit = defineEmits(['delete', 'regenerate', 'edit', 'update', 'branch-switched'])
 
-const roleMap = { user: '用户', assistant: '助手', system: '系统' }
-function roleLabel(role) { return roleMap[role] ?? '未知' }
+function roleLabel(role) {
+  return t(`role.${role}`) || t('common.unknown')
+}
 function nameOf(msg) { return roleLabel(msg.role) }
 
 const { ensurePaletteFor, stripeStyle } = usePalette()
@@ -364,7 +368,7 @@ function refreshIcons() {
 
 // 头像加载失败回退处理
 function onAvatarError(e) {
-  console.warn('头像加载失败，使用默认样式')
+  console.warn(t('chat.errors.avatarLoadFailed'))
   // 移除图片元素，让文字占位符显示
   if (e.target) {
     e.target.style.display = 'none'
@@ -422,7 +426,7 @@ async function switchBranch(direction) {
   if (switchStatus.value === 'switching') return
 
   if (!props.branchInfo || !props.conversationFile) {
-    console.error('无法切换分支：缺少分支信息或对话文件')
+    console.error(t('chat.errors.switchBranchFailed'))
     return
   }
 
@@ -435,18 +439,18 @@ async function switchBranch(direction) {
   else if (direction === 'right') targetJ = currentJ + 1
 
   if (targetJ < 1) {
-    console.warn(`目标分支 ${targetJ} 小于 1`)
+    console.warn(`Target branch ${targetJ} < 1`)
     return
   }
 
   if (targetJ > totalN) {
-    console.log(`已到最后分支，触发重试创建新分支`)
+    console.log(`At last branch, triggering retry to create new branch`)
     emitRegenerate()
     return
   }
 
   switchStatus.value = 'switching'
-  switchMessage.value = '切换中...'
+  switchMessage.value = t('chat.branch.switching')
   refreshIcons()
 
   const tag = `switch_${Date.now()}`
@@ -467,7 +471,7 @@ async function switchBranch(direction) {
       await nextTick()
 
       switchStatus.value = 'success'
-      switchMessage.value = '已切换'
+      switchMessage.value = t('chat.branch.switched')
       refreshIcons()
 
       setTimeout(() => {
@@ -483,7 +487,7 @@ async function switchBranch(direction) {
   const offFail = Host.events.on(Branch.EVT_BRANCH_SWITCH_FAIL, ({ conversationFile, message, tag: rtag }) => {
     if (conversationFile && conversationFile !== props.conversationFile) return
     if (rtag && rtag !== tag) return
-    console.error('切换分支失败:', message)
+    console.error(t('chat.errors.switchBranchFailed') + ':', message)
     switchStatus.value = null
     switchMessage.value = ''
     refreshIcons()
@@ -501,9 +505,9 @@ async function emitDelete() {
   menuOpen.value = false
 
   if (!props.conversationFile) {
-    console.error('无法删除：缺少 conversationFile')
+    console.error(t('chat.errors.cannotDelete'))
     deleteStatus.value = 'error'
-    deleteMessage.value = '缺少对话文件'
+    deleteMessage.value = t('chat.errors.missingConversationFile')
     setTimeout(() => {
       deleteStatus.value = null
       deleteMessage.value = ''
@@ -512,7 +516,7 @@ async function emitDelete() {
   }
 
   deleteStatus.value = 'deleting'
-  deleteMessage.value = '删除中...'
+  deleteMessage.value = t('chat.message.deleting')
   refreshIcons()
 
   const tag = `delete_${Date.now()}`
@@ -526,7 +530,7 @@ async function emitDelete() {
 
     if (afterDepth < beforeDepth) {
       deleteStatus.value = 'success'
-      deleteMessage.value = '删除成功'
+      deleteMessage.value = t('chat.message.deleteSuccess')
       refreshIcons()
 
       setTimeout(() => {
@@ -538,7 +542,7 @@ async function emitDelete() {
       // 新逻辑：不直接依赖完整文档，交由外层根据 active_path 刷新视图
       emit('branch-switched', { nodeId: switchedToNodeId, latest, active_path: newActivePath })
       deleteStatus.value = 'success'
-      deleteMessage.value = '已切换到相邻分支'
+      deleteMessage.value = t('chat.message.switchedToBranch')
       refreshIcons()
 
       setTimeout(() => {
@@ -554,9 +558,9 @@ async function emitDelete() {
   const offFail = Host.events.on(Branch.EVT_BRANCH_DELETE_FAIL, ({ conversationFile, message, tag: rtag }) => {
     if (conversationFile && conversationFile !== props.conversationFile) return
     if (rtag && rtag !== tag) return
-    console.error('删除失败:', message)
+    console.error(t('chat.message.deleteFailed') + ':', message)
     deleteStatus.value = 'error'
-    deleteMessage.value = '删除失败'
+    deleteMessage.value = t('chat.message.deleteFailed')
     setTimeout(() => {
       deleteStatus.value = null
       deleteMessage.value = ''
@@ -595,9 +599,9 @@ async function saveEdit() {
   }
 
   if (!props.conversationFile) {
-    console.error('无法保存编辑：缺少 conversationFile')
+    console.error(t('chat.errors.cannotSaveEdit'))
     saveStatus.value = 'error'
-    saveMessage.value = '缺少对话文件'
+    saveMessage.value = t('chat.errors.missingConversationFile')
     setTimeout(() => {
       saveStatus.value = null
       saveMessage.value = ''
@@ -606,7 +610,7 @@ async function saveEdit() {
   }
 
   saveStatus.value = 'saving'
-  saveMessage.value = '保存中...'
+  saveMessage.value = t('chat.message.saving')
 
   const tag = `edit_${Date.now()}`
   const offOk = Host.events.on(Message.EVT_MESSAGE_EDIT_OK, ({ conversationFile, nodeId, content, doc, tag: rtag }) => {
@@ -622,7 +626,7 @@ async function saveEdit() {
     try { msgStore.updateRawMessages?.([...msgStore.rawMessages]) } catch (_) {}
 
     saveStatus.value = 'success'
-    saveMessage.value = '保存成功'
+    saveMessage.value = t('chat.message.saveSuccess')
     refreshIcons()
 
     setTimeout(() => {
@@ -639,9 +643,9 @@ async function saveEdit() {
     if (nodeId && nodeId !== props.msg.id) return
     if (rtag && rtag !== tag) return
 
-    console.error('保存编辑失败:', message)
+    console.error(t('chat.message.saveFailed') + ':', message)
     saveStatus.value = 'error'
-    saveMessage.value = '保存失败'
+    saveMessage.value = t('chat.message.saveFailed')
     setTimeout(() => {
       saveStatus.value = null
       saveMessage.value = ''

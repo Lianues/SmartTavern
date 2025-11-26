@@ -12,6 +12,8 @@
 // - CORS is enabled by the gateway (allow-origins: *).
 // - Errors are thrown with details; UI should handle and display gracefully.
 
+import { i18n } from '@/locales'
+
 // 类型定义
 interface DataItem {
   file: string
@@ -361,7 +363,7 @@ const DataCatalog = {
 
     return (Array.isArray(items) ? items : []).map((it) => {
       const file = String(it.file || '')
-      const name = it.name || file.split('/').pop() || '未命名'
+      const name = it.name || file.split('/').pop() || i18n.t('services.dataCatalog.unnamed')
       const desc = it.description || ''
       return { key: file, icon, name, desc, file }
     })

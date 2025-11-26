@@ -1,7 +1,10 @@
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
 import ModeSwitch from '@/components/common/ModeSwitch.vue'
 import ThemeSwitch from '@/components/common/ThemeSwitch.vue'
+import { useI18n } from '@/locales'
+
+const { t } = useI18n()
 
 const props = defineProps({
   view: { type: String, default: 'start' },
@@ -26,10 +29,12 @@ onMounted(() => {
 onBeforeUnmount(() => window.removeEventListener('scroll', onScroll))
 
 function setView(v){ emit('update:view', v) }
-function setTheme(t){ emit('update:theme', t) }
+function setTheme(themeValue){ emit('update:theme', themeValue) }
 
-const viewMap = { threaded:'对话楼层', sandbox:'全局沙盒', start:'开始' }
-function viewTitle(){ return viewMap[props.view] || 'SmartTavern' }
+const viewTitle = computed(() => {
+  const key = `components.topBar.view${props.view.charAt(0).toUpperCase() + props.view.slice(1)}`
+  return t(key) || 'SmartTavern'
+})
 </script>
 
 <template>

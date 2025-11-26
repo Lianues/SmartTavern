@@ -7,6 +7,7 @@
 
 import * as SettingsChannel from '@/workflow/channels/settings'
 import ChatBranches from '@/services/chatBranches'
+import { i18n } from '@/locales'
 
 // 类型定义
 interface EventBus {
@@ -27,7 +28,7 @@ export function initSettingsBridge(bus: EventBus): void {
       bus.emit(SettingsChannel.EVT_SETTINGS_GET_RES, {
         requestId,
         success: false,
-        error: '缺少conversationFile参数'
+        error: i18n.t('workflow.controllers.settings.missingConversationFile')
       })
       return
     }
@@ -74,7 +75,7 @@ export function initSettingsBridge(bus: EventBus): void {
       bus.emit(SettingsChannel.EVT_SETTINGS_UPDATE_RES, {
         requestId,
         success: false,
-        error: '缺少conversationFile参数'
+        error: i18n.t('workflow.controllers.settings.missingConversationFile')
       })
       return
     }
@@ -84,7 +85,7 @@ export function initSettingsBridge(bus: EventBus): void {
         requestId,
         conversationFile,
         success: false,
-        error: '缺少或无效的patch参数'
+        error: i18n.t('workflow.controllers.settings.missingOrInvalidPatch')
       })
       return
     }

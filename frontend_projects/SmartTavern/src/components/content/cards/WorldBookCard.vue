@@ -1,5 +1,8 @@
 <script setup>
 import { ref, watch, nextTick } from 'vue'
+import { useI18n } from '@/locales'
+
+const { t } = useI18n()
 
 const props = defineProps({
   entry: { type: Object, required: true }
@@ -52,7 +55,7 @@ function onSave() {
   errorMsg.value = null
   const newId = String(form.value.id ?? '').trim()
   if (!newId) {
-    errorMsg.value = '请填写 ID'
+    errorMsg.value = t('cards.worldBook.errorIdRequired')
     return
   }
 
@@ -95,7 +98,7 @@ function onDelete() {
           <span class="text-xs px-2 py-0.5 rounded-4 border border-gray-900 text-black bg-transparent">
             {{ props.entry.position || 'system' }}
           </span>
-          <span class="text-xs text-black/60">{{ props.entry.enabled ? '已启用' : '未启用' }}</span>
+          <span class="text-xs text-black/60">{{ props.entry.enabled ? t('cards.common.enabled') : t('cards.common.disabled') }}</span>
           <span v-if="props.entry.order !== undefined" class="text-xs text-black/50">#{{ props.entry.order }}</span>
           <span v-if="props.entry.depth !== undefined" class="text-xs text-black/50">depth: {{ props.entry.depth }}</span>
         </div>
@@ -104,60 +107,60 @@ function onDelete() {
       <div class="flex items-center gap-2 shrink-0">
         <button
           class="px-3 py-1 rounded-4 bg-transparent border border-gray-900 text-black hover:bg-gray-100 active:bg-gray-200 transition-all duration-200 text-sm"
-          @click="onDelete">删除</button>
+          @click="onDelete">{{ t('cards.common.delete') }}</button>
         <button
           v-if="!editing"
           class="px-3 py-1 rounded-4 bg-transparent border border-gray-900 text-black hover:bg-gray-100 active:bg-gray-200 transition-all duration-200 text-sm"
-          @click="toggleEdit">编辑</button>
+          @click="toggleEdit">{{ t('cards.common.edit') }}</button>
         <template v-else>
           <button
             class="px-3 py-1 rounded-4 bg-transparent border border-gray-900 text-black hover:bg-gray-100 active:bg-gray-200 transition-all duration-200 text-sm"
-            @click="onSave">保存</button>
+            @click="onSave">{{ t('cards.common.save') }}</button>
           <button
             class="px-3 py-1 rounded-4 bg-transparent border border-gray-900 text-black hover:bg-gray-100 active:bg-gray-200 transition-all duration-200 text-sm"
-            @click="toggleEdit">取消</button>
+            @click="toggleEdit">{{ t('cards.common.cancel') }}</button>
         </template>
       </div>
     </div>
 
     <div v-if="!editing" class="mt-3 space-y-2">
-      <div class="text-sm text-black/70 leading-6">{{ props.entry.content || '（暂无内容）' }}</div>
+      <div class="text-sm text-black/70 leading-6">{{ props.entry.content || t('cards.common.noContent') }}</div>
       <div v-if="props.entry.mode === 'conditional'" class="text-xs text-black/60">
-        condition：<span class="font-mono break-all">{{ props.entry.condition || '(未设置)' }}</span>
+        condition：<span class="font-mono break-all">{{ props.entry.condition || t('cards.worldBook.notSetCondition') }}</span>
       </div>
     </div>
 
     <div v-else class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
       <div>
-        <label class="block text-sm font-medium text-black mb-2">ID</label>
-        <input v-model="form.id" placeholder="例如：1 或 my-id" class="w-full px-3 py-2 border border-gray-300 rounded-4 text-sm focus:outline-none focus:ring-2 focus:ring-gray-800" />
+        <label class="block text-sm font-medium text-black mb-2">{{ t('cards.worldBook.id') }}</label>
+        <input v-model="form.id" :placeholder="t('cards.worldBook.idPlaceholder')" class="w-full px-3 py-2 border border-gray-300 rounded-4 text-sm focus:outline-none focus:ring-2 focus:ring-gray-800" />
       </div>
       <div>
-        <label class="block text-sm font-medium text-black mb-2">名称</label>
+        <label class="block text-sm font-medium text-black mb-2">{{ t('cards.worldBook.name') }}</label>
         <input v-model="form.name" class="w-full px-3 py-2 border border-gray-300 rounded-4 text-sm focus:outline-none focus:ring-2 focus:ring-gray-800" />
       </div>
       <div class="flex items-center gap-3">
         <label class="inline-flex items-center space-x-2 select-none">
           <input type="checkbox" v-model="form.enabled" class="w-5 h-5 border border-gray-400 rounded-4 accent-black" />
-          <span class="text-sm text-black/80">已启用</span>
+          <span class="text-sm text-black/80">{{ t('cards.worldBook.enabledLabel') }}</span>
         </label>
       </div>
 
       <div>
-        <label class="block text-sm font-medium text-black mb-2">模式</label>
+        <label class="block text-sm font-medium text-black mb-2">{{ t('cards.worldBook.mode') }}</label>
         <select v-model="form.mode" class="w-full px-3 py-2 border border-gray-300 rounded-4 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-gray-800">
           <option value="always">always</option>
           <option value="conditional">conditional</option>
         </select>
       </div>
       <div>
-        <label class="block text-sm font-medium text-black mb-2">位置（position）</label>
+        <label class="block text-sm font-medium text-black mb-2">{{ t('cards.worldBook.position') }}</label>
         <select v-model="form.position" class="w-full px-3 py-2 border border-gray-300 rounded-4 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-gray-800">
-          <optgroup label="framing（角色前后）">
+          <optgroup :label="t('cards.worldBook.positionFraming')">
             <option value="before_char">before_char</option>
             <option value="after_char">after_char</option>
           </optgroup>
-          <optgroup label="in-chat（插入对话）">
+          <optgroup :label="t('cards.worldBook.positionInChat')">
             <option value="user">user</option>
             <option value="assistant">assistant</option>
             <option value="system">system</option>
@@ -166,21 +169,21 @@ function onDelete() {
       </div>
 
       <div>
-        <label class="block text-sm font-medium text-black mb-2">order（排序权重）</label>
+        <label class="block text-sm font-medium text-black mb-2">{{ t('cards.worldBook.orderLabel') }}</label>
         <input type="number" v-model.number="form.order" class="w-full px-3 py-2 border border-gray-300 rounded-4 text-sm focus:outline-none focus:ring-2 focus:ring-gray-800" />
       </div>
       <div>
-        <label class="block text-sm font-medium text-black mb-2">depth（注入深度）</label>
+        <label class="block text-sm font-medium text-black mb-2">{{ t('cards.worldBook.depthLabel') }}</label>
         <input type="number" v-model.number="form.depth" class="w-full px-3 py-2 border border-gray-300 rounded-4 text-sm focus:outline-none focus:ring-2 focus:ring-gray-800" />
       </div>
 
       <div v-if="form.mode === 'conditional'" class="md:col-span-2">
-        <label class="block text-sm font-medium text-black mb-2">condition（条件表达式，支持宏）</label>
-        <textarea v-model="form.condition" rows="2" placeholder="示例：{{ keywords('艾拉','工程师') }}" class="w-full px-3 py-2 border border-gray-300 rounded-4 text-sm focus:outline-none focus:ring-2 focus:ring-gray-800"></textarea>
+        <label class="block text-sm font-medium text-black mb-2">{{ t('cards.worldBook.conditionLabel') }}</label>
+        <textarea v-model="form.condition" rows="2" :placeholder="t('cards.worldBook.conditionPlaceholder')" class="w-full px-3 py-2 border border-gray-300 rounded-4 text-sm focus:outline-none focus:ring-2 focus:ring-gray-800"></textarea>
       </div>
 
       <div class="md:col-span-2">
-        <label class="block text-sm font-medium text-black mb-2">内容</label>
+        <label class="block text-sm font-medium text-black mb-2">{{ t('cards.worldBook.content') }}</label>
         <textarea rows="4" v-model="form.content" class="w-full px-3 py-2 border border-gray-300 rounded-4 text-sm focus:outline-none focus:ring-2 focus:ring-gray-800"></textarea>
       </div>
       <p v-if="errorMsg" class="md:col-span-2 text-xs text-red-600">* {{ errorMsg }}</p>

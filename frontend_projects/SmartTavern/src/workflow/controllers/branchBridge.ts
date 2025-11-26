@@ -6,6 +6,7 @@
 import Host from '@/workflow/core/host'
 import * as Branch from '@/workflow/channels/branch'
 import ChatBranches from '@/services/chatBranches'
+import { i18n } from '@/locales'
 
 // 类型定义
 interface ToastPayload {
@@ -44,7 +45,7 @@ export function initBranchBridge(): DisposerFn {
     const conversationFile = String(p.conversationFile || '').trim()
     const tag = p.tag ? String(p.tag) : undefined
     if (!conversationFile) {
-      return emitFail(Branch.EVT_BRANCH_TABLE_FAIL, { message: 'conversationFile required', tag }, '读取分支表失败：缺少参数')
+      return emitFail(Branch.EVT_BRANCH_TABLE_FAIL, { message: 'conversationFile required', tag }, i18n.t('workflow.controllers.branch.readTableFailMissingParam'))
     }
     try {
       const result = await ChatBranches.branchTableByFile(conversationFile)
@@ -54,10 +55,10 @@ export function initBranchBridge(): DisposerFn {
     } catch (e: any) {
       emitFail(Branch.EVT_BRANCH_TABLE_FAIL, {
         conversationFile,
-        message: e?.message || '读取分支表失败',
+        message: e?.message || i18n.t('workflow.controllers.branch.readTableFail'),
         detail: e,
         tag,
-      }, '读取分支表失败')
+      }, i18n.t('workflow.controllers.branch.readTableFail'))
     }
   }))
 
@@ -67,7 +68,7 @@ export function initBranchBridge(): DisposerFn {
     const targetJ = Number(p.targetJ)
     const tag = p.tag ? String(p.tag) : undefined
     if (!conversationFile || !targetJ || targetJ < 1) {
-      return emitFail(Branch.EVT_BRANCH_SWITCH_FAIL, { conversationFile, message: '参数不完整', tag }, '切换分支失败：参数不完整')
+      return emitFail(Branch.EVT_BRANCH_SWITCH_FAIL, { conversationFile, message: 'Incomplete parameters', tag }, i18n.t('workflow.controllers.branch.switchFailIncompleteParam'))
     }
     try {
       const result: any = await ChatBranches.switchBranch({ file: conversationFile, target_j: targetJ })
@@ -80,14 +81,14 @@ export function initBranchBridge(): DisposerFn {
           tag,
         })
       } catch (_) {}
-      try { Host.pushToast?.({ type: 'success', message: '分支已切换', timeout: 1200 } as ToastPayload) } catch (_) {}
+      try { Host.pushToast?.({ type: 'success', message: i18n.t('workflow.controllers.branch.switchSuccess'), timeout: 1200 } as ToastPayload) } catch (_) {}
     } catch (e: any) {
       emitFail(Branch.EVT_BRANCH_SWITCH_FAIL, {
         conversationFile,
-        message: e?.message || '切换分支失败',
+        message: e?.message || i18n.t('workflow.controllers.branch.switchFail'),
         detail: e,
         tag,
-      }, '切换分支失败')
+      }, i18n.t('workflow.controllers.branch.switchFail'))
     }
   }))
 
@@ -97,7 +98,7 @@ export function initBranchBridge(): DisposerFn {
     const nodeId = String(p.nodeId || '').trim()
     const tag = p.tag ? String(p.tag) : undefined
     if (!conversationFile || !nodeId) {
-      return emitFail(Branch.EVT_BRANCH_DELETE_FAIL, { conversationFile, nodeId, message: '参数不完整', tag }, '删除分支失败：参数不完整')
+      return emitFail(Branch.EVT_BRANCH_DELETE_FAIL, { conversationFile, nodeId, message: 'Incomplete parameters', tag }, i18n.t('workflow.controllers.branch.deleteFailIncompleteParam'))
     }
     try {
       const resp: any = await ChatBranches.deleteBranch({ file: conversationFile, node_id: nodeId })
@@ -113,15 +114,15 @@ export function initBranchBridge(): DisposerFn {
         })
       } catch (_) {}
       // 组件侧将基于 delete 成功回调触发一次分支表刷新，避免这里重复请求
-      try { Host.pushToast?.({ type: 'success', message: '分支已删除', timeout: 1200 } as ToastPayload) } catch (_) {}
+      try { Host.pushToast?.({ type: 'success', message: i18n.t('workflow.controllers.branch.deleteSuccess'), timeout: 1200 } as ToastPayload) } catch (_) {}
     } catch (e: any) {
       emitFail(Branch.EVT_BRANCH_DELETE_FAIL, {
         conversationFile,
         nodeId,
-        message: e?.message || '删除分支失败',
+        message: e?.message || i18n.t('workflow.controllers.branch.deleteFail'),
         detail: e,
         tag,
-      }, '删除分支失败')
+      }, i18n.t('workflow.controllers.branch.deleteFail'))
     }
   }))
 
@@ -134,7 +135,7 @@ export function initBranchBridge(): DisposerFn {
     const role = p.role === 'assistant' ? 'assistant' : 'assistant'
     const tag = p.tag ? String(p.tag) : undefined
     if (!conversationFile || !retryNodeId) {
-      return emitFail(Branch.EVT_BRANCH_RETRY_ASSIST_FAIL, { conversationFile, retryNodeId, message: '参数不完整', tag }, '重试失败：参数不完整')
+      return emitFail(Branch.EVT_BRANCH_RETRY_ASSIST_FAIL, { conversationFile, retryNodeId, message: 'Incomplete parameters', tag }, i18n.t('workflow.controllers.branch.retryFailIncompleteParam'))
     }
     try {
       const resp: any = await ChatBranches.retryBranch({
@@ -154,15 +155,15 @@ export function initBranchBridge(): DisposerFn {
         })
       } catch (_) {}
 
-      try { Host.pushToast?.({ type: 'success', message: '已创建新分支', timeout: 1200 } as ToastPayload) } catch (_) {}
+      try { Host.pushToast?.({ type: 'success', message: i18n.t('workflow.controllers.branch.retryAssistSuccess'), timeout: 1200 } as ToastPayload) } catch (_) {}
     } catch (e: any) {
       emitFail(Branch.EVT_BRANCH_RETRY_ASSIST_FAIL, {
         conversationFile,
         retryNodeId,
-        message: e?.message || '创建新分支失败',
+        message: e?.message || i18n.t('workflow.controllers.branch.retryAssistFail'),
         detail: e,
         tag,
-      }, '创建新分支失败')
+      }, i18n.t('workflow.controllers.branch.retryAssistFail'))
     }
   }))
 
@@ -172,7 +173,7 @@ export function initBranchBridge(): DisposerFn {
     const userNodeId = String(p.userNodeId || '').trim()
     const tag = p.tag ? String(p.tag) : undefined
     if (!conversationFile || !userNodeId) {
-      return emitFail(Branch.EVT_BRANCH_RETRY_USER_FAIL, { conversationFile, userNodeId, message: '参数不完整', tag }, '重试失败：参数不完整')
+      return emitFail(Branch.EVT_BRANCH_RETRY_USER_FAIL, { conversationFile, userNodeId, message: 'Incomplete parameters', tag }, i18n.t('workflow.controllers.branch.retryFailIncompleteParam'))
     }
     try {
       const result = await ChatBranches.retryUserMessage({ file: conversationFile, user_node_id: userNodeId })
@@ -185,15 +186,15 @@ export function initBranchBridge(): DisposerFn {
           tag,
         })
       } catch (_) {}
-      try { Host.pushToast?.({ type: 'info', message: '已触发智能重试', timeout: 1200 } as ToastPayload) } catch (_) {}
+      try { Host.pushToast?.({ type: 'info', message: i18n.t('workflow.controllers.branch.retryUserSuccess'), timeout: 1200 } as ToastPayload) } catch (_) {}
     } catch (e: any) {
       emitFail(Branch.EVT_BRANCH_RETRY_USER_FAIL, {
         conversationFile,
         userNodeId,
-        message: e?.message || '智能重试失败',
+        message: e?.message || i18n.t('workflow.controllers.branch.retryUserFail'),
         detail: e,
         tag,
-      }, '智能重试失败')
+      }, i18n.t('workflow.controllers.branch.retryUserFail'))
     }
   }))
 
@@ -203,7 +204,7 @@ export function initBranchBridge(): DisposerFn {
     const nodeId = String(p.nodeId || '').trim()
     const tag = p.tag ? String(p.tag) : undefined
     if (!conversationFile || !nodeId) {
-      return emitFail(Branch.EVT_BRANCH_TRUNCATE_FAIL, { conversationFile, nodeId, message: '参数不完整', tag }, '修剪失败：参数不完整')
+      return emitFail(Branch.EVT_BRANCH_TRUNCATE_FAIL, { conversationFile, nodeId, message: 'Incomplete parameters', tag }, i18n.t('workflow.controllers.branch.truncateFailIncompleteParam'))
     }
     try {
       const doc = await ChatBranches.truncateAfter({ file: conversationFile, node_id: nodeId })
@@ -214,15 +215,15 @@ export function initBranchBridge(): DisposerFn {
           tag,
         })
       } catch (_) {}
-      try { Host.pushToast?.({ type: 'success', message: '已修剪分支', timeout: 1200 } as ToastPayload) } catch (_) {}
+      try { Host.pushToast?.({ type: 'success', message: i18n.t('workflow.controllers.branch.truncateSuccess'), timeout: 1200 } as ToastPayload) } catch (_) {}
     } catch (e: any) {
       emitFail(Branch.EVT_BRANCH_TRUNCATE_FAIL, {
         conversationFile,
         nodeId,
-        message: e?.message || '修剪失败',
+        message: e?.message || i18n.t('workflow.controllers.branch.truncateFail'),
         detail: e,
         tag,
-      }, '修剪失败')
+      }, i18n.t('workflow.controllers.branch.truncateFail'))
     }
   }))
 

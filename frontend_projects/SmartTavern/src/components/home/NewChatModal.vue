@@ -1,15 +1,20 @@
 <script setup>
-import { ref, watch, nextTick, onBeforeUnmount } from 'vue'
+import { ref, watch, nextTick, onBeforeUnmount, computed } from 'vue'
 import ContentViewModal from '@/components/common/ContentViewModal.vue'
 import Host from '@/workflow/core/host'
 import * as Catalog from '@/workflow/channels/catalog'
 import * as Conversation from '@/workflow/channels/conversation'
+import { useI18n } from '@/locales'
+
+const { t } = useI18n()
  
 const props = defineProps({
   show: { type: Boolean, default: false },
-  title: { type: String, default: '新建对话' },
+  title: { type: String, default: '' },
   icon: { type: String, default: '' },
 })
+
+const effectiveTitle = computed(() => props.title || t('home.newChat.title'))
  
 const emit = defineEmits(['update:show', 'confirm', 'close'])
  
@@ -139,15 +144,15 @@ async function loadLists() {
             file: it.file,
           }))
           const head = { value: '', label: placeholder, file: '' }
-          return required ? [head, ...opts] : [{ value: '', label: '（可不选）', file: '' }, ...opts]
+          return required ? [head, ...opts] : [{ value: '', label: t('home.newChat.optional'), file: '' }, ...opts]
         }
         
-        llmConfigOptions.value = mapOpts(results.llmConfigs, true, '请选择AI配置')
-        presetOptions.value = mapOpts(results.presets, true, '请选择预设')
-        characterOptions.value = mapOpts(results.chars, true, '请选择角色卡')
-        personaOptions.value = mapOpts(results.personas, true, '请选择用户信息')
-        regexOptions.value = mapOpts(results.regex, false, '（可不选）')
-        worldbookOptions.value = mapOpts(results.worlds, false, '（可不选）')
+        llmConfigOptions.value = mapOpts(results.llmConfigs, true, t('home.newChat.llmConfigPlaceholder'))
+        presetOptions.value = mapOpts(results.presets, true, t('home.newChat.presetPlaceholder'))
+        characterOptions.value = mapOpts(results.chars, true, t('home.newChat.characterPlaceholder'))
+        personaOptions.value = mapOpts(results.personas, true, t('home.newChat.personaPlaceholder'))
+        regexOptions.value = mapOpts(results.regex, false, t('home.newChat.optional'))
+        worldbookOptions.value = mapOpts(results.worlds, false, t('home.newChat.optional'))
 
         // 组装重名检测集合
         const bases = new Set()
@@ -171,7 +176,7 @@ async function loadLists() {
           }
         })
       } catch (e) {
-        fetchError.value = e?.message || '加载列表失败'
+        fetchError.value = e?.message || t('home.newChat.listFailed')
       } finally {
         loadingLists.value = false
       }
@@ -243,13 +248,13 @@ async function loadLists() {
     
     const offFail = Host.events.on(Catalog.EVT_CATALOG_LIST_FAIL, ({ message, tag: resTag }) => {
       if (resTag && resTag !== tag) return
-      fetchError.value = message || '加载列表失败'
+      fetchError.value = message || t('home.newChat.listFailed')
       loadingLists.value = false
     })
     
     const offConvFail = Host.events.on(Conversation.EVT_CONVERSATION_LIST_FAIL, ({ message, tag: resTag }) => {
       if (resTag && resTag !== tag) return
-      fetchError.value = message || '加载对话列表失败'
+      fetchError.value = message || t('home.newChat.convListFailed')
       loadingLists.value = false
     })
     
@@ -264,7 +269,7 @@ async function loadLists() {
     Host.events.emit(Catalog.EVT_CATALOG_LIST_REQ, { category: 'llm_config', tag })
     Host.events.emit(Conversation.EVT_CONVERSATION_LIST_REQ, { tag })
   } catch (e) {
-    fetchError.value = e?.message || '加载列表失败'
+    fetchError.value = e?.message || t('home.newChat.listFailed')
     loadingLists.value = false
   }
 }
@@ -277,13 +282,13 @@ watch(() => props.show, (v) => {
 })
  
 async function onSubmit() {
-  const name = (newChatName.value ?? '').trim() || '未命名会话'
+  const name = (newChatName.value ?? '').trim() || t('common.unknown')
   if (!selectedLLMConfig.value || !selectedPreset.value || !selectedCharacter.value || !selectedPersona.value) {
-    newGameError.value = '请先选择：AI配置、预设、角色卡、用户信息（必选）'
+    newGameError.value = t('home.newChat.requiredError')
     return
   }
   if (nameDupByFile.value || nameDupByTitle.value) {
-    newGameError.value = '对话名称重复：请更换一个名称（文件名或内部 name 不可重复）'
+    newGameError.value = t('home.newChat.duplicateError')
     return
   }
   newGameError.value = ''
@@ -321,7 +326,7 @@ async function onSubmit() {
       const offFail = Host.events.on(Conversation.EVT_CONVERSATION_CREATE_FAIL, ({ message, tag: resTag }) => {
         if (resTag && resTag !== createTag) return
         
-        newGameError.value = message || '创建对话失败'
+        newGameError.value = message || t('home.newChat.createFailed')
         submitting.value = false
         
         try { offOk?.() } catch (_) {}
@@ -333,7 +338,7 @@ async function onSubmit() {
       // 发送创建请求
       Host.events.emit(Conversation.EVT_CONVERSATION_CREATE_REQ, { payload, tag: createTag })
     } catch (e) {
-      newGameError.value = e?.message || '创建对话失败'
+      newGameError.value = e?.message || t('home.newChat.createFailed')
       submitting.value = false
     }
   } else {
@@ -353,7 +358,7 @@ function onCancel() {
 <template>
   <ContentViewModal
     :show="props.show"
-    :title="props.title"
+    :title="effectiveTitle"
     :icon="props.icon"
     @update:show="(v) => emit('update:show', v)"
     @close="onCancel"
@@ -361,7 +366,7 @@ function onCancel() {
     <!-- 加载中（与 LoadGame 一致的旋转等待风格） -->
     <div v-if="loadingLists" class="new-chat-loading">
       <div class="spinner" aria-hidden="true"></div>
-      <div class="loading-text">正在加载列表…</div>
+      <div class="loading-text">{{ t('home.newChat.loading') }}</div>
     </div>
 
     <!-- 加载失败 -->
@@ -370,88 +375,88 @@ function onCancel() {
     <!-- 表单 -->
     <form v-else class="new-chat-form" @submit.prevent="onSubmit">
       <div class="form-row">
-        <label for="new-chat-name">新对话名称</label>
+        <label for="new-chat-name">{{ t('home.newChat.nameLabel') }}</label>
         <input
           id="new-chat-name"
           type="text"
           v-model="newChatName"
           :disabled="submitting"
-          placeholder="请输入对话名称"
+          :placeholder="t('home.newChat.namePlaceholder')"
           aria-describedby="name-help name-warn"
         />
         <div id="name-help" class="form-hint">
-          允许字符：中文、字母、数字、空格、-、_；特殊字符（/ \ : * ? " < > |）将被直接替换为“-”。
+          {{ t('home.newChat.nameHelp') }}
         </div>
         <div id="name-warn" class="form-hint warn" aria-live="polite" v-if="nameReplaced">
-          已替换不允许的字符为“-”以确保文件名安全。
+          {{ t('home.newChat.nameReplaced') }}
         </div>
         <div class="form-hint warn" v-if="nameDupByFile">
-          文件名已占用：{{ toFileBase(newChatName) }}.json 已存在，请更换名称。
+          {{ t('home.newChat.nameDupFile', { name: toFileBase(newChatName) }) }}
         </div>
         <div class="form-hint warn" v-if="!nameDupByFile && nameDupByTitle">
-          内部名称已占用：已有对话的 name 与“{{ (newChatName || '').trim() }}”重复，请更换名称。
+          {{ t('home.newChat.nameDupTitle', { name: (newChatName || '').trim() }) }}
         </div>
       </div>
 
       <div class="form-row">
-        <label for="new-chat-desc">描述（可选）</label>
-        <textarea id="new-chat-desc" v-model="newChatDesc" :disabled="submitting" rows="3" placeholder="请输入对话描述"></textarea>
+        <label for="new-chat-desc">{{ t('home.newChat.descLabel') }}</label>
+        <textarea id="new-chat-desc" v-model="newChatDesc" :disabled="submitting" rows="3" :placeholder="t('home.newChat.descPlaceholder')"></textarea>
       </div>
  
       <div class="form-row">
-        <label for="new-chat-llmconfig">AI配置（必选）</label>
+        <label for="new-chat-llmconfig">{{ t('home.newChat.llmConfigLabel') }}</label>
         <select id="new-chat-llmconfig" v-model="selectedLLMConfig" :disabled="submitting">
           <option v-for="opt in llmConfigOptions" :key="opt.value" :value="opt.value" :disabled="opt.value === ''">{{ opt.label }}</option>
         </select>
       </div>
 
       <div class="form-row">
-        <label for="new-chat-preset">预设（必选）</label>
+        <label for="new-chat-preset">{{ t('home.newChat.presetLabel') }}</label>
         <select id="new-chat-preset" v-model="selectedPreset" :disabled="submitting">
           <option v-for="opt in presetOptions" :key="opt.value" :value="opt.value" :disabled="opt.value === ''">{{ opt.label }}</option>
         </select>
       </div>
 
       <div class="form-row">
-        <label for="new-chat-character">角色卡（必选）</label>
+        <label for="new-chat-character">{{ t('home.newChat.characterLabel') }}</label>
         <select id="new-chat-character" v-model="selectedCharacter" :disabled="submitting">
           <option v-for="opt in characterOptions" :key="opt.value" :value="opt.value" :disabled="opt.value === ''">{{ opt.label }}</option>
         </select>
       </div>
 
       <div class="form-row">
-        <label for="new-chat-persona">用户信息（必选）</label>
+        <label for="new-chat-persona">{{ t('home.newChat.personaLabel') }}</label>
         <select id="new-chat-persona" v-model="selectedPersona" :disabled="submitting">
           <option v-for="opt in personaOptions" :key="opt.value" :value="opt.value" :disabled="opt.value === ''">{{ opt.label }}</option>
         </select>
       </div>
 
       <div class="form-row">
-        <label for="new-chat-regex">正则（可选）</label>
+        <label for="new-chat-regex">{{ t('home.newChat.regexLabel') }}</label>
         <select id="new-chat-regex" v-model="selectedRegex" :disabled="submitting">
           <option v-for="opt in regexOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
         </select>
       </div>
 
       <div class="form-row">
-        <label for="new-chat-worldbook">世界书（可选）</label>
+        <label for="new-chat-worldbook">{{ t('home.newChat.worldbookLabel') }}</label>
         <select id="new-chat-worldbook" v-model="selectedWorldbook" :disabled="submitting">
           <option v-for="opt in worldbookOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
         </select>
       </div>
 
       <div class="form-row">
-        <label>对话类型</label>
+        <label>{{ t('home.newChat.typeLabel') }}</label>
         <div class="type-options">
           <label class="type-option">
             <input type="radio" value="threaded" v-model="newChatType" :disabled="submitting" />
-            <span>对话楼层</span>
-            <small>Threaded Chat</small>
+            <span>{{ t('home.newChat.typeThreaded') }}</span>
+            <small>{{ t('home.newChat.typeThreadedSub') }}</small>
           </label>
           <label class="type-option">
             <input type="radio" value="sandbox" v-model="newChatType" :disabled="submitting" />
-            <span>前端沙盒</span>
-            <small>Frontend Sandbox</small>
+            <span>{{ t('home.newChat.typeSandbox') }}</span>
+            <small>{{ t('home.newChat.typeSandboxSub') }}</small>
           </label>
         </div>
       </div>
@@ -460,10 +465,10 @@ function onCancel() {
 
       <div class="form-actions">
         <button type="submit" class="btn primary" :disabled="submitting || nameDupByFile || nameDupByTitle">
-          <span v-if="!submitting">确认</span>
-          <span v-else class="btn-loading"><span class="spinner spinner-sm" aria-hidden="true"></span> 正在创建…</span>
+          <span v-if="!submitting">{{ t('home.newChat.confirm') }}</span>
+          <span v-else class="btn-loading"><span class="spinner spinner-sm" aria-hidden="true"></span> {{ t('home.newChat.creating') }}</span>
         </button>
-        <button type="button" class="btn" :disabled="submitting" @click="onCancel">取消</button>
+        <button type="button" class="btn" :disabled="submitting" @click="onCancel">{{ t('home.newChat.cancel') }}</button>
       </div>
     </form>
   </ContentViewModal>

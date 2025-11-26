@@ -6,6 +6,9 @@ import * as SettingsChannel from '@/workflow/channels/settings'
 import DataCatalog from '@/services/dataCatalog'
 import ImportConflictModal from '@/components/common/ImportConflictModal.vue'
 import ExportModal from '@/components/common/ExportModal.vue'
+import { useI18n } from '@/locales'
+
+const { t } = useI18n()
 
 const props = defineProps({
   anchorLeft: { type: Number, default: 308 },
@@ -13,7 +16,6 @@ const props = defineProps({
   zIndex: { type: Number, default: 59 },
   top: { type: Number, default: 64 },
   bottom: { type: Number, default: 12 },
-  title: { type: String, default: '世界书 World Books' },
   conversationFile: { type: String, default: null },
 })
 
@@ -190,7 +192,7 @@ async function handleFileSelect(event) {
   const validTypes = ['.json', '.zip', '.png']
   const ext = '.' + (file.name.split('.').pop() || '').toLowerCase()
   if (!validTypes.includes(ext)) {
-    importError.value = `不支持的文件类型: ${ext}，请选择 .json、.zip 或 .png 文件`
+    importError.value = t('error.invalidFileType', { ext })
     event.target.value = ''
     return
   }
@@ -222,11 +224,11 @@ async function doImport(file, overwrite = false, targetName = null) {
       refreshWorldbooks()
       emit('import', result)
     } else {
-      importError.value = result.message || result.error || '导入失败'
+      importError.value = result.message || result.error || t('error.importFailed')
     }
   } catch (err) {
     console.error('[WorldBooksPanel] Import error:', err)
-    importError.value = err.message || '导入失败'
+    importError.value = err.message || t('error.importFailed')
   } finally {
     importing.value = false
   }
@@ -282,32 +284,32 @@ function handleExportComplete(result) {
     :style="panelStyle"
   >
       <header class="wb-header">
-        <div class="wb-title">
+        <div class="wb-title st-panel-title">
           <span class="wb-icon"><i data-lucide="book-open"></i></span>
-          {{ props.title }}
+          {{ t('panel.worldBooks.title') }}
         </div>
         <div class="wb-header-actions">
           <button
-            class="wb-action-btn"
+            class="wb-action-btn st-btn-shrinkable"
             type="button"
-            title="导入世界书 (支持 .json, .zip, .png)"
+            :title="t('panel.worldBooks.importTitle')"
             @click="triggerImport"
             :disabled="importing"
           >
             <i data-lucide="download"></i>
-            <span>导入</span>
+            <span class="st-btn-text">{{ t('common.import') }}</span>
           </button>
           <button
-            class="wb-action-btn"
+            class="wb-action-btn st-btn-shrinkable"
             type="button"
-            title="导出世界书"
+            :title="t('panel.worldBooks.exportTitle')"
             @click="openExportModal"
             :disabled="worldbooks.length === 0"
           >
             <i data-lucide="upload"></i>
-            <span>导出</span>
+            <span class="st-btn-text">{{ t('common.export') }}</span>
           </button>
-          <button class="wb-close" type="button" title="关闭" @click="close">✕</button>
+          <button class="wb-close" type="button" :title="t('common.close')" @click="close">✕</button>
         </div>
       </header>
 
@@ -321,10 +323,10 @@ function handleExportComplete(result) {
 
       <CustomScrollbar class="wb-body">
         <div v-if="loading" class="wb-loading">
-          {{ importing ? '正在导入...' : '加载中...' }}
+          {{ importing ? t('common.importing') : t('common.loading') }}
         </div>
         <div v-else-if="error" class="wb-error">
-          {{ importError ? importError : `加载失败：${error}` }}
+          {{ importError ? importError : t('error.loadFailed', { error }) }}
           <button v-if="importError" class="wb-error-dismiss" @click="importError = null">×</button>
         </div>
         <div v-else class="wb-list">
@@ -352,16 +354,16 @@ function handleExportComplete(result) {
             </div>
             <div class="wb-actions">
               <button
-                class="wb-btn"
+                class="wb-btn st-btn-shrinkable"
                 :class="{ active: isUsing(it.key) }"
                 type="button"
                 @click="onUse(it.key)"
                 :aria-pressed="isUsing(it.key)"
-              >{{ isUsing(it.key) ? '使用中' : '使用' }}</button>
+              >{{ isUsing(it.key) ? t('common.using') : t('common.use') }}</button>
 
-              <button class="wb-btn" type="button" @click="onView(it.key)">查看</button>
+              <button class="wb-btn st-btn-shrinkable" type="button" @click="onView(it.key)">{{ t('common.view') }}</button>
 
-              <button class="wb-btn wb-danger" type="button" @click="onDelete(it.key)">删除</button>
+              <button class="wb-btn wb-danger st-btn-shrinkable" type="button" @click="onDelete(it.key)">{{ t('common.delete') }}</button>
             </div>
           </div>
         </div>
@@ -371,7 +373,7 @@ function handleExportComplete(result) {
       <ImportConflictModal
         :show="showImportConflictModal"
         data-type="worldbook"
-        data-type-name="世界书"
+        :data-type-name="t('panel.worldBooks.typeName')"
         :existing-name="importConflictExistingName"
         :suggested-name="importConflictSuggestedName"
         @close="closeImportConflictModal"
@@ -383,7 +385,7 @@ function handleExportComplete(result) {
       <ExportModal
         :show="showExportModal"
         data-type="worldbook"
-        data-type-name="世界书"
+        :data-type-name="t('panel.worldBooks.typeName')"
         :items="worldbooks"
         default-icon="book-open"
         @close="closeExportModal"

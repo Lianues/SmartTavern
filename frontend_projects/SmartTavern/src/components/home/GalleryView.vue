@@ -1,11 +1,15 @@
 <script setup>
 import { onMounted } from "vue"
+import { useI18n } from '@/locales'
+
+const { t } = useI18n()
+
 onMounted(() => window.lucide?.createIcons?.())
 </script>
 
 <template>
   <section class="home-modal-section">
-    <p class="hm-desc">占位界面：未来这里展示截图与插画素材，支持筛选与全屏预览。</p>
+    <p class="hm-desc">{{ t('home.gallery.placeholder') }}</p>
 
     <div class="gallery-grid">
       <div v-for="i in 12" :key="i" class="g-item">

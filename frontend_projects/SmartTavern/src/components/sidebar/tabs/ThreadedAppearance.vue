@@ -1,6 +1,9 @@
 <script setup>
 import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
 import useAppearanceThreaded from '@/composables/appearance/useAppearanceThreaded'
+import { useI18n } from '@/locales'
+
+const { t } = useI18n()
 
 /**
  * 楼层对话外观配置（拆分自 AppearancePanel）
@@ -191,12 +194,12 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="st-tab-panel" data-scope="settings-threaded">
-    <h3>楼层对话外观</h3>
+    <h3>{{ t('appearance.threaded.title') }}</h3>
 
     <!-- 字号/尺寸 -->
     <div class="st-control" data-slider="contentFontSize">
       <label class="st-control-label">
-        <span class="label-text">正文文字大小</span>
+        <span class="label-text">{{ t('appearance.threaded.contentFontSize') }}</span>
         <div class="value-group">
           <input type="number" class="st-number-input" :value="contentFontSize" min="12" max="32" @input="onContentFontSizeNumberInput" />
           <span class="unit">px</span>
@@ -207,7 +210,7 @@ onBeforeUnmount(() => {
 
     <div class="st-control" data-slider="nameFontSize">
       <label class="st-control-label">
-        <span class="label-text">角色名称文字大小</span>
+        <span class="label-text">{{ t('appearance.threaded.nameFontSize') }}</span>
         <div class="value-group">
           <input type="number" class="st-number-input" :value="nameFontSize" min="10" max="24" @input="onNameFontSizeNumberInput" />
           <span class="unit">px</span>
@@ -218,7 +221,7 @@ onBeforeUnmount(() => {
 
     <div class="st-control" data-slider="badgeFontSize">
       <label class="st-control-label">
-        <span class="label-text">角色徽章文字大小</span>
+        <span class="label-text">{{ t('appearance.threaded.badgeFontSize') }}</span>
         <div class="value-group">
           <input type="number" class="st-number-input" :value="badgeFontSize" min="8" max="16" @input="onBadgeFontSizeNumberInput" />
           <span class="unit">px</span>
@@ -229,7 +232,7 @@ onBeforeUnmount(() => {
 
     <div class="st-control" data-slider="floorFontSize">
       <label class="st-control-label">
-        <span class="label-text">楼层号文字大小</span>
+        <span class="label-text">{{ t('appearance.threaded.floorFontSize') }}</span>
         <div class="value-group">
           <input type="number" class="st-number-input" :value="floorFontSize" min="10" max="24" @input="onFloorFontSizeNumberInput" />
           <span class="unit">px</span>
@@ -240,7 +243,7 @@ onBeforeUnmount(() => {
 
     <div class="st-control" data-slider="avatarSize">
       <label class="st-control-label">
-        <span class="label-text">角色头像大小</span>
+        <span class="label-text">{{ t('appearance.threaded.avatarSize') }}</span>
         <div class="value-group">
           <input type="number" class="st-number-input" :value="avatarSize" min="32" max="80" @input="onAvatarSizeNumberInput" />
           <span class="unit">px</span>
@@ -251,7 +254,7 @@ onBeforeUnmount(() => {
 
     <div class="st-control" data-slider="chatWidth">
       <label class="st-control-label">
-        <span class="label-text">对话页面宽度</span>
+        <span class="label-text">{{ t('appearance.threaded.chatWidth') }}</span>
         <div class="value-group">
           <input type="number" class="st-number-input" :value="chatWidth" min="30" max="100" @input="onWidthNumberInput" />
           <span class="unit">%</span>
@@ -262,7 +265,7 @@ onBeforeUnmount(() => {
 
     <div class="st-control" data-slider="inputHeight">
       <label class="st-control-label">
-        <span class="label-text">底部输入框高度</span>
+        <span class="label-text">{{ t('appearance.threaded.inputHeight') }}</span>
         <div class="value-group">
           <input type="number" class="st-number-input" :value="inputHeight" min="60" max="300" @input="onInputHeightNumberInput" />
           <span class="unit">px</span>
@@ -274,7 +277,7 @@ onBeforeUnmount(() => {
     <!-- 常用外观 -->
     <div class="st-control" data-slider="contentLineHeight">
       <label class="st-control-label">
-        <span class="label-text">正文行距</span>
+        <span class="label-text">{{ t('appearance.threaded.lineHeight') }}</span>
         <div class="value-group">
           <input type="number" class="st-number-input" :value="contentLineHeight" min="1.2" max="2.0" step="0.05" @input="onContentLineHeightNumberInput" />
           <span class="unit">×</span>
@@ -285,7 +288,7 @@ onBeforeUnmount(() => {
 
     <div class="st-control" data-slider="messageGap">
       <label class="st-control-label">
-        <span class="label-text">消息间距</span>
+        <span class="label-text">{{ t('appearance.threaded.messageGap') }}</span>
         <div class="value-group">
           <input type="number" class="st-number-input" :value="messageGap" min="6" max="24" step="1" @input="onMessageGapNumberInput" />
           <span class="unit">px</span>
@@ -296,9 +299,9 @@ onBeforeUnmount(() => {
 
     <div class="st-control" data-slider="cardRadius">
       <label class="st-control-label">
-        <span class="label-text">消息卡圆角</span>
+        <span class="label-text">{{ t('appearance.threaded.cardRadius') }}</span>
         <div class="value-group">
-          <input type="number" class="st-number-input" :value="Number.isFinite(cardRadius) ? cardRadius : ''" min="0" max="24" step="1" @input="onCardRadiusNumberInput" placeholder="默认" />
+          <input type="number" class="st-number-input" :value="Number.isFinite(cardRadius) ? cardRadius : ''" min="0" max="24" step="1" @input="onCardRadiusNumberInput" :placeholder="t('common.default')" />
           <span class="unit">px</span>
         </div>
       </label>
@@ -307,7 +310,7 @@ onBeforeUnmount(() => {
 
     <div class="st-control" data-slider="stripeWidth">
       <label class="st-control-label">
-        <span class="label-text">色条宽度</span>
+        <span class="label-text">{{ t('appearance.threaded.stripeWidth') }}</span>
         <div class="value-group">
           <input type="number" class="st-number-input" :value="stripeWidth" min="0" max="12" step="1" @input="onStripeWidthNumberInput" />
           <span class="unit">px</span>
@@ -319,7 +322,7 @@ onBeforeUnmount(() => {
     <!-- 透明度 -->
     <div class="st-control" data-slider="threadedBgOpacity">
       <label class="st-control-label">
-        <span class="label-text">背景图片遮罩不透明度</span>
+        <span class="label-text">{{ t('appearance.threaded.bgMaskOpacity') }}</span>
         <div class="value-group">
           <input type="number" class="st-number-input" :value="threadedBgOpacityPct" min="0" max="100" @input="onThreadedBgOpacityNumberInput" />
           <span class="unit">%</span>
@@ -330,7 +333,7 @@ onBeforeUnmount(() => {
 
     <div class="st-control" data-slider="threadedBgBlur">
       <label class="st-control-label">
-        <span class="label-text">背景图片遮罩模糊</span>
+        <span class="label-text">{{ t('appearance.threaded.bgMaskBlur') }}</span>
         <div class="value-group">
           <input type="number" class="st-number-input" :value="threadedBgBlurPx" min="0" max="50" @input="onThreadedBgBlurNumberInput" />
           <span class="unit">px</span>
@@ -338,13 +341,13 @@ onBeforeUnmount(() => {
       </label>
       <input type="range" min="0" max="50" step="1" :value="threadedBgBlurPx" @pointerdown="onTuningStart('threadedBgBlur')" @input="onThreadedBgBlurRangeInput" />
       <div class="st-control-hint">
-        <span class="muted" style="font-size:12px;">通过遮罩层对背景图应用高斯模糊（性能与质感权衡建议 0~12px）</span>
+        <span class="muted" style="font-size:12px;">{{ t('appearance.threaded.bgMaskBlurHint') }}</span>
       </div>
     </div>
 
     <div class="st-control" data-slider="threadedMsgBgOpacity">
       <label class="st-control-label">
-        <span class="label-text">楼层消息背景不透明度</span>
+        <span class="label-text">{{ t('appearance.threaded.msgBgOpacity') }}</span>
         <div class="value-group">
           <input type="number" class="st-number-input" :value="threadedMsgBgOpacityPct" min="0" max="100" @input="onThreadedMsgBgOpacityNumberInput" />
           <span class="unit">%</span>
@@ -355,7 +358,7 @@ onBeforeUnmount(() => {
 
     <div class="st-control" data-slider="threadedListBgOpacity">
       <label class="st-control-label">
-        <span class="label-text">对话区容器背景不透明度</span>
+        <span class="label-text">{{ t('appearance.threaded.listBgOpacity') }}</span>
         <div class="value-group">
           <input type="number" class="st-number-input" :value="threadedListBgOpacityPct" min="0" max="100" @input="onThreadedListBgOpacityNumberInput" />
           <span class="unit">%</span>
@@ -366,7 +369,7 @@ onBeforeUnmount(() => {
 
     <div class="st-control" data-slider="threadedInputBgOpacity">
       <label class="st-control-label">
-        <span class="label-text">底部输入框背景不透明度</span>
+        <span class="label-text">{{ t('appearance.threaded.inputBgOpacity') }}</span>
         <div class="value-group">
           <input type="number" class="st-number-input" :value="threadedInputBgOpacityPct" min="0" max="100" @input="onThreadedInputBgOpacityNumberInput" />
           <span class="unit">%</span>
@@ -376,38 +379,36 @@ onBeforeUnmount(() => {
     </div>
 
     <!-- 楼层对话：HTML 舞台（iframe） -->
-    <h4 class="muted" style="margin:8px 0 0;">HTML 舞台（楼层内 iframe）</h4>
+    <h4 class="muted" style="margin:8px 0 0;">{{ t('appearance.threaded.htmlStage') }}</h4>
 
     <!-- 显示模式（固定 / 自适应 / 由沙盒内代码决定） -->
     <div class="st-control" data-slider="threadedDisplayMode">
       <label class="st-control-label">
-        <span class="label-text">显示模式</span>
+        <span class="label-text">{{ t('appearance.threaded.displayMode') }}</span>
         <div class="value-group">
           <select class="st-number-input" v-model="threadedDisplayModeSel" style="width: 200px;">
-            <option value="auto">自适应高度（默认）</option>
-            <option value="fixed">固定容器（使用宽高比）</option>
-            <option value="inline">由沙盒内代码决定（缺省则自适应）</option>
+            <option value="auto">{{ t('appearance.threaded.displayModeAuto') }}</option>
+            <option value="fixed">{{ t('appearance.threaded.displayModeFixed') }}</option>
+            <option value="inline">{{ t('appearance.threaded.displayModeInline') }}</option>
           </select>
         </div>
       </label>
       <div class="st-control-hint">
         <span class="muted" style="font-size:12px;">
-          使用“由沙盒内代码决定”时，可在 HTML 中加入注释：
-          <!-- st:display-mode=auto|fixed -->
-          若无声明则回退为自适应高度。
+          {{ t('appearance.threaded.displayModeHint') }}
         </span>
       </div>
     </div>
 
     <div class="st-control" data-slider="threadedStageAspect">
       <label class="st-control-label">
-        <span class="label-text">画面宽高比</span>
+        <span class="label-text">{{ t('appearance.threaded.aspectRatio') }}</span>
         <div class="value-group">
           <select class="st-number-input" @change="onThreadedAspectPreset">
-            <option disabled selected value="">预设</option>
+            <option disabled selected value="">{{ t('appearance.threaded.preset') }}</option>
             <option v-for="p in aspectPresets" :key="p.label" :value="p.v.join(',')">{{ p.label }}</option>
           </select>
-          <span class="unit">或 自定义</span>
+          <span class="unit">{{ t('appearance.threaded.orCustom') }}</span>
         </div>
       </label>
       <div style="display:flex; gap:8px; align-items:center;">
@@ -419,7 +420,7 @@ onBeforeUnmount(() => {
 
     <div class="st-control" data-slider="threadedStageMaxWidthPct">
       <label class="st-control-label">
-        <span class="label-text">舞台最大宽度</span>
+        <span class="label-text">{{ t('appearance.threaded.stageMaxWidth') }}</span>
         <div class="value-group">
           <input type="number" class="st-number-input" :value="thMaxWidthPct" min="30" max="100" @input="onThreadedMaxWidthNumberInput" />
           <span class="unit">%</span>
@@ -427,13 +428,13 @@ onBeforeUnmount(() => {
       </label>
       <input type="range" min="30" max="100" step="1" :value="thMaxWidthPct" @pointerdown="onTuningStart('threadedStageMaxWidthPct')" @input="onThreadedMaxWidthRangeInput" />
       <div class="st-control-hint">
-        <span class="muted" style="font-size:12px;">以消息内容宽度为上限，设置相对百分比宽度</span>
+        <span class="muted" style="font-size:12px;">{{ t('appearance.threaded.stageMaxWidthHint') }}</span>
       </div>
     </div>
 
     <div class="st-control" data-slider="threadedStagePadding">
       <label class="st-control-label">
-        <span class="label-text">舞台内边距</span>
+        <span class="label-text">{{ t('appearance.threaded.stagePadding') }}</span>
         <div class="value-group">
           <input type="number" class="st-number-input" :value="thPadding" min="0" max="48" @input="onThreadedPaddingNumberInput" />
           <span class="unit">px</span>
@@ -444,7 +445,7 @@ onBeforeUnmount(() => {
 
     <div class="st-control" data-slider="threadedStageRadius">
       <label class="st-control-label">
-        <span class="label-text">舞台圆角</span>
+        <span class="label-text">{{ t('appearance.threaded.stageRadius') }}</span>
         <div class="value-group">
           <input type="number" class="st-number-input" :value="thRadius" min="0" max="32" @input="onThreadedRadiusNumberInput" />
           <span class="unit">px</span>
@@ -453,7 +454,7 @@ onBeforeUnmount(() => {
       <input type="range" min="0" max="32" step="1" :value="thRadius" @pointerdown="onTuningStart('threadedStageRadius')" @input="onThreadedRadiusRangeInput" />
     </div>
 
-    <p class="muted">拖拽滑条时，页面会自动变透明，仅保留本面板不透明，便于实时查看调整效果。</p>
+    <p class="muted">{{ t('appearance.threaded.tuningTip') }}</p>
   </div>
 </template>
 

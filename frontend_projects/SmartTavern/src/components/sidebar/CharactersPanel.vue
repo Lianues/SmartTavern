@@ -6,6 +6,9 @@ import * as SettingsChannel from '@/workflow/channels/settings'
 import DataCatalog from '@/services/dataCatalog'
 import ImportConflictModal from '@/components/common/ImportConflictModal.vue'
 import ExportModal from '@/components/common/ExportModal.vue'
+import { useI18n } from '@/locales'
+
+const { t } = useI18n()
 
 const props = defineProps({
   anchorLeft: { type: Number, default: 308 },
@@ -13,7 +16,6 @@ const props = defineProps({
   zIndex: { type: Number, default: 59 },
   top: { type: Number, default: 64 },
   bottom: { type: Number, default: 12 },
-  title: { type: String, default: '角色卡 Characters' },
   conversationFile: { type: String, default: null },
 })
 
@@ -184,7 +186,7 @@ async function handleFileSelect(event) {
   const validTypes = ['.json', '.zip', '.png']
   const ext = '.' + (file.name.split('.').pop() || '').toLowerCase()
   if (!validTypes.includes(ext)) {
-    importError.value = `不支持的文件类型: ${ext}，请选择 .json、.zip 或 .png 文件`
+    importError.value = t('error.invalidFileType', { ext })
     event.target.value = ''
     return
   }
@@ -216,11 +218,11 @@ async function doImport(file, overwrite = false, targetName = null) {
       refreshCharacters()
       emit('import', result)
     } else {
-      importError.value = result.message || result.error || '导入失败'
+      importError.value = result.message || result.error || t('error.importFailed')
     }
   } catch (err) {
     console.error('[CharactersPanel] Import error:', err)
-    importError.value = err.message || '导入失败'
+    importError.value = err.message || t('error.importFailed')
   } finally {
     importing.value = false
   }
@@ -276,29 +278,29 @@ function handleExportComplete(result) {
     :style="panelStyle"
   >
       <header class="ch-header">
-        <div class="ch-title">
+        <div class="ch-title st-panel-title">
           <span class="ch-icon"><i data-lucide="users"></i></span>
-          {{ props.title }}
+          {{ t('panel.characters.title') }}
         </div>
         <div class="ch-header-actions">
-          <button class="ch-action-btn" type="button" title="导入角色 (支持 .json, .zip, .png)" @click="triggerImport" :disabled="importing">
+          <button class="ch-action-btn st-btn-shrinkable" type="button" :title="t('panel.characters.importTitle')" @click="triggerImport" :disabled="importing">
             <i data-lucide="download"></i>
-            <span>导入</span>
+            <span class="st-btn-text">{{ t('common.import') }}</span>
           </button>
-          <button class="ch-action-btn" type="button" title="导出角色" @click="openExportModal" :disabled="characters.length === 0">
+          <button class="ch-action-btn st-btn-shrinkable" type="button" :title="t('panel.characters.exportTitle')" @click="openExportModal" :disabled="characters.length === 0">
             <i data-lucide="upload"></i>
-            <span>导出</span>
+            <span class="st-btn-text">{{ t('common.export') }}</span>
           </button>
-          <button class="ch-close" type="button" title="关闭" @click="close">✕</button>
+          <button class="ch-close" type="button" :title="t('common.close')" @click="close">✕</button>
         </div>
       </header>
 
       <input ref="fileInputRef" type="file" accept=".json,.zip,.png" style="display: none;" @change="handleFileSelect" />
 
       <CustomScrollbar class="ch-body">
-        <div v-if="loading" class="ch-loading">{{ importing ? '正在导入...' : '加载中...' }}</div>
+        <div v-if="loading" class="ch-loading">{{ importing ? t('common.importing') : t('common.loading') }}</div>
         <div v-else-if="error" class="ch-error">
-          {{ importError ? importError : `加载失败：${error}` }}
+          {{ importError ? importError : t('error.loadFailed', { error }) }}
           <button v-if="importError" class="ch-error-dismiss" @click="importError = null">×</button>
         </div>
         <div v-else class="ch-list">
@@ -326,16 +328,16 @@ function handleExportComplete(result) {
             </div>
             <div class="ch-actions">
               <button
-                class="ch-btn"
+                class="ch-btn st-btn-shrinkable"
                 :class="{ active: usingKey === it.key }"
                 type="button"
                 @click="onUse(it.key)"
                 :aria-pressed="usingKey === it.key"
-              >{{ usingKey === it.key ? '使用中' : '使用' }}</button>
+              >{{ usingKey === it.key ? t('common.using') : t('common.use') }}</button>
 
-              <button class="ch-btn" type="button" @click="onView(it.key)">查看</button>
+              <button class="ch-btn st-btn-shrinkable" type="button" @click="onView(it.key)">{{ t('common.view') }}</button>
 
-              <button class="ch-btn ch-danger" type="button" @click="onDelete(it.key)">删除</button>
+              <button class="ch-btn ch-danger st-btn-shrinkable" type="button" @click="onDelete(it.key)">{{ t('common.delete') }}</button>
             </div>
           </div>
         </div>
@@ -345,7 +347,7 @@ function handleExportComplete(result) {
       <ImportConflictModal
         :show="showImportConflictModal"
         data-type="character"
-        data-type-name="角色"
+        :data-type-name="t('panel.characters.typeName')"
         :existing-name="importConflictExistingName"
         :suggested-name="importConflictSuggestedName"
         @close="closeImportConflictModal"
@@ -357,7 +359,7 @@ function handleExportComplete(result) {
       <ExportModal
         :show="showExportModal"
         data-type="character"
-        data-type-name="角色"
+        :data-type-name="t('panel.characters.typeName')"
         :items="characters"
         default-icon="users"
         @close="closeExportModal"
