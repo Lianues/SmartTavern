@@ -86,15 +86,412 @@
   --st-threaded-stage-container-bg-opacity: 0.82; /* 楼层内 HTML 舞台容器背景不透明度 (0~1) */
 }
 
-/* 暗色主题 */
+/* 暗色主题 - 使用中性灰色配色 */
 [data-theme="dark"] {
-  --st-color-bg: 14 17 22;
-  --st-color-text: 232 236 244;
-  --st-surface: 23 27 36;
-  --st-surface-2: 28 34 45;
-  --st-primary: 129 140 248;
-  --st-primary-contrast: 19 23 32;
-  --st-border: 45 54 70;
-  --st-accent: 94 234 212;
+  --st-color-bg: 18 18 20;
+  --st-color-text: 235 235 240;
+  --st-surface: 28 28 30;
+  --st-surface-2: 38 38 42;
+  --st-primary: 140 140 160;
+  --st-primary-contrast: 20 20 22;
+  --st-border: 60 60 65;
+  --st-accent: 160 180 200;
   --st-overlay-ink: 0 0 0;
+}
+
+/* ========================== */
+/* 自定义表单控件样式          */
+/* ========================== */
+
+/* 数字输入框 - 隐藏原生箭头 */
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* 数字输入框 - 自定义样式容器 */
+.st-number-input {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.st-number-input input {
+  padding-right: 28px;
+}
+
+.st-number-input .st-number-controls {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.st-number-input .st-number-btn {
+  width: 18px;
+  height: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.05);
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  padding: 0;
+}
+
+.st-number-input .st-number-btn:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.st-number-input .st-number-btn:active {
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.st-number-input .st-number-btn svg {
+  width: 10px;
+  height: 10px;
+  stroke: currentColor;
+  stroke-width: 2;
+  fill: none;
+}
+
+[data-theme="dark"] .st-number-input .st-number-btn {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .st-number-input .st-number-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+[data-theme="dark"] .st-number-input .st-number-btn:active {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* 勾选框 - 自定义样式 */
+input[type="checkbox"].st-checkbox,
+input[type="checkbox"] {
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  width: 18px !important;
+  height: 18px !important;
+  min-width: 18px !important;
+  min-height: 18px !important;
+  border: 2px solid rgb(180, 180, 185) !important;
+  border-radius: 4px !important;
+  background: rgb(255, 255, 255) !important;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s ease;
+  vertical-align: middle;
+}
+
+input[type="checkbox"]:hover {
+  border-color: rgb(140, 140, 150) !important;
+  background: rgb(248, 248, 250) !important;
+}
+
+input[type="checkbox"]:focus {
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(140, 140, 160, 0.2) !important;
+}
+
+input[type="checkbox"]:checked {
+  background: rgb(60, 60, 70) !important;
+  border-color: rgb(60, 60, 70) !important;
+}
+
+input[type="checkbox"]:checked::after {
+  content: '' !important;
+  position: absolute !important;
+  left: 5px !important;
+  top: 1px !important;
+  width: 5px !important;
+  height: 10px !important;
+  border: solid white !important;
+  border-width: 0 2px 2px 0 !important;
+  transform: rotate(45deg) !important;
+}
+
+input[type="checkbox"]:disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+}
+
+/* 暗色主题勾选框 */
+[data-theme="dark"] input[type="checkbox"],
+[data-theme="dark"] input[type="checkbox"].st-checkbox {
+  background: rgb(45, 45, 50) !important;
+  border-color: rgb(80, 80, 90) !important;
+}
+
+[data-theme="dark"] input[type="checkbox"]:hover {
+  border-color: rgb(110, 110, 120) !important;
+  background: rgb(55, 55, 60) !important;
+}
+
+[data-theme="dark"] input[type="checkbox"]:focus {
+  box-shadow: 0 0 0 3px rgba(140, 140, 160, 0.3) !important;
+}
+
+[data-theme="dark"] input[type="checkbox"]:checked {
+  background: rgb(120, 120, 140) !important;
+  border-color: rgb(120, 120, 140) !important;
+}
+
+[data-theme="dark"] input[type="checkbox"]:checked::after {
+  border-color: rgb(20, 20, 22) !important;
+}
+
+/* 开关样式（可选，用于替代部分勾选框） */
+.st-switch {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 22px;
+}
+
+.st-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.st-switch .st-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgb(200, 200, 205);
+  border-radius: 22px;
+  transition: all 0.3s ease;
+}
+
+.st-switch .st-slider::before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+.st-switch input:checked + .st-slider {
+  background-color: rgb(80, 80, 100);
+}
+
+.st-switch input:checked + .st-slider::before {
+  transform: translateX(18px);
+}
+
+.st-switch input:focus + .st-slider {
+  box-shadow: 0 0 0 3px rgba(140, 140, 160, 0.2);
+}
+
+.st-switch input:disabled + .st-slider {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+[data-theme="dark"] .st-switch .st-slider {
+  background-color: rgb(60, 60, 68);
+}
+
+[data-theme="dark"] .st-switch .st-slider::before {
+  background-color: rgb(200, 200, 205);
+}
+
+[data-theme="dark"] .st-switch input:checked + .st-slider {
+  background-color: rgb(120, 120, 140);
+}
+
+[data-theme="dark"] .st-switch input:checked + .st-slider::before {
+  background-color: rgb(20, 20, 25);
+}
+
+/* 下拉选择框美化 */
+select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 32px !important;
+}
+
+[data-theme="dark"] select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23aaa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+}
+
+/* ========================== */
+/* 文本区域（textarea）样式    */
+/* ========================== */
+
+/* 设置最小高度，避免过小时滚动条异常 */
+textarea {
+  min-height: 80px !important;
+  resize: vertical;
+}
+
+/* 自定义 textarea 调整手柄 */
+textarea::-webkit-resizer {
+  background-color: rgb(220, 220, 225);
+  border-radius: 0 0 4px 0;
+}
+
+[data-theme="dark"] textarea::-webkit-resizer {
+  background-color: rgb(60, 60, 68);
+}
+
+/* ========================== */
+/* 自定义滚动条样式            */
+/* ========================== */
+
+/* 适用于所有输入框和文本区域的滚动条 */
+input,
+textarea,
+select {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(140, 140, 160, 0.4) transparent;
+}
+
+/* Webkit 浏览器滚动条样式 */
+input::-webkit-scrollbar,
+textarea::-webkit-scrollbar,
+select::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+input::-webkit-scrollbar-track,
+textarea::-webkit-scrollbar-track,
+select::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 4px;
+}
+
+input::-webkit-scrollbar-thumb,
+textarea::-webkit-scrollbar-thumb,
+select::-webkit-scrollbar-thumb {
+  background: rgba(140, 140, 160, 0.35);
+  border-radius: 4px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+  transition: background 0.2s ease;
+}
+
+input::-webkit-scrollbar-thumb:hover,
+textarea::-webkit-scrollbar-thumb:hover,
+select::-webkit-scrollbar-thumb:hover {
+  background: rgba(140, 140, 160, 0.55);
+  background-clip: content-box;
+}
+
+input::-webkit-scrollbar-thumb:active,
+textarea::-webkit-scrollbar-thumb:active,
+select::-webkit-scrollbar-thumb:active {
+  background: rgba(140, 140, 160, 0.7);
+  background-clip: content-box;
+}
+
+input::-webkit-scrollbar-corner,
+textarea::-webkit-scrollbar-corner,
+select::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* 暗色主题滚动条 */
+[data-theme="dark"] input,
+[data-theme="dark"] textarea,
+[data-theme="dark"] select {
+  scrollbar-color: rgba(140, 140, 160, 0.35) transparent;
+}
+
+[data-theme="dark"] input::-webkit-scrollbar-thumb,
+[data-theme="dark"] textarea::-webkit-scrollbar-thumb,
+[data-theme="dark"] select::-webkit-scrollbar-thumb {
+  background: rgba(160, 160, 180, 0.3);
+  background-clip: content-box;
+}
+
+[data-theme="dark"] input::-webkit-scrollbar-thumb:hover,
+[data-theme="dark"] textarea::-webkit-scrollbar-thumb:hover,
+[data-theme="dark"] select::-webkit-scrollbar-thumb:hover {
+  background: rgba(160, 160, 180, 0.5);
+  background-clip: content-box;
+}
+
+[data-theme="dark"] input::-webkit-scrollbar-thumb:active,
+[data-theme="dark"] textarea::-webkit-scrollbar-thumb:active,
+[data-theme="dark"] select::-webkit-scrollbar-thumb:active {
+  background: rgba(160, 160, 180, 0.65);
+  background-clip: content-box;
+}
+
+/* 全局容器滚动条样式（用于有 overflow 的 div 等） */
+.st-scrollbar,
+[data-st-scrollbar] {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(140, 140, 160, 0.35) transparent;
+}
+
+.st-scrollbar::-webkit-scrollbar,
+[data-st-scrollbar]::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.st-scrollbar::-webkit-scrollbar-track,
+[data-st-scrollbar]::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 4px;
+}
+
+.st-scrollbar::-webkit-scrollbar-thumb,
+[data-st-scrollbar]::-webkit-scrollbar-thumb {
+  background: rgba(140, 140, 160, 0.35);
+  border-radius: 4px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+.st-scrollbar::-webkit-scrollbar-thumb:hover,
+[data-st-scrollbar]::-webkit-scrollbar-thumb:hover {
+  background: rgba(140, 140, 160, 0.55);
+  background-clip: content-box;
+}
+
+[data-theme="dark"] .st-scrollbar,
+[data-theme="dark"] [data-st-scrollbar] {
+  scrollbar-color: rgba(160, 160, 180, 0.3) transparent;
+}
+
+[data-theme="dark"] .st-scrollbar::-webkit-scrollbar-thumb,
+[data-theme="dark"] [data-st-scrollbar]::-webkit-scrollbar-thumb {
+  background: rgba(160, 160, 180, 0.3);
+  background-clip: content-box;
+}
+
+[data-theme="dark"] .st-scrollbar::-webkit-scrollbar-thumb:hover,
+[data-theme="dark"] [data-st-scrollbar]::-webkit-scrollbar-thumb:hover {
+  background: rgba(160, 160, 180, 0.5);
+  background-clip: content-box;
 }

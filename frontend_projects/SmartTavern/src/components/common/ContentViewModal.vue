@@ -87,7 +87,7 @@ watch(() => props.show, (v) => {
 }
 
 [data-theme="dark"] .modal-container {
-  background: rgb(14, 17, 22);
+  background: rgb(24, 24, 26);
 }
 
 /* Header */

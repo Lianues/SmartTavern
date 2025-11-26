@@ -437,21 +437,36 @@ function handleClose() {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 .export-item-check {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
-  background: rgb(var(--st-border) / 0.15);
-  border: 1.5px solid rgb(var(--st-border) / 0.5);
+  border-radius: 4px;
+  background: rgb(var(--st-surface));
+  border: 2px solid rgb(var(--st-border) / 0.6);
   flex-shrink: 0;
   transition: all .2s;
 }
+.export-item-item:hover .export-item-check {
+  border-color: rgb(var(--st-border) / 0.9);
+}
 .export-item-item.selected .export-item-check {
-  background: rgb(var(--st-color-text));
-  border-color: rgb(var(--st-color-text));
-  color: rgb(var(--st-surface));
+  background: rgb(60, 60, 70);
+  border-color: rgb(60, 60, 70);
+  color: white;
+}
+[data-theme="dark"] .export-item-check {
+  background: rgb(45, 45, 50);
+  border-color: rgb(80, 80, 90);
+}
+[data-theme="dark"] .export-item-item:hover .export-item-check {
+  border-color: rgb(110, 110, 120);
+}
+[data-theme="dark"] .export-item-item.selected .export-item-check {
+  background: rgb(120, 120, 140);
+  border-color: rgb(120, 120, 140);
+  color: rgb(20, 20, 22);
 }
 .export-item-avatar {
   width: 44px;
@@ -598,21 +613,36 @@ function handleClose() {
   margin-top: 2px;
 }
 .export-format-card-check {
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
-  background: rgb(var(--st-border) / 0.15);
-  border: 1.5px solid rgb(var(--st-border) / 0.4);
+  border-radius: 4px;
+  background: rgb(var(--st-surface));
+  border: 2px solid rgb(var(--st-border) / 0.5);
   flex-shrink: 0;
   transition: all .2s;
 }
+.export-format-card:hover .export-format-card-check {
+  border-color: rgb(var(--st-border) / 0.8);
+}
 .export-format-card.selected .export-format-card-check {
-  background: rgb(var(--st-color-text));
-  border-color: rgb(var(--st-color-text));
-  color: rgb(var(--st-surface));
+  background: rgb(60, 60, 70);
+  border-color: rgb(60, 60, 70);
+  color: white;
+}
+[data-theme="dark"] .export-format-card-check {
+  background: rgb(45, 45, 50);
+  border-color: rgb(80, 80, 90);
+}
+[data-theme="dark"] .export-format-card:hover .export-format-card-check {
+  border-color: rgb(110, 110, 120);
+}
+[data-theme="dark"] .export-format-card.selected .export-format-card-check {
+  background: rgb(120, 120, 140);
+  border-color: rgb(120, 120, 140);
+  color: rgb(20, 20, 22);
 }
 
 /* 图片上传区 */

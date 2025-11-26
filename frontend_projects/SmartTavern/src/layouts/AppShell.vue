@@ -32,9 +32,9 @@ const props = defineProps({
 .st-gradient {
   position: absolute; inset: -10%;
   background:
-    radial-gradient(800px 500px at 20% 10%, rgba(129,140,248,0.22), transparent 60%),
-    radial-gradient(800px 500px at 80% 10%, rgba(56,189,248,0.18), transparent 60%),
-    radial-gradient(800px 500px at 50% 90%, rgba(52,211,153,0.18), transparent 60%);
+    radial-gradient(800px 500px at 20% 10%, rgba(120,120,130,0.18), transparent 60%),
+    radial-gradient(800px 500px at 80% 10%, rgba(100,100,110,0.15), transparent 60%),
+    radial-gradient(800px 500px at 50% 90%, rgba(110,110,120,0.15), transparent 60%);
   filter: blur(40px);
 }
 .st-noise {
@@ -60,7 +60,7 @@ const props = defineProps({
   box-shadow: var(--st-shadow-sm);
 }
 [data-theme="dark"] .glass {
-  background: rgba(26, 31, 43, 0.55);
+  background: rgba(28, 28, 30, 0.55);
 }
 .card {
   background: rgb(var(--st-surface));

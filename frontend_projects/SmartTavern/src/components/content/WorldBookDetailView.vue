@@ -524,52 +524,79 @@ async function save() {
   background: rgb(232, 236, 244);
 }
 
-/* 深色主题适配 */
+/* 深色主题适配 - 使用中性灰色 */
 [data-theme="dark"] .bg-white {
-  background-color: rgb(23, 27, 36) !important;
+  background-color: rgb(28, 28, 30) !important;
 }
 
 [data-theme="dark"] .bg-gray-100 {
-  background-color: rgb(33, 39, 52) !important;
+  background-color: rgb(38, 38, 42) !important;
 }
 
 [data-theme="dark"] .text-black {
-  color: rgb(232, 236, 244) !important;
+  color: rgb(235, 235, 240) !important;
 }
 
 [data-theme="dark"] .text-black\/50 {
-  color: rgba(232, 236, 244, 0.5) !important;
+  color: rgba(235, 235, 240, 0.5) !important;
 }
 
 [data-theme="dark"] .text-black\/60 {
-  color: rgba(232, 236, 244, 0.6) !important;
+  color: rgba(235, 235, 240, 0.6) !important;
 }
 
 [data-theme="dark"] .text-black\/70 {
-  color: rgba(232, 236, 244, 0.7) !important;
+  color: rgba(235, 235, 240, 0.7) !important;
 }
 
 [data-theme="dark"] .border-gray-200 {
-  border-color: rgb(45, 54, 70) !important;
+  border-color: rgb(50, 50, 55) !important;
 }
 
 [data-theme="dark"] .border-gray-300 {
-  border-color: rgb(55, 64, 80) !important;
+  border-color: rgb(60, 60, 65) !important;
 }
 
 [data-theme="dark"] .border-gray-800 {
-  border-color: rgb(200, 205, 215) !important;
+  border-color: rgb(200, 200, 205) !important;
 }
 
 [data-theme="dark"] .border-gray-900 {
-  border-color: rgb(200, 205, 215) !important;
+  border-color: rgb(200, 200, 205) !important;
 }
 
 [data-theme="dark"] .hover\:bg-gray-100:hover {
-  background-color: rgb(33, 39, 52) !important;
+  background-color: rgb(38, 38, 42) !important;
 }
 
 [data-theme="dark"] .text-red-600 {
   color: rgb(248, 113, 113) !important;
 }
+
+/* 暗色主题 - 输入框适配 */
+[data-theme="dark"] input,
+[data-theme="dark"] textarea,
+[data-theme="dark"] select {
+  background-color: rgb(38, 38, 42) !important;
+  color: rgb(235, 235, 240) !important;
+  border-color: rgb(60, 60, 65) !important;
+}
+
+[data-theme="dark"] input::placeholder,
+[data-theme="dark"] textarea::placeholder {
+  color: rgba(235, 235, 240, 0.5) !important;
+}
+
+[data-theme="dark"] input:focus,
+[data-theme="dark"] textarea:focus,
+[data-theme="dark"] select:focus {
+  border-color: rgb(100, 100, 110) !important;
+  box-shadow: 0 0 0 2px rgba(140, 140, 160, 0.2) !important;
+}
+
+[data-theme="dark"] select option {
+  background-color: rgb(38, 38, 42) !important;
+  color: rgb(235, 235, 240) !important;
+}
+
 </style>
