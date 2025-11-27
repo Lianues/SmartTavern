@@ -128,117 +128,282 @@ onMounted(() => {
   width: 100%;
 }
 
-/* LIGHT THEME: Premium black rail with gradient depth */
+/* ═══════════════════════════════════════════════════════════════
+   PREMIUM SLIDER DESIGN - 高级滑条设计
+   设计理念：玻璃拟态 + 精致金属质感 + 柔和光影
+   ═══════════════════════════════════════════════════════════════ */
+
+/* LIGHT THEME: 不透明实色轨道 */
 [data-scope="settings-view"] .st-control input[type="range"]::-webkit-slider-runnable-track {
   height: 8px !important;
-  border-radius: 9999px !important;
-  background: linear-gradient(180deg, rgba(0,0,0,0.68), rgba(0,0,0,0.82)) !important;
-  border: 1px solid rgba(0,0,0,0.92) !important;
+  border-radius: 4px !important;
+  /* 浅灰色实色背景 */
+  background: linear-gradient(180deg,
+    #d8dce5 0%,
+    #e2e6ee 50%,
+    #d0d5e0 100%
+  ) !important;
+  border: 1px solid #c0c8d5 !important;
   box-shadow:
-    inset 0 1px 2px rgba(0,0,0,0.25),
-    0 1px 0 rgba(255,255,255,0.15) !important;
+    inset 0 1px 3px rgba(0, 0, 0, 0.1),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.6),
+    0 1px 0 rgba(255, 255, 255, 0.4) !important;
 }
 [data-scope="settings-view"] .st-control input[type="range"]::-moz-range-track {
   height: 8px !important;
-  border-radius: 9999px !important;
-  background: linear-gradient(180deg, rgba(0,0,0,0.68), rgba(0,0,0,0.82)) !important;
-  border: 1px solid rgba(0,0,0,0.92) !important;
+  border-radius: 4px !important;
+  background: linear-gradient(180deg,
+    #d8dce5 0%,
+    #e2e6ee 50%,
+    #d0d5e0 100%
+  ) !important;
+  border: 1px solid #c0c8d5 !important;
   box-shadow:
-    inset 0 1px 2px rgba(0,0,0,0.25),
-    0 1px 0 rgba(255,255,255,0.15) !important;
+    inset 0 1px 3px rgba(0, 0, 0, 0.1),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.6),
+    0 1px 0 rgba(255, 255, 255, 0.4) !important;
 }
 
-/* LIGHT THEME: Premium white thumb with refined shadow */
+/* LIGHT THEME: 中灰色金属质感圆形滑块（柔和反色） */
 [data-scope="settings-view"] .st-control input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 18px;
-  height: 18px;
-  border-radius: 9999px;
-  background: linear-gradient(180deg, #ffffff, #f8f9fa) !important;
-  border: 1px solid rgba(0,0,0,0.12) !important;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  /* 中灰色金属渐变：柔和但凸显 */
+  background: linear-gradient(145deg,
+    #7a8090 0%,
+    #6a7080 25%,
+    #5a6070 50%,
+    #4a5565 60%,
+    #40485a 100%
+  ) !important;
+  border: 1px solid rgba(60, 70, 90, 0.5) !important;
   box-shadow:
-    0 0 0 1px rgba(255,255,255,0.9),
-    0 2px 4px rgba(0,0,0,0.20),
-    0 4px 8px rgba(0,0,0,0.10) !important;
-  margin-top: -6px;
+    /* 外层亮边 */
+    0 0 0 1px rgba(255, 255, 255, 0.2),
+    /* 主阴影 */
+    0 2px 6px rgba(0, 0, 0, 0.2),
+    0 4px 12px rgba(0, 0, 0, 0.15),
+    /* 内部高光 */
+    inset 0 2px 4px rgba(255, 255, 255, 0.25),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.2) !important;
+  margin-top: -7px;
   cursor: pointer;
-  transition: transform .2s cubic-bezier(.22,.61,.36,1),
-              box-shadow .2s cubic-bezier(.22,.61,.36,1);
+  transition:
+    transform .25s cubic-bezier(.22,.61,.36,1),
+    box-shadow .25s cubic-bezier(.22,.61,.36,1),
+    background .25s ease;
 }
 [data-scope="settings-view"] .st-control input[type="range"]::-moz-range-thumb {
-  width: 18px;
-  height: 18px;
-  border-radius: 9999px;
-  background: linear-gradient(180deg, #ffffff, #f8f9fa) !important;
-  border: 1px solid rgba(0,0,0,0.12) !important;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: linear-gradient(145deg,
+    #7a8090 0%,
+    #6a7080 25%,
+    #5a6070 50%,
+    #4a5565 60%,
+    #40485a 100%
+  ) !important;
+  border: 1px solid rgba(60, 70, 90, 0.5) !important;
   box-shadow:
-    0 0 0 1px rgba(255,255,255,0.9),
-    0 2px 4px rgba(0,0,0,0.20),
-    0 4px 8px rgba(0,0,0,0.10) !important;
+    0 0 0 1px rgba(255, 255, 255, 0.2),
+    0 2px 6px rgba(0, 0, 0, 0.2),
+    0 4px 12px rgba(0, 0, 0, 0.15),
+    inset 0 2px 4px rgba(255, 255, 255, 0.25),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.2) !important;
   cursor: pointer;
-  transition: transform .2s cubic-bezier(.22,.61,.36,1),
-              box-shadow .2s cubic-bezier(.22,.61,.36,1);
+  transition:
+    transform .25s cubic-bezier(.22,.61,.36,1),
+    box-shadow .25s cubic-bezier(.22,.61,.36,1),
+    background .25s ease;
 }
 
-/* DARK THEME: Premium white rail with gradient depth */
+/* DARK THEME: 不透明实色轨道 */
 [data-theme="dark"] [data-scope="settings-view"] .st-control input[type="range"]::-webkit-slider-runnable-track {
-  background: linear-gradient(180deg, rgba(255,255,255,0.72), rgba(255,255,255,0.85)) !important;
-  border: 1px solid rgba(255,255,255,0.95) !important;
+  /* 深灰色实色背景 */
+  background: linear-gradient(180deg,
+    #35393f 0%,
+    #3d4148 50%,
+    #30343a 100%
+  ) !important;
+  border: 1px solid #484e58 !important;
   box-shadow:
-    inset 0 1px 2px rgba(255,255,255,0.20),
-    0 1px 0 rgba(0,0,0,0.15) !important;
+    inset 0 1px 3px rgba(0, 0, 0, 0.25),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.05),
+    0 1px 0 rgba(0, 0, 0, 0.15) !important;
 }
 [data-theme="dark"] [data-scope="settings-view"] .st-control input[type="range"]::-moz-range-track {
-  background: linear-gradient(180deg, rgba(255,255,255,0.72), rgba(255,255,255,0.85)) !important;
-  border: 1px solid rgba(255,255,255,0.95) !important;
+  background: linear-gradient(180deg,
+    #35393f 0%,
+    #3d4148 50%,
+    #30343a 100%
+  ) !important;
+  border: 1px solid #484e58 !important;
   box-shadow:
-    inset 0 1px 2px rgba(255,255,255,0.20),
-    0 1px 0 rgba(0,0,0,0.15) !important;
+    inset 0 1px 3px rgba(0, 0, 0, 0.25),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.05),
+    0 1px 0 rgba(0, 0, 0, 0.15) !important;
 }
 
-/* DARK THEME: Premium black thumb with refined shadow */
+/* DARK THEME: 浅灰色金属质感圆形滑块（柔和反色） */
 [data-theme="dark"] [data-scope="settings-view"] .st-control input[type="range"]::-webkit-slider-thumb {
-  background: linear-gradient(180deg, #1a1a1a, #0a0a0a) !important;
-  border: 1px solid rgba(255,255,255,0.15) !important;
+  /* 浅灰色金属渐变：柔和但凸显 */
+  background: linear-gradient(145deg,
+    #c8d0dc 0%,
+    #b8c2d0 25%,
+    #a8b4c4 50%,
+    #9aa8ba 75%,
+    #8c9cb0 100%
+  ) !important;
+  border: 1px solid rgba(200, 210, 225, 0.5) !important;
   box-shadow:
-    0 0 0 1px rgba(0,0,0,0.85),
-    0 2px 4px rgba(255,255,255,0.15),
-    0 4px 8px rgba(0,0,0,0.40) !important;
+    /* 外层光晕 */
+    0 0 0 1px rgba(255, 255, 255, 0.15),
+    /* 主阴影 */
+    0 2px 6px rgba(0, 0, 0, 0.35),
+    0 4px 12px rgba(0, 0, 0, 0.25),
+    /* 内部高光 */
+    inset 0 2px 4px rgba(255, 255, 255, 0.5),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.15) !important;
 }
 [data-theme="dark"] [data-scope="settings-view"] .st-control input[type="range"]::-moz-range-thumb {
-  background: linear-gradient(180deg, #1a1a1a, #0a0a0a) !important;
-  border: 1px solid rgba(255,255,255,0.15) !important;
+  background: linear-gradient(145deg,
+    #c8d0dc 0%,
+    #b8c2d0 25%,
+    #a8b4c4 50%,
+    #9aa8ba 75%,
+    #8c9cb0 100%
+  ) !important;
+  border: 1px solid rgba(200, 210, 225, 0.5) !important;
   box-shadow:
-    0 0 0 1px rgba(0,0,0,0.85),
-    0 2px 4px rgba(255,255,255,0.15),
-    0 4px 8px rgba(0,0,0,0.40) !important;
+    0 0 0 1px rgba(255, 255, 255, 0.15),
+    0 2px 6px rgba(0, 0, 0, 0.35),
+    0 4px 12px rgba(0, 0, 0, 0.25),
+    inset 0 2px 4px rgba(255, 255, 255, 0.5),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.15) !important;
 }
 
-/* Hover state */
+/* ═══════════════════════════════════════════════════════════════
+   HOVER STATES - 悬停状态
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Hover state - 浅色主题：中灰滑块发光效果 */
 [data-scope="settings-view"] .st-control input[type="range"]:hover::-webkit-slider-thumb,
 [data-scope="settings-view"] .st-control input[type="range"]:hover::-moz-range-thumb {
-  transform: scale(1.12);
+  transform: scale(1.12) translateY(-1px);
+  background: linear-gradient(145deg,
+    #8a90a0 0%,
+    #7a8090 25%,
+    #6a7080 50%,
+    #5a6575 75%,
+    #4a5565 100%
+  ) !important;
   box-shadow:
-    0 0 0 1px rgba(255,255,255,0.95),
-    0 4px 8px rgba(0,0,0,0.25),
-    0 6px 12px rgba(0,0,0,0.15),
-    0 0 0 4px rgba(var(--st-primary),0.15) !important;
-}
-[data-theme="dark"] [data-scope="settings-view"] .st-control input[type="range"]:hover::-webkit-slider-thumb,
-[data-theme="dark"] [data-scope="settings-view"] .st-control input[type="range"]:hover::-moz-range-thumb {
-  transform: scale(1.12);
-  box-shadow:
-    0 0 0 1px rgba(0,0,0,0.90),
-    0 4px 8px rgba(255,255,255,0.20),
-    0 6px 12px rgba(0,0,0,0.50),
-    0 0 0 4px rgba(var(--st-accent),0.20) !important;
+    /* 外层发光 */
+    0 0 0 3px rgba(var(--st-primary), 0.18),
+    0 0 12px rgba(var(--st-primary), 0.15),
+    /* 主阴影增强 */
+    0 4px 10px rgba(0, 0, 0, 0.25),
+    0 8px 20px rgba(0, 0, 0, 0.18),
+    /* 内部高光增强 */
+    inset 0 2px 6px rgba(255, 255, 255, 0.35),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.25) !important;
 }
 
-/* Active/dragging state */
+/* Hover state - 暗色主题：浅灰滑块发光效果 */
+[data-theme="dark"] [data-scope="settings-view"] .st-control input[type="range"]:hover::-webkit-slider-thumb,
+[data-theme="dark"] [data-scope="settings-view"] .st-control input[type="range"]:hover::-moz-range-thumb {
+  transform: scale(1.12) translateY(-1px);
+  background: linear-gradient(145deg,
+    #d8e0ec 0%,
+    #c8d2e0 25%,
+    #b8c4d4 50%,
+    #a8b8ca 75%,
+    #9aacbe 100%
+  ) !important;
+  box-shadow:
+    /* 外层发光 */
+    0 0 0 3px rgba(var(--st-accent), 0.2),
+    0 0 15px rgba(var(--st-accent), 0.18),
+    /* 主阴影增强 */
+    0 4px 10px rgba(0, 0, 0, 0.38),
+    0 8px 20px rgba(0, 0, 0, 0.28),
+    /* 内部高光增强 */
+    inset 0 2px 6px rgba(255, 255, 255, 0.6),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ACTIVE STATES - 激活/拖拽状态
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Active state - 浅色主题：中灰滑块按压效果 */
 [data-scope="settings-view"] .st-control input[type="range"]:active::-webkit-slider-thumb,
 [data-scope="settings-view"] .st-control input[type="range"]:active::-moz-range-thumb {
   transform: scale(1.05);
+  background: linear-gradient(145deg,
+    #6a7080 0%,
+    #5a6070 25%,
+    #4a5565 50%,
+    #40485a 75%,
+    #363e50 100%
+  ) !important;
+  box-shadow:
+    0 0 0 3px rgba(var(--st-primary), 0.22),
+    0 2px 4px rgba(0, 0, 0, 0.25),
+    0 4px 8px rgba(0, 0, 0, 0.18),
+    inset 0 1px 3px rgba(255, 255, 255, 0.2),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Active state - 暗色主题：浅灰滑块按压效果 */
+[data-theme="dark"] [data-scope="settings-view"] .st-control input[type="range"]:active::-webkit-slider-thumb,
+[data-theme="dark"] [data-scope="settings-view"] .st-control input[type="range"]:active::-moz-range-thumb {
+  transform: scale(1.05);
+  background: linear-gradient(145deg,
+    #b8c2d0 0%,
+    #a8b4c4 25%,
+    #9aa8ba 50%,
+    #8c9cb0 75%,
+    #7e90a5 100%
+  ) !important;
+  box-shadow:
+    0 0 0 3px rgba(var(--st-accent), 0.25),
+    0 2px 4px rgba(0, 0, 0, 0.32),
+    0 4px 8px rgba(0, 0, 0, 0.22),
+    inset 0 1px 3px rgba(255, 255, 255, 0.45),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.12) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   FOCUS STATES - 聚焦状态（键盘导航）
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Focus state - 浅色主题：中灰滑块聚焦 */
+[data-scope="settings-view"] .st-control input[type="range"]:focus::-webkit-slider-thumb,
+[data-scope="settings-view"] .st-control input[type="range"]:focus::-moz-range-thumb {
+  box-shadow:
+    0 0 0 4px rgba(var(--st-primary), 0.25),
+    0 0 15px rgba(var(--st-primary), 0.2),
+    0 2px 6px rgba(0, 0, 0, 0.22),
+    0 4px 12px rgba(0, 0, 0, 0.18),
+    inset 0 2px 4px rgba(255, 255, 255, 0.28),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.22) !important;
+}
+
+/* Focus state - 暗色主题：浅灰滑块聚焦 */
+[data-theme="dark"] [data-scope="settings-view"] .st-control input[type="range"]:focus::-webkit-slider-thumb,
+[data-theme="dark"] [data-scope="settings-view"] .st-control input[type="range"]:focus::-moz-range-thumb {
+  box-shadow:
+    0 0 0 4px rgba(var(--st-accent), 0.28),
+    0 0 15px rgba(var(--st-accent), 0.22),
+    0 2px 6px rgba(0, 0, 0, 0.38),
+    0 4px 12px rgba(0, 0, 0, 0.28),
+    inset 0 2px 4px rgba(255, 255, 255, 0.55),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.15) !important;
 }
 
 /* =========================

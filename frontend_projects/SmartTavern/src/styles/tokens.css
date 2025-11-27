@@ -670,3 +670,258 @@ html[dir="rtl"] .st-card-title {
     font-size: 14px;
   }
 }
+
+/* ========================== */
+/* 滑条（Range Slider）样式    */
+/* ========================== */
+
+/**
+ * 统一的滑条样式设计
+ * 设计原则：
+ * - 中性灰色配色，遵循 60-30-10 法则
+ * - 圆角 < 4px（规范要求）
+ * - 微妙的阴影和过渡动画
+ * - 明暗主题完美适配
+ */
+
+/* 基础重置 - 使用 !important 确保覆盖 Tailwind */
+input[type="range"] {
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  background: transparent !important;
+  width: 100%;
+  height: 24px;
+  cursor: pointer;
+  margin: 0;
+  padding: 0;
+}
+
+input[type="range"]:focus {
+  outline: none !important;
+}
+
+/* ===== 轨道样式 (Track) ===== */
+
+/* Webkit (Chrome, Safari, Edge) */
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 6px !important;
+  border-radius: 3px !important;
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.08) 0%,
+    rgba(0, 0, 0, 0.12) 100%
+  ) !important;
+  border: 1px solid rgba(0, 0, 0, 0.15) !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.06) !important;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+/* Firefox */
+input[type="range"]::-moz-range-track {
+  height: 6px !important;
+  border-radius: 3px !important;
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.08) 0%,
+    rgba(0, 0, 0, 0.12) 100%
+  ) !important;
+  border: 1px solid rgba(0, 0, 0, 0.15) !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.06) !important;
+}
+
+/* 悬停时轨道 */
+input[type="range"]:hover::-webkit-slider-runnable-track {
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.10) 0%,
+    rgba(0, 0, 0, 0.16) 100%
+  ) !important;
+  border-color: rgba(0, 0, 0, 0.20) !important;
+}
+
+input[type="range"]:hover::-moz-range-track {
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.10) 0%,
+    rgba(0, 0, 0, 0.16) 100%
+  ) !important;
+  border-color: rgba(0, 0, 0, 0.20) !important;
+}
+
+/* ===== 滑块样式 (Thumb) ===== */
+
+/* Webkit (Chrome, Safari, Edge) - 使用绿色测试样式是否生效 */
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  width: 16px !important;
+  height: 16px !important;
+  border-radius: 3px !important;
+  /* 使用明亮绿色测试 */
+  background: #22c55e !important;
+  border: 2px solid #15803d !important;
+  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.5) !important;
+  margin-top: -6px !important;
+  cursor: grab;
+  transition: all 0.15s ease;
+}
+
+/* Firefox - 使用绿色测试样式是否生效 */
+input[type="range"]::-moz-range-thumb {
+  width: 16px !important;
+  height: 16px !important;
+  border-radius: 3px !important;
+  /* 使用明亮绿色测试 */
+  background: #22c55e !important;
+  border: 2px solid #15803d !important;
+  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.5) !important;
+  cursor: grab;
+  transition: all 0.15s ease;
+}
+
+/* 悬停时滑块 - 绿色变亮 */
+input[type="range"]:hover::-webkit-slider-thumb {
+  transform: scale(1.1);
+  background: #4ade80 !important;
+  border-color: #16a34a !important;
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.6) !important;
+}
+
+input[type="range"]:hover::-moz-range-thumb {
+  transform: scale(1.1);
+  background: #4ade80 !important;
+  border-color: #16a34a !important;
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.6) !important;
+}
+
+/* 激活/拖拽时滑块 - 绿色变深 */
+input[type="range"]:active::-webkit-slider-thumb {
+  cursor: grabbing;
+  transform: scale(1.02);
+  background: #16a34a !important;
+  border-color: #14532d !important;
+  box-shadow: 0 2px 6px rgba(22, 163, 74, 0.5) !important;
+}
+
+input[type="range"]:active::-moz-range-thumb {
+  cursor: grabbing;
+  transform: scale(1.02);
+  background: #16a34a !important;
+  border-color: #14532d !important;
+  box-shadow: 0 2px 6px rgba(22, 163, 74, 0.5) !important;
+}
+
+/* 聚焦时滑块 */
+input[type="range"]:focus::-webkit-slider-thumb {
+  box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.4) !important;
+}
+
+input[type="range"]:focus::-moz-range-thumb {
+  box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.4) !important;
+}
+
+/* ===== 暗色主题 ===== */
+
+/* 暗色轨道 */
+[data-theme="dark"] input[type="range"]::-webkit-slider-runnable-track {
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.08) 0%,
+    rgba(255, 255, 255, 0.12) 100%
+  ) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2) !important;
+}
+
+[data-theme="dark"] input[type="range"]::-moz-range-track {
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.08) 0%,
+    rgba(255, 255, 255, 0.12) 100%
+  ) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* 暗色悬停轨道 */
+[data-theme="dark"] input[type="range"]:hover::-webkit-slider-runnable-track {
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.10) 0%,
+    rgba(255, 255, 255, 0.16) 100%
+  ) !important;
+  border-color: rgba(255, 255, 255, 0.22) !important;
+}
+
+[data-theme="dark"] input[type="range"]:hover::-moz-range-track {
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.10) 0%,
+    rgba(255, 255, 255, 0.16) 100%
+  ) !important;
+  border-color: rgba(255, 255, 255, 0.22) !important;
+}
+
+/* 暗色滑块 - 使用绿色测试 */
+[data-theme="dark"] input[type="range"]::-webkit-slider-thumb {
+  background: #22c55e !important;
+  border: 2px solid #15803d !important;
+  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.5) !important;
+}
+
+[data-theme="dark"] input[type="range"]::-moz-range-thumb {
+  background: #22c55e !important;
+  border: 2px solid #15803d !important;
+  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.5) !important;
+}
+
+/* 暗色悬停滑块 */
+[data-theme="dark"] input[type="range"]:hover::-webkit-slider-thumb {
+  background: #4ade80 !important;
+  border-color: #16a34a !important;
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.6) !important;
+}
+
+[data-theme="dark"] input[type="range"]:hover::-moz-range-thumb {
+  background: #4ade80 !important;
+  border-color: #16a34a !important;
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.6) !important;
+}
+
+/* 暗色激活滑块 */
+[data-theme="dark"] input[type="range"]:active::-webkit-slider-thumb {
+  background: #16a34a !important;
+  border-color: #14532d !important;
+  box-shadow: 0 2px 6px rgba(22, 163, 74, 0.5) !important;
+}
+
+[data-theme="dark"] input[type="range"]:active::-moz-range-thumb {
+  background: #16a34a !important;
+  border-color: #14532d !important;
+  box-shadow: 0 2px 6px rgba(22, 163, 74, 0.5) !important;
+}
+
+/* 暗色聚焦滑块 */
+[data-theme="dark"] input[type="range"]:focus::-webkit-slider-thumb {
+  box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.4) !important;
+}
+
+[data-theme="dark"] input[type="range"]:focus::-moz-range-thumb {
+  box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.4) !important;
+}
+
+/* ===== 禁用状态 ===== */
+
+input[type="range"]:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+input[type="range"]:disabled::-webkit-slider-thumb {
+  cursor: not-allowed;
+}
+
+input[type="range"]:disabled::-moz-range-thumb {
+  cursor: not-allowed;
+}
