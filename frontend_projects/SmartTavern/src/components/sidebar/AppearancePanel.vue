@@ -94,7 +94,7 @@ onMounted(() => {
         </button>
       </nav>
 
-      <CustomScrollbar class="st-settings-body">
+      <CustomScrollbar2 class="st-settings-body">
         <div v-if="active === 'home'" class="st-tab-panel">
           <h3>{{ t('appearance.tabs.home') }}</h3>
           <p class="muted">{{ t('appearance.placeholder') }}</p>
@@ -112,7 +112,7 @@ onMounted(() => {
           <h3>{{ t('appearance.unknownTab') }}</h3>
           <p class="muted">{{ t('appearance.placeholderContent') }}</p>
         </div>
-      </CustomScrollbar>
+      </CustomScrollbar2>
     </div>
   </transition>
 </template>

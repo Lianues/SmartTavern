@@ -116,7 +116,7 @@ onMounted(() => {
         <button class="as-close" type="button" :title="t('common.close')" @click="close">✕</button>
       </header>
 
-      <CustomScrollbar class="as-body">
+      <CustomScrollbar2 class="as-body">
         <section class="home-modal-section">
           <div class="hm-title">
             <i data-lucide="settings" class="icon-20" aria-hidden="true"></i>
@@ -202,7 +202,7 @@ onMounted(() => {
             </div>
           </div>
         </section>
-      </CustomScrollbar>
+      </CustomScrollbar2>
     </div>
 </template>
 

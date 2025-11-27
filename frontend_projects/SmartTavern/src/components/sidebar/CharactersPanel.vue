@@ -374,7 +374,7 @@ function handleExportComplete(result) {
 
       <input ref="fileInputRef" type="file" accept=".json,.zip,.png" style="display: none;" @change="handleFileSelect" />
 
-      <CustomScrollbar class="ch-body">
+      <CustomScrollbar2 class="ch-body">
         <div v-if="loading" class="ch-loading">{{ importing ? t('common.importing') : t('common.loading') }}</div>
         <div v-else-if="error" class="ch-error">
           {{ importError ? importError : t('error.loadFailed', { error }) }}
@@ -418,7 +418,7 @@ function handleExportComplete(result) {
             </div>
           </div>
         </div>
-      </CustomScrollbar>
+      </CustomScrollbar2>
 
       <!-- 使用可复用的导入冲突弹窗组件 -->
       <ImportConflictModal

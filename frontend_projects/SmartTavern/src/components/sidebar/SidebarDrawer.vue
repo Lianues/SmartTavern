@@ -212,9 +212,9 @@ const drawerStyle = computed(() => {
           <i data-lucide="chevron-left"></i>
         </button>
       </div>
-      <CustomScrollbar class="sd-body">
+      <CustomScrollbar2 class="sd-body">
         <slot />
-      </CustomScrollbar>
+      </CustomScrollbar2>
     </div>
   </transition>
 

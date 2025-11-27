@@ -396,7 +396,7 @@ function handleExportComplete(result) {
         @change="handleFileSelect"
       />
 
-      <CustomScrollbar class="pr-body">
+      <CustomScrollbar2 class="pr-body">
         <div v-if="loading" class="pr-loading">
           {{ importing ? t('common.importing') : t('common.loading') }}
         </div>
@@ -442,7 +442,7 @@ function handleExportComplete(result) {
             </div>
           </div>
         </div>
-      </CustomScrollbar>
+      </CustomScrollbar2>
 
       <!-- 使用可复用的导入冲突弹窗组件 -->
       <ImportConflictModal

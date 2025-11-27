@@ -5,6 +5,47 @@
    - AppearancePanel also updates these live and persists to localStorage.
 */
 
+/* ========================== */
+/* 全局禁用文本选择光标         */
+/* ========================== */
+
+/**
+ * 禁用非输入元素的文本编辑光标（闪烁的竖线）
+ * 只有真正的输入框才显示光标
+ */
+
+/* 全局隐藏光标 */
+*:not(input):not(textarea):not([contenteditable="true"]) {
+  caret-color: transparent !important;
+}
+
+/* 确保输入框显示光标 */
+input,
+textarea,
+[contenteditable="true"] {
+  caret-color: auto;
+}
+
+/* 禁止非输入区域的文本选择（可选，减少误触） */
+button,
+[role="button"],
+.st-preview-card,
+.st-sidebar-nav,
+[data-scope="sidebar"],
+[data-scope="sidebar-nav"] {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* 允许某些区域的文本选择（如消息内容） */
+.st-selectable,
+[data-selectable],
+.message-content,
+.chat-content {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
 :root {
   /* 基础语义令牌（RGB 形式，便于调优） */
   --st-color-bg: 246 248 253;

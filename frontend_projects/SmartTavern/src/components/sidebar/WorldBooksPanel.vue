@@ -400,7 +400,7 @@ function handleExportComplete(result) {
         @change="handleFileSelect"
       />
 
-      <CustomScrollbar class="wb-body">
+      <CustomScrollbar2 class="wb-body">
         <div v-if="loading" class="wb-loading">
           {{ importing ? t('common.importing') : t('common.loading') }}
         </div>
@@ -446,7 +446,7 @@ function handleExportComplete(result) {
             </div>
           </div>
         </div>
-      </CustomScrollbar>
+      </CustomScrollbar2>
 
       <!-- 使用可复用的导入冲突弹窗组件 -->
       <ImportConflictModal

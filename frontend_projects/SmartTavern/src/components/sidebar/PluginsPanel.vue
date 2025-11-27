@@ -449,7 +449,7 @@ function handleExportComplete(result) {
     </header>
     <input ref="fileInputRef" type="file" accept=".json,.zip,.png" style="display: none;" @change="handleFileSelect" />
 
-    <CustomScrollbar class="wf-body">
+    <CustomScrollbar2 class="wf-body">
       <div v-if="importing" class="wf-loading">{{ t('common.importing') }}</div>
       <div v-else-if="importError" class="wf-error">
         {{ importError }}
@@ -503,7 +503,7 @@ function handleExportComplete(result) {
           </div>
         </div>
       </div>
-    </CustomScrollbar>
+    </CustomScrollbar2>
 
     <!-- 使用可复用的导入冲突弹窗组件 -->
     <ImportConflictModal

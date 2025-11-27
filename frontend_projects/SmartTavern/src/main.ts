@@ -1,6 +1,7 @@
 import { createApp } from 'vue'
 import App from './App.vue'
 import CustomScrollbar from '@/components/common/CustomScrollbar.vue'
+import CustomScrollbar2 from '@/components/common/CustomScrollbar2.vue'
 import './tailwind.css'
 import './styles/tokens.css'
 // @ts-ignore - JS module without types
@@ -72,6 +73,7 @@ async function bootstrapApp(): Promise<void> {
 
   // 3. 注册全局组件
   app.component('CustomScrollbar', CustomScrollbar)
+  app.component('CustomScrollbar2', CustomScrollbar2)
 
   // 4. 注册 Pinia（供 Host 与各模块在组件外部访问 Store）
   const pinia = createPinia()
