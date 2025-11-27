@@ -5,7 +5,9 @@ import * as CatalogChannel from '@/workflow/channels/catalog'
 import * as SettingsChannel from '@/workflow/channels/settings'
 import DataCatalog from '@/services/dataCatalog'
 import ImportConflictModal from '@/components/common/ImportConflictModal.vue'
+import ImportErrorModal from '@/components/common/ImportErrorModal.vue'
 import ExportModal from '@/components/common/ExportModal.vue'
+import DeleteConfirmModal from '@/components/common/DeleteConfirmModal.vue'
 import { useI18n } from '@/locales'
 
 const { t } = useI18n()
@@ -46,6 +48,18 @@ const importConflictSuggestedName = ref('')
 
 // 导出弹窗状态
 const showExportModal = ref(false)
+
+// 导入错误弹窗状态
+const showImportErrorModal = ref(false)
+const importErrorCode = ref('')
+const importErrorMessage = ref('')
+const importExpectedType = ref('')
+const importActualType = ref('')
+
+// 删除确认弹窗状态
+const showDeleteConfirmModal = ref(false)
+const deleteTarget = ref(null)
+const deleting = ref(false)
 
 // 使用通道响应式状态
 const presets = CatalogChannel.presets
@@ -154,7 +168,52 @@ function onUse(k) {
 }
 
 function onView(k){ emit('view', k) }
-function onDelete(k){ emit('delete', k) }
+
+// ==================== 删除功能 ====================
+
+function onDelete(k) {
+  // 找到要删除的预设信息
+  const preset = presets.value.find(p => p.key === k)
+  if (!preset) return
+  
+  deleteTarget.value = {
+    key: k,
+    name: preset.name || getFolderName(k),
+    folderPath: k.replace(/\/preset\.json$/, ''),
+  }
+  showDeleteConfirmModal.value = true
+}
+
+function closeDeleteConfirmModal() {
+  showDeleteConfirmModal.value = false
+  deleteTarget.value = null
+}
+
+async function handleDeleteConfirm() {
+  if (!deleteTarget.value) return
+  
+  deleting.value = true
+  try {
+    const result = await DataCatalog.deleteDataFolder(deleteTarget.value.folderPath)
+    if (result.success) {
+      // 如果删除的是当前使用的预设，清除选中状态
+      if (usingKey.value === deleteTarget.value.key) {
+        usingKey.value = null
+      }
+      // 刷新列表
+      refreshPresets()
+      emit('delete', deleteTarget.value.key)
+    } else {
+      importError.value = result.message || t('error.deleteFailed', { error: result.error || '' })
+    }
+  } catch (err) {
+    console.error('[PresetsPanel] Delete error:', err)
+    importError.value = t('error.deleteFailed', { error: err.message || '' })
+  } finally {
+    deleting.value = false
+    closeDeleteConfirmModal()
+  }
+}
 
 const isLucide = (v) => typeof v === 'string' && /^[a-z\-]+$/.test(v)
 
@@ -220,7 +279,13 @@ async function doImport(file, overwrite = false, targetName = null) {
       refreshPresets()
       emit('import', result)
     } else {
-      importError.value = result.message || result.error || t('error.importFailed')
+      // 检查是否是类型不匹配或缺少类型信息的错误
+      const errorCode = result.error || ''
+      if (errorCode === 'TYPE_MISMATCH' || errorCode === 'NO_TYPE_INFO') {
+        openImportErrorModal(errorCode, result.message, result.expected_type, result.actual_type)
+      } else {
+        importError.value = result.message || result.error || t('error.importFailed')
+      }
     }
   } catch (err) {
     console.error('[PresetsPanel] Import error:', err)
@@ -228,6 +293,20 @@ async function doImport(file, overwrite = false, targetName = null) {
   } finally {
     importing.value = false
   }
+}
+
+// 打开导入错误弹窗
+function openImportErrorModal(code, message, expected, actual) {
+  importErrorCode.value = code
+  importErrorMessage.value = message || ''
+  importExpectedType.value = expected || 'preset'
+  importActualType.value = actual || ''
+  showImportErrorModal.value = true
+}
+
+// 关闭导入错误弹窗
+function closeImportErrorModal() {
+  showImportErrorModal.value = false
 }
 
 function openImportConflictModal(file, existingName, suggestedName) {
@@ -386,6 +465,27 @@ function handleExportComplete(result) {
         default-icon="sliders-horizontal"
         @close="closeExportModal"
         @export="handleExportComplete"
+      />
+
+      <!-- 导入错误弹窗 -->
+      <ImportErrorModal
+        :show="showImportErrorModal"
+        :error-code="importErrorCode"
+        :error-message="importErrorMessage"
+        :data-type-name="t('panel.presets.typeName')"
+        :expected-type="importExpectedType"
+        :actual-type="importActualType"
+        @close="closeImportErrorModal"
+      />
+
+      <!-- 删除确认弹窗 -->
+      <DeleteConfirmModal
+        :show="showDeleteConfirmModal"
+        :item-name="deleteTarget?.name || ''"
+        :data-type-name="t('panel.presets.typeName')"
+        :loading="deleting"
+        @close="closeDeleteConfirmModal"
+        @confirm="handleDeleteConfirm"
       />
     </div>
 </template>

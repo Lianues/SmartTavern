@@ -194,6 +194,39 @@ const enUS = {
     operationFailed: 'Operation failed: {error}',
   },
 
+  // ==================== Delete Confirm Modal ====================
+  deleteConfirm: {
+    title: 'Confirm Delete',
+    message: 'Are you sure you want to delete {type} "{name}"?',
+    warning: 'This will delete the entire folder and all files within it. This action cannot be undone!',
+    deleting: 'Deleting...',
+  },
+
+  // ==================== Import Error Modal ====================
+  import: {
+    error: {
+      // Error titles
+      typeMismatch: 'File Type Mismatch',
+      noTypeInfo: 'Missing Type Information',
+      invalidZip: 'Invalid Archive',
+      invalidFormat: 'Unsupported Format',
+      importFailed: 'Import Failed',
+      
+      // Error descriptions
+      typeMismatchDesc: 'The selected file contains data of a different type than expected by this panel.',
+      noTypeInfoDesc: 'This file is missing type marker information, unable to verify if it is the correct data type.',
+      genericDesc: 'An error occurred during import. Please check if the file format is correct.',
+      
+      // Type information
+      fileContains: 'File contains',
+      panelExpects: 'Panel expects',
+      
+      // Hints
+      typeMismatchHint: 'Please make sure to import files in the correct panel for their type, or select a different file.',
+      noTypeInfoHint: 'This file may be from an older version or not exported from this system. Please manually verify the data format if you need to import it.',
+    },
+  },
+
   // ==================== Sidebar ====================
   sidebar: {
     title: 'Settings',

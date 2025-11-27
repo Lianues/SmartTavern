@@ -103,6 +103,15 @@ interface CheckNameExistsResponse {
   [key: string]: any
 }
 
+interface DeleteDataFolderResponse {
+  success: boolean
+  deleted_path?: string
+  data_type?: string
+  error?: string
+  message?: string
+  [key: string]: any
+}
+
 type DataType = 'preset' | 'worldbook' | 'character' | 'persona' | 'regex' | 'conversation' | 'llmconfig'
 
 // 扩展 ImportMeta 接口以支持 env
@@ -383,6 +392,9 @@ const DataCatalog = {
   downloadExportedData: null as any,
   getSupportedTypes: null as any,
   checkNameExists: null as any,
+  
+  // Delete functions (declared here for TypeScript)
+  deleteDataFolder: null as any,
 }
 
 /**
@@ -567,6 +579,27 @@ DataCatalog.checkNameExists = function (
   return postJSON('smarttavern/data_import/check_name_exists', {
     data_type: dataType,
     name,
+  })
+}
+
+// ==================== 删除 API ====================
+
+/**
+ * 删除数据目录
+ * @param folderPath - 要删除的目录路径（POSIX 风格）
+ *
+ * 仅允许删除以下类型的目录：
+ * - 预设 (backend_projects/SmartTavern/data/presets/...)
+ * - 世界书 (backend_projects/SmartTavern/data/world_books/...)
+ * - 角色卡 (backend_projects/SmartTavern/data/characters/...)
+ * - 用户画像 (backend_projects/SmartTavern/data/personas/...)
+ * - 正则规则 (backend_projects/SmartTavern/data/regex_rules/...)
+ * - LLM配置 (backend_projects/SmartTavern/data/llm_configs/...)
+ * - 插件 (backend_projects/SmartTavern/plugins/...)
+ */
+DataCatalog.deleteDataFolder = function (folderPath: string): Promise<DeleteDataFolderResponse> {
+  return postJSON('smarttavern/data_catalog/delete_data_folder', {
+    folder_path: folderPath,
   })
 }
 

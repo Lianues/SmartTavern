@@ -4,7 +4,9 @@ import Host from '@/workflow/core/host'
 import { PluginLoader } from '@/workflow/loader.js'
 import DataCatalog from '@/services/dataCatalog'
 import ImportConflictModal from '@/components/common/ImportConflictModal.vue'
+import ImportErrorModal from '@/components/common/ImportErrorModal.vue'
 import ExportModal from '@/components/common/ExportModal.vue'
+import DeleteConfirmModal from '@/components/common/DeleteConfirmModal.vue'
 import { useI18n } from '@/locales'
 
 const { t } = useI18n()
@@ -48,6 +50,18 @@ const importConflictSuggestedName = ref('')
 
 // 导出弹窗状态
 const showExportModal = ref(false)
+
+// 导入错误弹窗状态
+const showImportErrorModal = ref(false)
+const importErrorCode = ref('')
+const importErrorMessage = ref('')
+const importExpectedType = ref('')
+const importActualType = ref('')
+
+// 删除确认弹窗状态
+const showDeleteConfirmModal = ref(false)
+const deleteTarget = ref(null)
+const deleting = ref(false)
 
 /** 规范化插件 ID：使用文件路径派生稳定 ID，便于 load/unload */
 function mkId(file) {
@@ -105,6 +119,59 @@ async function onUnload(dir) {
 
 
 function close(){ emit('close') }
+
+// ==================== 删除功能 ====================
+
+function onDeletePlugin(it) {
+  const dir = String(it?.dir || it?.key || '')
+  if (!dir) return
+  
+  deleteTarget.value = {
+    key: dir,
+    name: it.name || getFolderName(dir),
+    folderPath: dir,
+  }
+  showDeleteConfirmModal.value = true
+}
+
+function closeDeleteConfirmModal() {
+  showDeleteConfirmModal.value = false
+  deleteTarget.value = null
+}
+
+async function handleDeleteConfirm() {
+  if (!deleteTarget.value) return
+  
+  const dir = deleteTarget.value.key
+  const id = mkId(dir)
+  
+  deleting.value = true
+  try {
+    // 先卸载插件（如果已加载）
+    try {
+      await PluginLoader.unload(id)
+    } catch (_) {
+      // 忽略卸载错误
+    }
+    
+    // 删除插件目录
+    const result = await DataCatalog.deleteDataFolder(deleteTarget.value.folderPath)
+    if (result.success) {
+      // 刷新列表
+      await loadPlugins()
+      emit('delete', dir)
+      Host.pushToast?.({ type: 'success', message: `已删除插件：${deleteTarget.value.name}`, timeout: 1800 })
+    } else {
+      Host.pushToast?.({ type: 'error', message: result.message || t('error.deleteFailed', { error: result.error || '' }), timeout: 2200 })
+    }
+  } catch (err) {
+    console.error('[PluginsPanel] Delete error:', err)
+    Host.pushToast?.({ type: 'error', message: t('error.deleteFailed', { error: err.message || '' }), timeout: 2200 })
+  } finally {
+    deleting.value = false
+    closeDeleteConfirmModal()
+  }
+}
 
 const isLucide = (v) => typeof v === 'string' && /^[a-z\-]+$/.test(v)
 
@@ -279,18 +346,24 @@ async function doImport(file, overwrite = false, targetName = null) {
         const id = mkId(pluginDir)
         try {
           await PluginLoader.loadPluginByDir(pluginDir, { id, replace: true })
-          Host.pushToast?.({ type: 'success', message: `已导入并启用插件：${result.name}`, timeout: 2000 })
+          Host.pushToast?.({ type: 'success', message: t('toast.plugin.importedAndEnabled', { name: result.name }), timeout: 2000 })
         } catch (e) {
           console.warn('[PluginsPanel] Auto load plugin failed:', e)
-          Host.pushToast?.({ type: 'warning', message: `插件已导入，但自动加载失败：${e?.message || e}`, timeout: 2800 })
+          Host.pushToast?.({ type: 'warning', message: t('toast.plugin.importAutoLoadFailed', { error: e?.message || e }), timeout: 2800 })
         }
       } else {
-        Host.pushToast?.({ type: 'success', message: `已导入插件：${result.name}`, timeout: 1800 })
+        Host.pushToast?.({ type: 'success', message: t('toast.plugin.imported', { name: result.name }), timeout: 1800 })
       }
       
       emit('import', result)
     } else {
-      importError.value = result.message || result.error || t('error.importFailed')
+      // 检查是否是类型不匹配或缺少类型信息的错误
+      const errorCode = result.error || ''
+      if (errorCode === 'TYPE_MISMATCH' || errorCode === 'NO_TYPE_INFO') {
+        openImportErrorModal(errorCode, result.message, result.expected_type, result.actual_type)
+      } else {
+        importError.value = result.message || result.error || t('error.importFailed')
+      }
     }
   } catch (err) {
     console.error('[PluginsPanel] Import error:', err)
@@ -298,6 +371,20 @@ async function doImport(file, overwrite = false, targetName = null) {
   } finally {
     importing.value = false
   }
+}
+
+// 打开导入错误弹窗
+function openImportErrorModal(code, message, expected, actual) {
+  importErrorCode.value = code
+  importErrorMessage.value = message || ''
+  importExpectedType.value = expected || 'plugin'
+  importActualType.value = actual || ''
+  showImportErrorModal.value = true
+}
+
+// 关闭导入错误弹窗
+function closeImportErrorModal() {
+  showImportErrorModal.value = false
 }
 
 function openImportConflictModal(file, existingName, suggestedName) {
@@ -405,6 +492,14 @@ function handleExportComplete(result) {
             >
               {{ it.enabled ? t('common.enabled') : t('common.enable') }}
             </button>
+            <button
+              class="wf-btn wf-danger st-btn-shrinkable"
+              type="button"
+              :disabled="pending[mkId(it.key)]"
+              @click="onDeletePlugin(it)"
+            >
+              {{ t('common.delete') }}
+            </button>
           </div>
         </div>
       </div>
@@ -432,6 +527,27 @@ function handleExportComplete(result) {
       :use-key-as-path="true"
       @close="closeExportModal"
       @export="handleExportComplete"
+    />
+
+    <!-- 导入错误弹窗 -->
+    <ImportErrorModal
+      :show="showImportErrorModal"
+      :error-code="importErrorCode"
+      :error-message="importErrorMessage"
+      :data-type-name="t('panel.plugins.typeName')"
+      :expected-type="importExpectedType"
+      :actual-type="importActualType"
+      @close="closeImportErrorModal"
+    />
+
+    <!-- 删除确认弹窗 -->
+    <DeleteConfirmModal
+      :show="showDeleteConfirmModal"
+      :item-name="deleteTarget?.name || ''"
+      :data-type-name="t('panel.plugins.typeName')"
+      :loading="deleting"
+      @close="closeDeleteConfirmModal"
+      @confirm="handleDeleteConfirm"
     />
   </div>
 </template>

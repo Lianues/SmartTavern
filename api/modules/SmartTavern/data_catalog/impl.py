@@ -1202,6 +1202,171 @@ def get_plugins_asset_impl(file: str) -> Dict[str, Any]:
         return {"error": "READ_FAILED", "message": f"{type(e).__name__}: {e}", "file": _path_rel_to_root(target, root)}
 
 
+# ---------- 实现：通用删除数据目录 ----------
+
+# 允许删除的数据类型及其对应的目录路径
+_ALLOWED_DELETE_TYPES: Dict[str, str] = {
+    "preset": "backend_projects/SmartTavern/data/presets",
+    "worldbook": "backend_projects/SmartTavern/data/world_books",
+    "character": "backend_projects/SmartTavern/data/characters",
+    "persona": "backend_projects/SmartTavern/data/personas",
+    "regex_rule": "backend_projects/SmartTavern/data/regex_rules",
+    "llm_config": "backend_projects/SmartTavern/data/llm_configs",
+    "conversation": "backend_projects/SmartTavern/data/conversations",
+    "plugin": "backend_projects/SmartTavern/plugins",
+}
+
+
+def delete_data_folder_impl(folder_path: str) -> Dict[str, Any]:
+    """
+    通用的删除数据目录实现。
+    删除指定的数据目录（整个文件夹，包括其中所有文件）。
+    
+    仅允许删除以下类型的目录：
+    - 预设 (presets)
+    - 世界书 (world_books)
+    - 角色卡 (characters)
+    - 用户画像 (personas)
+    - 正则规则 (regex_rules)
+    - LLM配置 (llm_configs)
+    - 插件 (plugins)
+    
+    入参:
+      - folder_path: 要删除的目录路径（POSIX 风格），例如：
+                    "backend_projects/SmartTavern/data/presets/Default"
+    
+    返回:
+      成功: { "success": True, "deleted_path": "...", "data_type": "...", "message": "..." }
+      失败: { "success": False, "error": "...", "message": "..." }
+    """
+    import shutil
+    
+    root = _repo_root()
+    
+    if not isinstance(folder_path, str) or not folder_path:
+        return {"success": False, "error": "INVALID_INPUT", "message": "folder_path 必须为非空字符串"}
+    
+    # 规范化路径
+    folder_path_normalized = folder_path.replace("\\", "/").strip("/")
+    
+    # 检查路径是否在允许的类型目录中
+    matched_type: Optional[str] = None
+    matched_base: Optional[Path] = None
+    
+    for data_type, base_path in _ALLOWED_DELETE_TYPES.items():
+        if folder_path_normalized.startswith(base_path):
+            matched_type = data_type
+            matched_base = root / base_path
+            break
+    
+    if not matched_type or not matched_base:
+        allowed_paths = ", ".join(_ALLOWED_DELETE_TYPES.values())
+        return {
+            "success": False,
+            "error": "NOT_ALLOWED",
+            "message": f"不允许删除该路径。仅允许删除以下目录下的内容: {allowed_paths}"
+        }
+    
+    target = (root / Path(folder_path_normalized)).resolve()
+    
+    # 安全检查：确保目标在允许的目录范围内（防止路径遍历攻击）
+    if not _is_within(target, matched_base):
+        return {
+            "success": False,
+            "error": "OUT_OF_SCOPE",
+            "message": f"路径不在允许的范围内"
+        }
+    
+    # 确保不是删除类型目录本身（例如不能删除整个 presets 目录）
+    if target.resolve() == matched_base.resolve():
+        return {
+            "success": False,
+            "error": "CANNOT_DELETE_ROOT",
+            "message": f"不能删除根类型目录: {matched_type}"
+        }
+    
+    # 确保目标存在
+    if not target.exists():
+        return {
+            "success": False,
+            "error": "NOT_FOUND",
+            "message": f"目录不存在: {folder_path}"
+        }
+    
+    # 确保目标是目录
+    if not target.is_dir():
+        return {
+            "success": False,
+            "error": "NOT_A_DIRECTORY",
+            "message": f"目标不是目录: {folder_path}"
+        }
+    
+    try:
+        # 如果是插件，删除前需要从 plugins_switch.json 中移除注册
+        plugin_name = target.name if matched_type == "plugin" else None
+        
+        # 删除整个目录
+        shutil.rmtree(target)
+        
+        # 删除插件后，更新 plugins_switch.json
+        if matched_type == "plugin" and plugin_name:
+            _remove_plugin_from_switch(plugin_name, root)
+        
+        return {
+            "success": True,
+            "deleted_path": _path_rel_to_root(target, root),
+            "data_type": matched_type,
+            "message": f"已删除{matched_type}目录: {target.name}"
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": "DELETE_FAILED",
+            "message": f"{type(e).__name__}: {e}"
+        }
+
+
+def _remove_plugin_from_switch(plugin_name: str, root: Path) -> None:
+    """
+    从 plugins_switch.json 中移除指定插件的注册。
+    
+    入参:
+      - plugin_name: 插件目录名称
+      - root: 仓库根目录
+    """
+    switch_path = root / "backend_projects" / "SmartTavern" / "plugins" / "plugins_switch.json"
+    
+    if not switch_path.exists() or not switch_path.is_file():
+        return  # 开关文件不存在，无需处理
+    
+    try:
+        doc, err = _safe_read_json(switch_path)
+        if err or not isinstance(doc, dict):
+            return  # 无法读取或格式不正确，跳过
+        
+        modified = False
+        
+        # 从 enabled 列表移除
+        enabled = doc.get("enabled", [])
+        if isinstance(enabled, list) and plugin_name in enabled:
+            enabled.remove(plugin_name)
+            doc["enabled"] = enabled
+            modified = True
+        
+        # 从 disabled 列表移除
+        disabled = doc.get("disabled", [])
+        if isinstance(disabled, list) and plugin_name in disabled:
+            disabled.remove(plugin_name)
+            doc["disabled"] = disabled
+            modified = True
+        
+        # 如果有修改，写回文件
+        if modified:
+            _write_json_atomic(switch_path, doc)
+    except Exception:
+        pass  # 更新开关文件失败不影响删除操作的结果
+
+
 # ---------- 实现：读取 data 资产（图片/二进制/任意文件，Base64 编码） ----------
 def get_data_asset_impl(file: str) -> Dict[str, Any]:
     """

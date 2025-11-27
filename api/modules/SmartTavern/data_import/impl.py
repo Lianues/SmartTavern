@@ -341,21 +341,24 @@ def _extract_data_from_png(png_data: bytes) -> Tuple[Optional[Dict[str, Any]], O
 
 # ---------- ZIP 数据提取 ----------
 
-def _extract_data_from_zip(zip_data: bytes, data_type: str) -> Tuple[Optional[Dict[str, Any]], Optional[Dict[str, bytes]], Optional[str]]:
+def _extract_data_from_zip(zip_data: bytes, data_type: str, validate_type: bool = True) -> Tuple[Optional[Dict[str, Any]], Optional[Dict[str, bytes]], Optional[str], Optional[str], Optional[Dict[str, str]]]:
     """
     从 ZIP 压缩包中提取数据
     
     Args:
         zip_data: ZIP 文件的二进制数据
         data_type: 数据类型
+        validate_type: 是否验证类型匹配
         
     Returns:
-        (主 JSON 数据, 附加文件字典, 错误信息)
+        (主 JSON 数据, 附加文件字典, 错误信息, 错误码, 额外信息)
+        错误码: TYPE_MISMATCH / NO_TYPE_INFO / 其他
+        额外信息: 包含 expected_type, actual_type 等
     """
     try:
         config = DATA_TYPE_CONFIG.get(data_type)
         if not config:
-            return None, None, f"不支持的数据类型: {data_type}"
+            return None, None, f"不支持的数据类型: {data_type}", "INVALID_TYPE", None
         
         main_file = config["main_file"]
         
@@ -365,6 +368,45 @@ def _extract_data_from_zip(zip_data: bytes, data_type: str) -> Tuple[Optional[Di
             # 解压 ZIP 文件
             with zipfile.ZipFile(io.BytesIO(zip_data), 'r') as zf:
                 zf.extractall(temp_path)
+            
+            # 检查元数据文件
+            meta_path = temp_path / META_FILENAME
+            embedded_type = None
+            meta_found = False
+            
+            if meta_path.exists():
+                meta_found = True
+                meta_data, _ = _safe_read_json(meta_path)
+                if meta_data:
+                    embedded_type = meta_data.get("type")
+            else:
+                # 也检查子目录中是否有元数据文件
+                for item in temp_path.iterdir():
+                    if item.is_dir():
+                        sub_meta = item / META_FILENAME
+                        if sub_meta.exists():
+                            meta_found = True
+                            meta_data, _ = _safe_read_json(sub_meta)
+                            if meta_data:
+                                embedded_type = meta_data.get("type")
+                            break
+            
+            # 如果启用类型验证，必须存在元数据文件
+            if validate_type:
+                if not meta_found:
+                    extra_info = {"expected_type": data_type}
+                    return None, None, f"ZIP 中未找到类型标记文件 ({META_FILENAME})，无法验证文件类型。此文件可能不是从本系统导出的。", "NO_TYPE_INFO", extra_info
+                
+                if not embedded_type:
+                    extra_info = {"expected_type": data_type}
+                    return None, None, f"类型标记文件 ({META_FILENAME}) 中缺少 type 字段，无法验证文件类型", "NO_TYPE_INFO", extra_info
+                
+                if embedded_type != data_type:
+                    extra_info = {
+                        "expected_type": data_type,
+                        "actual_type": embedded_type
+                    }
+                    return None, None, f"文件类型不匹配：文件包含 {embedded_type} 类型的数据，但当前面板期望 {data_type} 类型", "TYPE_MISMATCH", extra_info
             
             # 查找主 JSON 文件
             main_json_path = None
@@ -391,12 +433,12 @@ def _extract_data_from_zip(zip_data: bytes, data_type: str) -> Tuple[Optional[Di
                         main_json_path = json_files[0]
             
             if main_json_path is None:
-                return None, None, f"ZIP 中未找到 {main_file} 或任何 JSON 文件"
+                return None, None, f"ZIP 中未找到 {main_file} 或任何 JSON 文件", "NO_MAIN_FILE", None
             
             # 读取主 JSON 文件
             main_data, err = _safe_read_json(main_json_path)
             if err:
-                return None, None, f"读取 JSON 失败: {err}"
+                return None, None, f"读取 JSON 失败: {err}", "PARSE_FAILED", None
             
             # 收集附加文件（图片等）
             extra_files = {}
@@ -410,12 +452,12 @@ def _extract_data_from_zip(zip_data: bytes, data_type: str) -> Tuple[Optional[Di
                     except Exception:
                         pass
             
-            return main_data, extra_files, None
+            return main_data, extra_files, None, None, None
             
     except zipfile.BadZipFile:
-        return None, None, "无效的 ZIP 文件"
+        return None, None, "无效的 ZIP 文件", "INVALID_ZIP", None
     except Exception as e:
-        return None, None, f"解压 ZIP 失败: {type(e).__name__}: {e}"
+        return None, None, f"解压 ZIP 失败: {type(e).__name__}: {e}", "EXTRACT_FAILED", None
 
 
 # ---------- 导入实现 ----------
@@ -485,13 +527,17 @@ def import_data_impl(
     
     elif file_type == 'zip':
         # 从 ZIP 提取
-        main_data, extra_files, err = _extract_data_from_zip(file_data, data_type)
+        main_data, extra_files, err, err_code, extra_info = _extract_data_from_zip(file_data, data_type, validate_type=True)
         if err:
-            return {
+            result = {
                 "success": False,
-                "error": "EXTRACT_FAILED",
+                "error": err_code or "EXTRACT_FAILED",
                 "message": err
             }
+            # 添加额外的类型信息（用于前端显示）
+            if extra_info:
+                result.update(extra_info)
+            return result
         extra_files = extra_files or {}
     
     elif file_type == 'png':
@@ -512,19 +558,38 @@ def import_data_impl(
             # 新导出格式：包含完整 ZIP 数据
             try:
                 zip_data = base64.b64decode(binding_data["data"])
-                embedded_type = binding_data.get("type", data_type)
+                embedded_type = binding_data.get("type")
                 
-                # 如果嵌入的类型与请求的类型不匹配，给出警告但继续处理
-                if embedded_type != data_type:
-                    pass  # 可以在返回结果中添加警告
-                
-                main_data, extra_files, err = _extract_data_from_zip(zip_data, data_type)
-                if err:
+                # 检查嵌入的类型标记
+                if not embedded_type:
                     return {
                         "success": False,
-                        "error": "EXTRACT_FAILED",
+                        "error": "NO_TYPE_INFO",
+                        "message": "PNG 嵌入数据中缺少类型标记，无法验证文件类型。此文件可能不是从本系统导出的。",
+                        "expected_type": data_type
+                    }
+                
+                # 如果嵌入的类型与请求的类型不匹配，返回错误
+                if embedded_type != data_type:
+                    return {
+                        "success": False,
+                        "error": "TYPE_MISMATCH",
+                        "message": f"文件类型不匹配：文件包含 {embedded_type} 类型的数据，但当前面板期望 {data_type} 类型",
+                        "expected_type": data_type,
+                        "actual_type": embedded_type
+                    }
+                
+                # ZIP 内部不需要再验证类型（已在外层验证）
+                main_data, extra_files, err, err_code, extra_info = _extract_data_from_zip(zip_data, data_type, validate_type=False)
+                if err:
+                    result = {
+                        "success": False,
+                        "error": err_code or "EXTRACT_FAILED",
                         "message": err
                     }
+                    if extra_info:
+                        result.update(extra_info)
+                    return result
                 extra_files = extra_files or {}
                 # 如果 ZIP 中没有 icon 文件，才使用导入的 PNG 作为 icon
                 if not any(f.lower() in ('icon.png', 'icon.jpg', 'icon.jpeg', 'icon.webp') for f in extra_files.keys()):

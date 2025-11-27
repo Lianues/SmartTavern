@@ -1035,6 +1035,55 @@ def get_plugins_asset(file: str) -> Dict[str, Any]:
 
 
 # ---------- 获取 data 资产（二进制） ----------
+# ---------- 通用删除数据目录接口 ----------
+
+@core.register_api(
+    path="smarttavern/data_catalog/delete_data_folder",
+    name="删除数据目录",
+    description="""通用的删除数据目录接口。删除指定的数据目录（整个文件夹，包括其中所有文件）。
+
+仅允许删除以下类型的目录：
+- 预设 (backend_projects/SmartTavern/data/presets/...)
+- 世界书 (backend_projects/SmartTavern/data/world_books/...)
+- 角色卡 (backend_projects/SmartTavern/data/characters/...)
+- 用户画像 (backend_projects/SmartTavern/data/personas/...)
+- 正则规则 (backend_projects/SmartTavern/data/regex_rules/...)
+- LLM配置 (backend_projects/SmartTavern/data/llm_configs/...)
+- 对话 (backend_projects/SmartTavern/data/conversations/...)
+- 插件 (backend_projects/SmartTavern/plugins/...)
+
+注意：
+1. 不能删除类型根目录本身（例如整个 presets 目录）。
+2. 删除插件时会自动从 plugins_switch.json 中移除对应的注册。""",
+    input_schema={
+        "type": "object",
+        "properties": {
+            "folder_path": {
+                "type": "string",
+                "description": "要删除的目录路径（POSIX 风格），例如 backend_projects/SmartTavern/data/presets/Default"
+            }
+        },
+        "required": ["folder_path"],
+        "additionalProperties": False
+    },
+    output_schema={
+        "type": "object",
+        "properties": {
+            "success": {"type": "boolean"},
+            "deleted_path": {"type": "string"},
+            "data_type": {"type": "string", "description": "被删除目录的数据类型"},
+            "error": {"type": "string"},
+            "message": {"type": "string"}
+        },
+        "required": ["success"],
+        "additionalProperties": True
+    },
+)
+def delete_data_folder(folder_path: str) -> Dict[str, Any]:
+    from .impl import delete_data_folder_impl
+    return delete_data_folder_impl(folder_path=folder_path)
+
+
 @core.register_api(
     path="smarttavern/data_catalog/get_data_asset",
     name="获取数据资产（二进制Base64）",
