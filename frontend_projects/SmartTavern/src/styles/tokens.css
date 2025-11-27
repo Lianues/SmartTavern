@@ -386,11 +386,7 @@ select {
 /* 文本区域（textarea）样式    */
 /* ========================== */
 
-/* 设置最小高度，避免过小时滚动条异常 */
-textarea {
-  min-height: 80px !important;
-  resize: vertical;
-}
+
 
 /* 自定义 textarea 调整手柄 */
 textarea::-webkit-resizer {

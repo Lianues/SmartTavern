@@ -94,6 +94,7 @@
         <!-- 编辑模式：显示 textarea -->
         <section v-if="isEditing" data-part="content" class="floor-content editing">
           <textarea
+            ref="editTextareaRef"
             v-model="editingContent"
             class="edit-textarea"
             :disabled="saveStatus === 'saving'"
@@ -101,6 +102,7 @@
             @keydown.ctrl.enter="saveEdit"
             @keydown.meta.enter="saveEdit"
             @keydown.esc="cancelEdit"
+            @input="autoResizeTextarea"
           ></textarea>
         </section>
 
@@ -345,6 +347,7 @@ const menuOpen = ref(false)
 const copied = ref(false)
 const isEditing = ref(false)
 const editingContent = ref('')
+const editTextareaRef = ref(null)
 const saveStatus = ref(null) // null | 'saving' | 'success' | 'error'
 const saveMessage = ref('')
 const deleteStatus = ref(null) // null | 'deleting' | 'success' | 'error'
@@ -580,6 +583,20 @@ function emitEdit() {
   try { msgStore.startEdit(props.msg.id) } catch (_) {}
   editingContent.value = msgStore.getMessageContent(props.msg.id)
   refreshIcons()
+  // 等待 DOM 更新后自动调整 textarea 高度
+  nextTick(() => {
+    autoResizeTextarea()
+  })
+}
+
+// 自动调整 textarea 高度以适应内容
+function autoResizeTextarea() {
+  const textarea = editTextareaRef.value
+  if (textarea) {
+    // 先重置高度以获取正确的 scrollHeight
+    textarea.style.height = 'auto'
+    textarea.style.height = textarea.scrollHeight + 'px'
+  }
 }
 
 function cancelEdit() {
@@ -800,6 +817,11 @@ async function saveEdit() {
   letter-spacing: .2px;
   word-break: break-word;
   white-space: pre-wrap;
+  padding: 8px 12px;
+}
+/* 编辑模式的 floor-content 不需要 padding，因为 textarea 自己有 */
+.floor-content.editing {
+  padding: 0;
 }
 .floor-content p { margin: 0; }
 .floor-content p + p { margin-top: 8px; }
@@ -899,27 +921,50 @@ async function saveEdit() {
 
 /* 编辑模式样式 */
 .edit-textarea {
-  width: 100%;
-  min-height: 120px;
-  padding: 12px;
-  border: 1px solid rgba(var(--st-border), 0.9);
+  width: calc(100% + 2px);
+  min-height: auto;
+  padding: 8px 12px;
+  margin: -1px;
+  border: 1px solid rgba(0, 0, 0, 0.15);
   border-radius: var(--st-radius-md);
-  background: rgb(var(--st-surface) / 0.9);
-  color: rgb(var(--st-color-text));
+  background: rgba(0, 0, 0, 0.06);
+  color: rgba(var(--st-color-text), 0.95);
   font-family: var(--st-font-body);
   font-size: var(--st-content-font-size, 18px);
   line-height: var(--st-content-line-height, 1.75);
+  letter-spacing: .2px;
+  word-break: break-word;
+  white-space: pre-wrap;
   resize: vertical;
-  transition: border-color .2s ease, box-shadow .2s ease;
+  overflow-y: auto;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color .2s ease, background .2s ease;
 }
 .edit-textarea:focus {
   outline: none;
   border-color: rgba(var(--st-primary), 0.6);
-  box-shadow: 0 0 0 3px rgba(var(--st-primary), 0.08);
+  background: rgba(0, 0, 0, 0.09);
+  box-shadow: 0 0 0 3px rgba(var(--st-primary), 0.12);
 }
 .edit-textarea:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+  background: rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="dark"] .edit-textarea {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+[data-theme="dark"] .edit-textarea:focus {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(var(--st-primary), 0.7);
+}
+
+[data-theme="dark"] .edit-textarea:disabled {
+  background: rgba(255, 255, 255, 0.05);
 }
 
 /* 编辑模式的操作按钮样式 */
