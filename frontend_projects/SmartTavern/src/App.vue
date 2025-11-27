@@ -42,8 +42,14 @@ import Host from '@/workflow/core/host'
 import * as Chat from '@/workflow/channels/chat'
 import * as Conversation from '@/workflow/channels/conversation'
 import { useI18n } from '@/locales'
+import useAppearanceThreaded from '@/composables/appearance/useAppearanceThreaded'
+import useAppearanceSandbox from '@/composables/appearance/useAppearanceSandbox'
 
 const { t } = useI18n()
+
+// 外观设置 composables - 在应用启动时初始化
+const appearanceThreaded = useAppearanceThreaded()
+const appearanceSandbox = useAppearanceSandbox()
 import { useMessagesStore } from '@/stores/chatMessages'
 import { useChatSettingsStore, registerGlobalFunctions as registerChatSettingsFunctions } from '@/stores/chatSettings'
 import { useCharacterStore, registerGlobalFunctions as registerCharacterFunctions } from '@/stores/character'
@@ -184,6 +190,11 @@ watch(view, (v) => {
 
 onMounted(() => {
   initTheme()
+  
+  // 在应用启动时立即加载外观设置（从 localStorage 恢复）
+  try { appearanceThreaded.initFromCSS() } catch (_) {}
+  try { appearanceSandbox.initFromCSS() } catch (_) {}
+  
   try { registerChatSettingsFunctions({ exposeToWindow: true }) } catch (_) {}
   try { registerCharacterFunctions({ exposeToWindow: true }) } catch (_) {}
   try { registerPersonaFunctions({ exposeToWindow: true }) } catch (_) {}

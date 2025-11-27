@@ -296,29 +296,91 @@ const drawerStyle = computed(() => {
   z-index: 58; /* 低于抽屉(59)，高于内容 */
 }
 
-/* Floating Action Button (收起浮标) */
+/* ═══════════════════════════════════════════════════════════════
+   Floating Action Button - 优雅极简主义设计
+   遵循UI美化规范：黑白中性色 + 微妙阴影 + 精致圆角
+   ═══════════════════════════════════════════════════════════════ */
 .sd-fab {
-  border: 1px solid rgba(var(--st-border), 0.9);
-  /* base 半透明底 + 渐变叠加，避免在复杂背景上近乎透明 */
-  background:
-    linear-gradient(135deg, rgba(var(--st-primary),0.16), rgba(var(--st-accent),0.16)),
-    rgb(var(--st-surface) / var(--st-fab-bg-opacity, 0.62));
-  color: rgb(var(--st-color-text));
+  /* 精致边框 - 炭黑色 */
+  border: 1px solid rgba(0, 0, 0, 0.18);
+  /* 极简背景：纯净白到浅灰渐变 */
+  background: linear-gradient(180deg,
+    #ffffff 0%,
+    #fafafa 50%,
+    #f5f5f5 100%
+  );
+  color: #1a1a1a;
+  /* 精致圆角 < 4px */
   border-radius: 4px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.2);
+  /* 微妙的多层阴影 */
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.08),
+    0 4px 12px rgba(0, 0, 0, 0.06),
+    0 8px 24px rgba(0, 0, 0, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   user-select: none;
   cursor: grab;
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  /* 细腻的微交互过渡 */
+  transition:
+    transform .2s cubic-bezier(.22,.61,.36,1),
+    box-shadow .2s cubic-bezier(.22,.61,.36,1),
+    background .2s ease,
+    border-color .2s ease;
   animation: sd-float 4s ease-in-out infinite alternate 0.8s;
 }
+
+/* 悬停状态 - 微妙的提升效果 */
 .sd-fab:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 28px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.25);
+  border-color: rgba(0, 0, 0, 0.25);
+  background: linear-gradient(180deg,
+    #ffffff 0%,
+    #fefefe 50%,
+    #fafafa 100%
+  );
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.1),
+    0 8px 20px rgba(0, 0, 0, 0.08),
+    0 16px 40px rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 1);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   暗色主题 - 深色极简设计
+   ═══════════════════════════════════════════════════════════════ */
+:root[data-theme="dark"] .sd-fab,
+[data-theme="dark"] .sd-fab {
+  border-color: rgba(255, 255, 255, 0.15);
+  background: linear-gradient(180deg,
+    #3a3a3a 0%,
+    #2d2d2d 50%,
+    #262626 100%
+  );
+  color: #f5f5f5;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.25),
+    0 4px 12px rgba(0, 0, 0, 0.2),
+    0 8px 24px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+:root[data-theme="dark"] .sd-fab:hover,
+[data-theme="dark"] .sd-fab:hover {
+  border-color: rgba(255, 255, 255, 0.22);
+  background: linear-gradient(180deg,
+    #454545 0%,
+    #3a3a3a 50%,
+    #333333 100%
+  );
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.3),
+    0 8px 20px rgba(0, 0, 0, 0.25),
+    0 16px 40px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 .sd-fab:active {
   transform: translateY(0);
