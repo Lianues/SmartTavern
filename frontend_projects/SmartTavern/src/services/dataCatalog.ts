@@ -495,16 +495,19 @@ DataCatalog.importDataFromFile = async function (
  * @param folderPath - 要导出的目录路径
  * @param dataType - 数据类型（可选，自动检测）
  * @param embedImageBase64 - 嵌入图片的 Base64（可选，提供则输出 PNG，否则输出 ZIP）
+ * @param exportFormat - 导出格式（可选：'zip', 'png', 'json'，默认根据 embedImageBase64 决定）
  */
 DataCatalog.exportData = function (
   folderPath: string,
   dataType?: ImportDataType,
-  embedImageBase64?: string
+  embedImageBase64?: string,
+  exportFormat?: 'zip' | 'png' | 'json'
 ): Promise<ExportDataResponse> {
   return postJSON('smarttavern/data_import/export_data', {
     folder_path: folderPath,
     data_type: dataType,
     embed_image_base64: embedImageBase64,
+    export_format: exportFormat,
   })
 }
 
@@ -513,20 +516,27 @@ DataCatalog.exportData = function (
  * @param folderPath - 要导出的目录路径
  * @param dataType - 数据类型（可选）
  * @param embedImageBase64 - 嵌入图片的 Base64（可选）
+ * @param exportFormat - 导出格式（可选：'zip', 'png', 'json'）
  */
 DataCatalog.exportDataAsBlob = async function (
   folderPath: string,
   dataType?: ImportDataType,
-  embedImageBase64?: string
+  embedImageBase64?: string,
+  exportFormat?: 'zip' | 'png' | 'json'
 ): Promise<{ blob: Blob; filename: string; mime: string; size: number }> {
-  const res = await DataCatalog.exportData(folderPath, dataType, embedImageBase64)
+  const res = await DataCatalog.exportData(folderPath, dataType, embedImageBase64, exportFormat)
   if (!res.success || !res.content_base64) {
     const err: any = new Error(`[DataCatalog] Export failed: ${res.message || res.error || 'Unknown error'}`)
     err.details = res
     throw err
   }
   const bytes = _b64ToBytes(res.content_base64)
-  const mime = res.format === 'png' ? 'image/png' : 'application/zip'
+  const mimeMap: Record<string, string> = {
+    'png': 'image/png',
+    'json': 'application/json',
+    'zip': 'application/zip',
+  }
+  const mime = mimeMap[res.format || 'zip'] || 'application/zip'
   const filename = res.filename || `export.${res.format || 'zip'}`
   return {
     blob: new Blob([bytes.buffer as ArrayBuffer], { type: mime }),
@@ -541,13 +551,15 @@ DataCatalog.exportDataAsBlob = async function (
  * @param folderPath - 要导出的目录路径
  * @param dataType - 数据类型（可选）
  * @param embedImageBase64 - 嵌入图片的 Base64（可选）
+ * @param exportFormat - 导出格式（可选：'zip', 'png', 'json'）
  */
 DataCatalog.downloadExportedData = async function (
   folderPath: string,
   dataType?: ImportDataType,
-  embedImageBase64?: string
+  embedImageBase64?: string,
+  exportFormat?: 'zip' | 'png' | 'json'
 ): Promise<void> {
-  const { blob, filename } = await DataCatalog.exportDataAsBlob(folderPath, dataType, embedImageBase64)
+  const { blob, filename } = await DataCatalog.exportDataAsBlob(folderPath, dataType, embedImageBase64, exportFormat)
   
   // 创建下载链接
   const url = URL.createObjectURL(blob)

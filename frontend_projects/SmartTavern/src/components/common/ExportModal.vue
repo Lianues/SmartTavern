@@ -12,6 +12,7 @@ const props = defineProps({
   items: { type: Array, default: () => [] }, // 列表项数组 [{ key, name, avatarUrl, desc }]
   defaultIcon: { type: String, default: 'file' }, // 默认 lucide 图标名
   useKeyAsPath: { type: Boolean, default: false }, // 为 true 时直接使用 key 作为导出路径（用于插件等目录型数据）
+  hideJsonFormat: { type: Boolean, default: false }, // 为 true 时隐藏 JSON 格式选项（如插件不支持纯 JSON 导出）
 })
 
 const emit = defineEmits(['close', 'export'])
@@ -22,8 +23,10 @@ const embedImage = ref(null)
 const embedImagePreview = ref(null)
 const exporting = ref(false)
 const exportError = ref(null)
+const exportSuccess = ref(false)
 const imageInputRef = ref(null)
 const isDraggingImage = ref(false)
+let successTimer = null
 
 // 当弹窗显示时，初始化状态
 watch(() => props.show, (val) => {
@@ -33,7 +36,12 @@ watch(() => props.show, (val) => {
     embedImage.value = null
     embedImagePreview.value = null
     exportError.value = null
+    exportSuccess.value = false
     exporting.value = false
+    if (successTimer) {
+      clearTimeout(successTimer)
+      successTimer = null
+    }
     // 刷新 lucide 图标
     setTimeout(() => { try { window?.lucide?.createIcons?.() } catch (_) {} }, 50)
   }
@@ -135,6 +143,11 @@ async function doExport() {
   
   exporting.value = true
   exportError.value = null
+  exportSuccess.value = false
+  if (successTimer) {
+    clearTimeout(successTimer)
+    successTimer = null
+  }
   
   try {
     let embedImageBase64 = null
@@ -155,11 +168,18 @@ async function doExport() {
     await DataCatalog.downloadExportedData(
       folderPath,
       props.dataType,
-      exportFormat.value === 'png' ? embedImageBase64 : undefined
+      exportFormat.value === 'png' ? embedImageBase64 : undefined,
+      exportFormat.value
     )
     
     emit('export', { item: selectedItem.value, format: exportFormat.value })
-    handleClose()
+    // 导出成功后不关闭面板，允许用户继续导出其他项
+    exportSuccess.value = true
+    // 3秒后自动隐藏成功提示
+    if (successTimer) clearTimeout(successTimer)
+    successTimer = setTimeout(() => {
+      exportSuccess.value = false
+    }, 3000)
     
   } catch (err) {
     console.error('[ExportModal] Export error:', err)
@@ -245,6 +265,31 @@ function handleClose() {
                 </div>
               </div>
               <div
+                v-if="!hideJsonFormat"
+                class="export-format-card"
+                :class="{ selected: exportFormat === 'json' }"
+                @click="exportFormat = 'json'"
+              >
+                <div class="export-format-card-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                    <polyline points="10 9 9 9 8 9"></polyline>
+                  </svg>
+                </div>
+                <div class="export-format-card-text">
+                  <div class="export-format-card-title">{{ t('exportModal.format.json.title') }}</div>
+                  <div class="export-format-card-desc">{{ t('exportModal.format.json.desc') }}</div>
+                </div>
+                <div class="export-format-card-check">
+                  <svg v-if="exportFormat === 'json'" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                </div>
+              </div>
+              <div
                 class="export-format-card"
                 :class="{ selected: exportFormat === 'png' }"
                 @click="exportFormat = 'png'"
@@ -315,6 +360,15 @@ function handleClose() {
         </div>
         
         <footer class="export-modal-footer">
+          <transition name="success-fade">
+            <div v-if="exportSuccess" class="export-success-message">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              <span>{{ t('exportModal.exportSuccess') }}</span>
+            </div>
+          </transition>
+          <div style="flex: 1;"></div>
           <button class="export-btn-cancel" @click="handleClose">{{ t('exportModal.cancelButton') }}</button>
           <button
             class="export-btn-confirm"
@@ -791,6 +845,41 @@ function handleClose() {
 .export-btn-confirm:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+/* 导出成功提示 */
+.export-success-message {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  border-radius: 4px;
+  color: rgb(34, 197, 94);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+[data-theme="dark"] .export-success-message {
+  background: rgba(34, 197, 94, 0.15);
+  border-color: rgba(34, 197, 94, 0.4);
+}
+
+/* 成功提示淡入淡出动画 */
+.success-fade-enter-active,
+.success-fade-leave-active {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.success-fade-enter-from {
+  opacity: 0;
+  transform: translateX(-10px);
+}
+
+.success-fade-leave-to {
+  opacity: 0;
+  transform: translateX(-10px);
 }
 
 @media (max-width: 640px) {

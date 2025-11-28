@@ -125,14 +125,15 @@ def import_data(
     path="smarttavern/data_import/export_data",
     name="导出数据",
     description="""
-通用数据导出接口，将指定目录打包为 ZIP 或嵌入到 PNG 图片中。
+通用数据导出接口，将指定目录打包为 ZIP、JSON 或嵌入到 PNG 图片中。
 
 导出格式：
-- 如不提供 embed_image_base64：输出 ZIP 压缩包
-- 如提供 embed_image_base64：将数据嵌入到该 PNG 图片中输出
+- json：仅导出主 JSON 文件（轻量，便于编辑）
+- zip：输出 ZIP 压缩包（包含所有文件）
+- png：将数据嵌入到 PNG 图片中（需提供 embed_image_base64）
 
 ZIP 结构：
-- .st_meta.json：元数据文件，包含类型标记、版本、名称等
+- .st_meta.json：元数据文件，包含类型标记、名称等
 - {folder_name}/：原始目录结构
 
 PNG 嵌入：
@@ -143,9 +144,8 @@ PNG 嵌入：
 导出流程：
 1. 前端调用接口，传入目录路径
 2. 后端自动检测数据类型（或使用指定类型）
-3. 打包目录为 ZIP（含元数据标记）
-4. 如提供嵌入图片，则将 ZIP 嵌入到 PNG 中
-5. 返回 Base64 编码的文件内容
+3. 根据 export_format 选择导出格式
+4. 返回 Base64 编码的文件内容
 """,
     input_schema={
         "type": "object",
@@ -161,7 +161,12 @@ PNG 嵌入：
             },
             "embed_image_base64": {
                 "type": ["string", "null"],
-                "description": "Base64 编码的 PNG 图片（可选），如提供则将数据嵌入此图片输出 PNG，否则输出 ZIP"
+                "description": "Base64 编码的 PNG 图片（可选），当 export_format 为 png 时使用"
+            },
+            "export_format": {
+                "type": ["string", "null"],
+                "description": "导出格式：zip（默认）、png、json",
+                "enum": ["zip", "png", "json", None]
             }
         },
         "required": ["folder_path"],
@@ -177,7 +182,7 @@ PNG 嵌入：
             "name": {"type": "string"},
             "format": {
                 "type": "string",
-                "description": "输出格式：zip 或 png"
+                "description": "输出格式：zip、png 或 json"
             },
             "filename": {
                 "type": "string",
@@ -199,7 +204,8 @@ PNG 嵌入：
 def export_data(
     folder_path: str,
     data_type: Optional[str] = None,
-    embed_image_base64: Optional[str] = None
+    embed_image_base64: Optional[str] = None,
+    export_format: Optional[str] = None
 ) -> Dict[str, Any]:
     """
     导出数据
@@ -208,6 +214,7 @@ def export_data(
         folder_path: 要导出的目录路径
         data_type: 数据类型（可选，自动检测）
         embed_image_base64: Base64 编码的嵌入图片（可选）
+        export_format: 导出格式（可选：'zip', 'png', 'json'）
         
     Returns:
         导出结果
@@ -215,7 +222,8 @@ def export_data(
     return export_data_impl(
         folder_path=folder_path,
         data_type=data_type,
-        embed_image_base64=embed_image_base64
+        embed_image_base64=embed_image_base64,
+        export_format=export_format
     )
 
 

@@ -252,19 +252,7 @@ async function handleFileSelect(event) {
     return
   }
   
-  const presetName = extractPresetName(file.name)
-  
-  try {
-    const checkResult = await DataCatalog.checkNameExists('preset', presetName)
-    if (checkResult.success && checkResult.exists) {
-      openImportConflictModal(file, checkResult.folder_name, checkResult.suggested_name)
-      event.target.value = ''
-      return
-    }
-  } catch (err) {
-    console.warn('[PresetsPanel] Check name exists failed:', err)
-  }
-  
+  // 直接调用导入，后端会处理名称冲突检测
   await doImport(file, false)
   event.target.value = ''
 }
@@ -279,9 +267,12 @@ async function doImport(file, overwrite = false, targetName = null) {
       refreshPresets()
       emit('import', result)
     } else {
-      // 检查是否是类型不匹配或缺少类型信息的错误
+      // 检查是否是需要显示专用弹窗的错误
       const errorCode = result.error || ''
-      if (errorCode === 'TYPE_MISMATCH' || errorCode === 'NO_TYPE_INFO') {
+      if (errorCode === 'NAME_EXISTS') {
+        // 名称冲突，显示冲突弹窗
+        openImportConflictModal(file, result.folder_name, result.suggested_name)
+      } else if (errorCode === 'TYPE_MISMATCH' || errorCode === 'NO_TYPE_INFO' || errorCode === 'NO_TYPE_IN_FILENAME') {
         openImportErrorModal(errorCode, result.message, result.expected_type, result.actual_type)
       } else {
         importError.value = result.message || result.error || t('error.importFailed')

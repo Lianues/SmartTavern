@@ -153,6 +153,10 @@ const jaJP = {
         title: 'ZIP圧縮ファイル',
         desc: '標準的な圧縮形式、共有に便利',
       },
+      json: {
+        title: 'JSONファイル',
+        desc: '軽量フォーマット、編集とバージョン管理に便利',
+      },
       png: {
         title: 'PNG画像',
         desc: 'データを画像に埋め込み、直接プレビュー可能',
@@ -168,6 +172,7 @@ const jaJP = {
     
     cancelButton: 'キャンセル',
     confirmButton: 'エクスポートを確認',
+    exportSuccess: 'エクスポート成功！',
     
     errors: {
       noSelection: 'エクスポートする{type}を選択してください',
@@ -206,6 +211,7 @@ const jaJP = {
       // エラータイトル
       typeMismatch: 'ファイルタイプが一致しません',
       noTypeInfo: 'タイプ情報がありません',
+      noTypeInFilename: 'ファイル名にタイプ識別子がありません',
       invalidZip: '無効な圧縮ファイル',
       invalidFormat: 'サポートされていない形式',
       importFailed: 'インポート失敗',
@@ -213,6 +219,7 @@ const jaJP = {
       // エラー説明
       typeMismatchDesc: '選択したファイルのデータタイプは現在のパネルと一致しません。',
       noTypeInfoDesc: 'このファイルにはタイプマーカー情報がないため、正しいデータタイプかどうか検証できません。',
+      noTypeInFilenameDesc: 'JSONファイル名にタイプ識別子が含まれていません。ファイル名が「preset_名前.json」のようなタイププレフィックスで始まることを確認してください。',
       genericDesc: 'インポート中にエラーが発生しました。ファイル形式を確認してください。',
       
       // タイプ情報
@@ -222,6 +229,7 @@ const jaJP = {
       // ヒント
       typeMismatchHint: '正しいパネルで対応するタイプのファイルをインポートするか、別のファイルを選択してください。',
       noTypeInfoHint: 'このファイルは古いバージョンからエクスポートされたか、このシステムからエクスポートされたものではない可能性があります。インポートする場合は、データ形式を手動で確認してください。',
+      noTypeInFilenameHint: 'このシステムからエクスポートされたJSONファイルには自動的にタイププレフィックスが含まれます。正しく命名されたファイルを使用してください。',
     },
   },
 

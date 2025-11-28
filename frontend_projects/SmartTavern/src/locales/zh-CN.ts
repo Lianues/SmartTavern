@@ -155,6 +155,10 @@ const zhCN = {
         title: 'ZIP 压缩包',
         desc: '标准压缩格式，便于分享',
       },
+      json: {
+        title: 'JSON 文件',
+        desc: '轻量格式，便于编辑和版本控制',
+      },
       png: {
         title: 'PNG 图片',
         desc: '数据嵌入图片中，可直接预览',
@@ -170,6 +174,7 @@ const zhCN = {
     
     cancelButton: '取消',
     confirmButton: '确认导出',
+    exportSuccess: '导出成功！',
     
     errors: {
       noSelection: '请选择要导出的{type}',
@@ -208,6 +213,7 @@ const zhCN = {
       // 错误标题
       typeMismatch: '文件类型不匹配',
       noTypeInfo: '缺少类型信息',
+      noTypeInFilename: '文件名缺少类型标识',
       invalidZip: '无效的压缩包',
       invalidFormat: '不支持的格式',
       importFailed: '导入失败',
@@ -215,6 +221,7 @@ const zhCN = {
       // 错误描述
       typeMismatchDesc: '您选择的文件包含的数据类型与当前面板不匹配。',
       noTypeInfoDesc: '此文件缺少类型标记信息，无法验证是否为正确的数据类型。',
+      noTypeInFilenameDesc: 'JSON 文件名中未包含类型标识。请确保文件名以类型前缀开头，如 "preset_名称.json"。',
       genericDesc: '导入过程中发生错误，请检查文件格式是否正确。',
       
       // 类型信息
@@ -224,6 +231,7 @@ const zhCN = {
       // 提示
       typeMismatchHint: '请确保在正确的面板中导入对应类型的文件，或选择其他文件。',
       noTypeInfoHint: '此文件可能是旧版本导出的，或不是从本系统导出的。如需导入，请手动确认数据格式。',
+      noTypeInFilenameHint: '本系统导出的 JSON 文件会自动包含类型前缀，请使用正确命名的文件。',
     },
   },
 

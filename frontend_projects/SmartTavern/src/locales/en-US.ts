@@ -155,6 +155,10 @@ const enUS = {
         title: 'ZIP Archive',
         desc: 'Standard compressed format, easy to share',
       },
+      json: {
+        title: 'JSON File',
+        desc: 'Lightweight format, easy to edit and version control',
+      },
       png: {
         title: 'PNG Image',
         desc: 'Data embedded in image, can preview directly',
@@ -170,6 +174,7 @@ const enUS = {
     
     cancelButton: 'Cancel',
     confirmButton: 'Confirm Export',
+    exportSuccess: 'Export successful!',
     
     errors: {
       noSelection: 'Please select a {type} to export',
@@ -208,6 +213,7 @@ const enUS = {
       // Error titles
       typeMismatch: 'File Type Mismatch',
       noTypeInfo: 'Missing Type Information',
+      noTypeInFilename: 'Missing Type in Filename',
       invalidZip: 'Invalid Archive',
       invalidFormat: 'Unsupported Format',
       importFailed: 'Import Failed',
@@ -215,6 +221,7 @@ const enUS = {
       // Error descriptions
       typeMismatchDesc: 'The selected file contains data of a different type than expected by this panel.',
       noTypeInfoDesc: 'This file is missing type marker information, unable to verify if it is the correct data type.',
+      noTypeInFilenameDesc: 'The JSON filename does not contain a type identifier. Please ensure the filename starts with a type prefix, such as "preset_name.json".',
       genericDesc: 'An error occurred during import. Please check if the file format is correct.',
       
       // Type information
@@ -224,6 +231,7 @@ const enUS = {
       // Hints
       typeMismatchHint: 'Please make sure to import files in the correct panel for their type, or select a different file.',
       noTypeInfoHint: 'This file may be from an older version or not exported from this system. Please manually verify the data format if you need to import it.',
+      noTypeInFilenameHint: 'JSON files exported from this system will automatically include type prefixes. Please use correctly named files.',
     },
   },
 

@@ -21,6 +21,7 @@ const errorIcon = computed(() => {
     case 'TYPE_MISMATCH':
       return 'file-x'
     case 'NO_TYPE_INFO':
+    case 'NO_TYPE_IN_FILENAME':
       return 'file-question'
     case 'INVALID_ZIP':
     case 'INVALID_FORMAT':
@@ -37,6 +38,8 @@ const errorTitle = computed(() => {
       return t('import.error.typeMismatch')
     case 'NO_TYPE_INFO':
       return t('import.error.noTypeInfo')
+    case 'NO_TYPE_IN_FILENAME':
+      return t('import.error.noTypeInFilename')
     case 'INVALID_ZIP':
       return t('import.error.invalidZip')
     case 'INVALID_FORMAT':
@@ -139,6 +142,18 @@ onMounted(() => {
             <template v-else-if="errorCode === 'NO_TYPE_INFO'">
               <p class="iem-message">{{ t('import.error.noTypeInfoDesc') }}</p>
               <p class="iem-hint">{{ t('import.error.noTypeInfoHint') }}</p>
+            </template>
+
+            <!-- JSON 文件名缺少类型标识 -->
+            <template v-else-if="errorCode === 'NO_TYPE_IN_FILENAME'">
+              <p class="iem-message">{{ t('import.error.noTypeInFilenameDesc') }}</p>
+              <div class="iem-type-info">
+                <div class="iem-type-row">
+                  <span class="iem-type-label">{{ t('import.error.panelExpects') }}:</span>
+                  <span class="iem-type-value iem-type-expected">{{ expectedTypeName }}</span>
+                </div>
+              </div>
+              <p class="iem-hint">{{ t('import.error.noTypeInFilenameHint') }}</p>
             </template>
 
             <!-- 其他错误 -->

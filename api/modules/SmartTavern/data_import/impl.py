@@ -81,6 +81,29 @@ META_FILENAME = ".st_meta.json"
 EXPORT_VERSION = "1.0.0"
 
 
+# 类型名称标识映射（用于从文件名识别类型）
+TYPE_IDENTIFIERS = {
+    "preset": ["preset", "预设"],
+    "character": ["character", "角色", "角色卡"],
+    "worldbook": ["worldbook", "world_book", "世界书"],
+    "persona": ["persona", "用户", "人设"],
+    "regex_rule": ["regex", "正则", "regex_rule"],
+    "llm_config": ["llm", "llm_config", "llm配置"],
+    "plugin": ["plugin", "插件"],
+}
+
+# 类型到导出前缀的映射
+TYPE_EXPORT_PREFIX = {
+    "preset": "preset",
+    "character": "character",
+    "worldbook": "worldbook",
+    "persona": "persona",
+    "regex_rule": "regex",
+    "llm_config": "llm_config",
+    "plugin": "plugin",
+}
+
+
 # ---------- 路径与工具 ----------
 
 def _repo_root() -> Path:
@@ -165,6 +188,92 @@ def _sanitize_folder_name(name: str) -> str:
     if not result:
         result = f"imported_{uuid.uuid4().hex[:8]}"
     return result
+
+
+def _detect_type_from_filename(filename: str) -> Tuple[Optional[str], Optional[str]]:
+    """
+    从文件名中检测数据类型，并提取去掉前/后缀后的纯名称
+    
+    支持两种格式：
+    - 前缀格式：preset_xxx.json, character_xxx.json 等
+    - 后缀格式：xxx_preset.json, xxx_character.json 等
+    
+    Args:
+        filename: 文件名（不包含路径）
+        
+    Returns:
+        (检测到的数据类型, 去掉前/后缀后的纯名称)
+        如果没有检测到则返回 (None, None)
+    """
+    # 获取不带扩展名的原始文件名（保留大小写）
+    original_name_without_ext = Path(filename).stem
+    # 转换为小写进行匹配
+    name_without_ext_lower = original_name_without_ext.lower()
+    
+    # 遍历所有类型标识进行匹配
+    for data_type, identifiers in TYPE_IDENTIFIERS.items():
+        for identifier in identifiers:
+            identifier_lower = identifier.lower()
+            
+            # 检查前缀格式（如 preset_xxx, preset-xxx）
+            prefix_patterns = [
+                (f"{identifier_lower}_", "_"),
+                (f"{identifier_lower}-", "-"),
+            ]
+            for pattern, sep in prefix_patterns:
+                if name_without_ext_lower.startswith(pattern):
+                    # 提取去掉前缀后的名称（使用原始大小写）
+                    clean_name = original_name_without_ext[len(pattern):]
+                    return data_type, clean_name
+            
+            # 检查后缀格式（如 xxx_preset, xxx-preset）
+            suffix_patterns = [
+                (f"_{identifier_lower}", "_"),
+                (f"-{identifier_lower}", "-"),
+            ]
+            for pattern, sep in suffix_patterns:
+                if name_without_ext_lower.endswith(pattern):
+                    # 提取去掉后缀后的名称（使用原始大小写）
+                    clean_name = original_name_without_ext[:-len(pattern)]
+                    return data_type, clean_name
+            
+            # 也检查文件名中是否包含类型标识（被 _ 或 - 包围）
+            # 这种情况不提取名称，保留原文件名
+            infix_patterns = [
+                f"_{identifier_lower}_",
+                f"-{identifier_lower}-",
+                f"_{identifier_lower}-",
+                f"-{identifier_lower}_",
+            ]
+            for pattern in infix_patterns:
+                if pattern in name_without_ext_lower:
+                    return data_type, original_name_without_ext
+    
+    return None, None
+
+
+def _validate_json_file_type(filename: str, expected_type: str) -> Tuple[bool, Optional[str], Optional[str], Optional[str]]:
+    """
+    验证 JSON 文件名是否包含正确的类型标识
+    
+    Args:
+        filename: 文件名
+        expected_type: 期望的数据类型
+        
+    Returns:
+        (是否有效, 错误码, 检测到的类型, 去掉前/后缀后的纯名称)
+    """
+    detected_type, clean_name = _detect_type_from_filename(filename)
+    
+    if detected_type is None:
+        # 文件名中没有类型标识
+        return False, "NO_TYPE_IN_FILENAME", None, None
+    
+    if detected_type != expected_type:
+        # 类型不匹配
+        return False, "TYPE_MISMATCH", detected_type, None
+    
+    return True, None, detected_type, clean_name
 
 
 def _register_plugin_enabled(plugin_name: str) -> Optional[str]:
@@ -341,7 +450,7 @@ def _extract_data_from_png(png_data: bytes) -> Tuple[Optional[Dict[str, Any]], O
 
 # ---------- ZIP 数据提取 ----------
 
-def _extract_data_from_zip(zip_data: bytes, data_type: str, validate_type: bool = True) -> Tuple[Optional[Dict[str, Any]], Optional[Dict[str, bytes]], Optional[str], Optional[str], Optional[Dict[str, str]]]:
+def _extract_data_from_zip(zip_data: bytes, data_type: str, validate_type: bool = True) -> Tuple[Optional[Dict[str, Any]], Optional[Dict[str, bytes]], Optional[str], Optional[str], Optional[Dict[str, Any]]]:
     """
     从 ZIP 压缩包中提取数据
     
@@ -353,7 +462,7 @@ def _extract_data_from_zip(zip_data: bytes, data_type: str, validate_type: bool 
     Returns:
         (主 JSON 数据, 附加文件字典, 错误信息, 错误码, 额外信息)
         错误码: TYPE_MISMATCH / NO_TYPE_INFO / 其他
-        额外信息: 包含 expected_type, actual_type 等
+        额外信息: 包含 expected_type, actual_type, folder_name 等
     """
     try:
         config = DATA_TYPE_CONFIG.get(data_type)
@@ -372,13 +481,16 @@ def _extract_data_from_zip(zip_data: bytes, data_type: str, validate_type: bool 
             # 检查元数据文件
             meta_path = temp_path / META_FILENAME
             embedded_type = None
+            embedded_folder_name = None
             meta_found = False
+            meta_data = None
             
             if meta_path.exists():
                 meta_found = True
                 meta_data, _ = _safe_read_json(meta_path)
                 if meta_data:
                     embedded_type = meta_data.get("type")
+                    embedded_folder_name = meta_data.get("folder_name")
             else:
                 # 也检查子目录中是否有元数据文件
                 for item in temp_path.iterdir():
@@ -389,6 +501,7 @@ def _extract_data_from_zip(zip_data: bytes, data_type: str, validate_type: bool 
                             meta_data, _ = _safe_read_json(sub_meta)
                             if meta_data:
                                 embedded_type = meta_data.get("type")
+                                embedded_folder_name = meta_data.get("folder_name")
                             break
             
             # 如果启用类型验证，必须存在元数据文件
@@ -407,6 +520,11 @@ def _extract_data_from_zip(zip_data: bytes, data_type: str, validate_type: bool 
                         "actual_type": embedded_type
                     }
                     return None, None, f"文件类型不匹配：文件包含 {embedded_type} 类型的数据，但当前面板期望 {data_type} 类型", "TYPE_MISMATCH", extra_info
+                
+                # 必须有 folder_name
+                if not embedded_folder_name:
+                    extra_info = {"expected_type": data_type}
+                    return None, None, f"类型标记文件 ({META_FILENAME}) 中缺少 folder_name 字段，无法确定文件夹名称", "NO_FOLDER_NAME", extra_info
             
             # 查找主 JSON 文件
             main_json_path = None
@@ -452,7 +570,9 @@ def _extract_data_from_zip(zip_data: bytes, data_type: str, validate_type: bool 
                     except Exception:
                         pass
             
-            return main_data, extra_files, None, None, None
+            # 返回额外信息包含 folder_name
+            result_info = {"folder_name": embedded_folder_name} if embedded_folder_name else None
+            return main_data, extra_files, None, None, result_info
             
     except zipfile.BadZipFile:
         return None, None, "无效的 ZIP 文件", "INVALID_ZIP", None
@@ -514,7 +634,31 @@ def import_data_impl(
     extra_files = {}
     
     # 根据文件类型提取数据
+    # 用于存储从文件名提取的清理后的名称（仅 JSON 导入时使用）
+    clean_name_from_filename = None
+    # 用于存储从 ZIP/PNG 的 .st_meta.json 中提取的 folder_name
+    folder_name_from_meta = None
+    
     if file_type == 'json':
+        # 对于 JSON 文件，检查文件名是否包含类型标识
+        is_valid, err_code, detected_type, clean_name_from_filename = _validate_json_file_type(filename, data_type)
+        if not is_valid:
+            if err_code == "NO_TYPE_IN_FILENAME":
+                return {
+                    "success": False,
+                    "error": "NO_TYPE_IN_FILENAME",
+                    "message": f"JSON 文件名 '{filename}' 中未包含类型标识。请确保文件名包含类型前缀或后缀，如 '{TYPE_EXPORT_PREFIX.get(data_type, data_type)}_名称.json' 或 '名称_{TYPE_EXPORT_PREFIX.get(data_type, data_type)}.json'",
+                    "expected_type": data_type
+                }
+            elif err_code == "TYPE_MISMATCH":
+                return {
+                    "success": False,
+                    "error": "TYPE_MISMATCH",
+                    "message": f"文件类型不匹配：文件名表明这是 {detected_type} 类型的数据，但当前面板期望 {data_type} 类型",
+                    "expected_type": data_type,
+                    "actual_type": detected_type
+                }
+        
         # 直接解析 JSON
         try:
             main_data = json.loads(file_data.decode('utf-8'))
@@ -539,6 +683,9 @@ def import_data_impl(
                 result.update(extra_info)
             return result
         extra_files = extra_files or {}
+        # 提取 folder_name
+        if extra_info and "folder_name" in extra_info:
+            folder_name_from_meta = extra_info["folder_name"]
     
     elif file_type == 'png':
         # 从 PNG 提取嵌入数据
@@ -591,6 +738,16 @@ def import_data_impl(
                         result.update(extra_info)
                     return result
                 extra_files = extra_files or {}
+                
+                # 从 PNG 嵌入数据的 binding_data 中获取 folder_name
+                folder_name_from_meta = binding_data.get("folder_name")
+                if not folder_name_from_meta:
+                    return {
+                        "success": False,
+                        "error": "NO_FOLDER_NAME",
+                        "message": "PNG 嵌入数据中缺少 folder_name 字段，无法确定文件夹名称",
+                        "expected_type": data_type
+                    }
                 # 如果 ZIP 中没有 icon 文件，才使用导入的 PNG 作为 icon
                 if not any(f.lower() in ('icon.png', 'icon.jpg', 'icon.jpeg', 'icon.webp') for f in extra_files.keys()):
                     extra_files["icon.png"] = original_png_data
@@ -653,18 +810,29 @@ def import_data_impl(
             "message": f"不支持的文件格式: {file_type}"
         }
     
-    # 确定目标名称
-    name_field = config["name_field"]
-    if target_name:
-        final_name = target_name
-    elif isinstance(main_data, dict) and name_field in main_data:
-        final_name = str(main_data[name_field])
-    else:
-        # 使用文件名作为名称
-        final_name = Path(filename).stem
+    # 确定文件夹名称（简化逻辑）
+    folder_name = None
     
-    # 清理文件夹名称
-    folder_name = _sanitize_folder_name(final_name)
+    if file_type == 'json':
+        # JSON 导入：必须使用去掉前/后缀的文件名
+        if not clean_name_from_filename:
+            return {
+                "success": False,
+                "error": "NO_FOLDER_NAME",
+                "message": "无法从 JSON 文件名中提取名称，请确保文件名包含正确的类型前缀或后缀",
+                "expected_type": data_type
+            }
+        folder_name = _sanitize_folder_name(clean_name_from_filename)
+    else:
+        # ZIP/PNG 导入：必须使用 .st_meta.json 中的 folder_name
+        if not folder_name_from_meta:
+            return {
+                "success": False,
+                "error": "NO_FOLDER_NAME",
+                "message": f"导入文件中缺少 folder_name 字段，无法确定文件夹名称",
+                "expected_type": data_type
+            }
+        folder_name = _sanitize_folder_name(folder_name_from_meta)
     
     # 获取目标目录（插件使用单独的目录）
     if is_plugin:
@@ -676,10 +844,17 @@ def import_data_impl(
     # 检查是否已存在
     if target_folder.exists():
         if not overwrite:
-            # 获取已存在的文件夹名称列表
+            # 返回名称冲突错误，让前端处理
             existing_names = {d.name for d in target_dir.iterdir() if d.is_dir()}
-            folder_name = _generate_unique_name(folder_name, existing_names)
-            target_folder = target_dir / folder_name
+            suggested_name = _generate_unique_name(folder_name, existing_names)
+            return {
+                "success": False,
+                "error": "NAME_EXISTS",
+                "message": f"名称 '{folder_name}' 已存在，请选择覆盖或重命名",
+                "folder_name": folder_name,
+                "suggested_name": suggested_name,
+                "expected_type": data_type
+            }
         else:
             # 删除已存在的目录
             shutil.rmtree(target_folder)
@@ -711,12 +886,18 @@ def import_data_impl(
     if is_plugin and config.get("register_enabled"):
         register_error = _register_plugin_enabled(folder_name)
     
+    # 确定显示名称（从数据中获取或使用文件夹名）
+    name_field = config["name_field"]
+    display_name = folder_name
+    if isinstance(main_data, dict) and name_field in main_data:
+        display_name = str(main_data[name_field])
+    
     # 返回结果
     result = {
         "success": True,
         "message": f"成功导入 {data_type}",
         "data_type": data_type,
-        "name": final_name if isinstance(main_data, dict) and name_field in main_data else folder_name,
+        "name": display_name,
         "folder": folder_name,
         "file": _path_rel_to_root(main_file_path, root),
         "extra_files": list(extra_files.keys()),
@@ -828,7 +1009,8 @@ def _detect_data_type_from_path(folder_path: str) -> Optional[str]:
 def export_data_impl(
     folder_path: str,
     data_type: Optional[str] = None,
-    embed_image_base64: Optional[str] = None
+    embed_image_base64: Optional[str] = None,
+    export_format: Optional[str] = None
 ) -> Dict[str, Any]:
     """
     导出数据的主实现函数
@@ -837,6 +1019,7 @@ def export_data_impl(
         folder_path: 要导出的目录路径（相对于仓库根或绝对路径）
         data_type: 数据类型（可选，自动检测）
         embed_image_base64: Base64 编码的嵌入图片（可选，如提供则输出 PNG，否则输出 ZIP）
+        export_format: 导出格式（可选：'zip', 'png', 'json'，默认根据 embed_image_base64 决定）
         
     Returns:
         导出结果，包含 Base64 编码的文件内容
@@ -897,10 +1080,54 @@ def export_data_impl(
         if main_data and config["name_field"] in main_data:
             data_name = str(main_data[config["name_field"]])
     
-    # 创建元数据
+    # 生成文件名（类型_名称格式）
+    type_prefix = TYPE_EXPORT_PREFIX.get(data_type, data_type)
+    safe_name = _sanitize_folder_name(data_name)
+    
+    # 确定最终导出格式
+    final_format = export_format
+    if not final_format:
+        if embed_image_base64:
+            final_format = 'png'
+        else:
+            final_format = 'zip'
+    
+    # 导出为 JSON 格式
+    if final_format == 'json':
+        # 读取主文件内容
+        if not main_file_path.exists():
+            return {
+                "success": False,
+                "error": "NO_MAIN_FILE",
+                "message": f"主文件不存在: {config['main_file']}"
+            }
+        
+        main_data, err = _safe_read_json(main_file_path)
+        if err:
+            return {
+                "success": False,
+                "error": "READ_FAILED",
+                "message": f"读取文件失败: {err}"
+            }
+        
+        # 将数据转换为 JSON 字符串
+        json_content = json.dumps(main_data, ensure_ascii=False, indent=2)
+        json_bytes = json_content.encode('utf-8')
+        
+        return {
+            "success": True,
+            "message": f"成功导出 {data_type}: {data_name}",
+            "data_type": data_type,
+            "name": data_name,
+            "format": "json",
+            "filename": f"{type_prefix}_{safe_name}.json",
+            "content_base64": base64.b64encode(json_bytes).decode("ascii"),
+            "size": len(json_bytes),
+        }
+    
+    # 创建元数据（不含 version 字段）
     meta_data = {
         "type": data_type,
-        "version": EXPORT_VERSION,
         "created_at": datetime.now().isoformat(),
         "name": data_name,
         "folder_name": folder.name,
@@ -921,24 +1148,50 @@ def export_data_impl(
     
     zip_data = zip_buffer.getvalue()
     
-    # 根据是否提供嵌入图片决定输出格式
-    if embed_image_base64:
-        # 嵌入到 PNG 图片
-        try:
-            png_data = base64.b64decode(embed_image_base64)
-            # 验证是否为有效的 PNG
-            if png_data[:8] != b'\x89PNG\r\n\x1a\n':
+    # 导出为 PNG 格式（嵌入到图片）
+    if final_format == 'png':
+        png_data = None
+        
+        # 如果提供了嵌入图片，使用它
+        if embed_image_base64:
+            try:
+                png_data = base64.b64decode(embed_image_base64)
+                # 验证是否为有效的 PNG
+                if png_data[:8] != b'\x89PNG\r\n\x1a\n':
+                    return {
+                        "success": False,
+                        "error": "INVALID_IMAGE",
+                        "message": "提供的图片不是有效的 PNG 格式"
+                    }
+            except Exception as e:
                 return {
                     "success": False,
-                    "error": "INVALID_IMAGE",
-                    "message": "提供的图片不是有效的 PNG 格式"
+                    "error": "DECODE_FAILED",
+                    "message": f"图片 Base64 解码失败: {str(e)}"
                 }
-        except Exception as e:
-            return {
-                "success": False,
-                "error": "DECODE_FAILED",
-                "message": f"图片 Base64 解码失败: {str(e)}"
-            }
+        else:
+            # 没有提供嵌入图片，尝试从目录中读取 icon.png
+            icon_candidates = ['icon.png', 'icon.PNG', 'Icon.png', 'ICON.png']
+            for icon_name in icon_candidates:
+                icon_path = folder / icon_name
+                if icon_path.exists() and icon_path.is_file():
+                    try:
+                        png_data = icon_path.read_bytes()
+                        # 验证是否为有效的 PNG
+                        if png_data[:8] == b'\x89PNG\r\n\x1a\n':
+                            break
+                        else:
+                            png_data = None
+                    except Exception:
+                        png_data = None
+            
+            # 如果没有找到有效的 icon.png，返回错误
+            if not png_data:
+                return {
+                    "success": False,
+                    "error": "NO_ICON_IMAGE",
+                    "message": "选择了 PNG 格式但未提供嵌入图片，且目录中没有可用的 icon.png 文件。请选择一张 PNG 图片或使用其他导出格式。"
+                }
         
         # 读取 PNG 数据块
         try:
@@ -950,10 +1203,9 @@ def export_data_impl(
                 "message": f"PNG 解析失败: {str(e)}"
             }
         
-        # 创建嵌入数据
+        # 创建嵌入数据（不含 version 字段）
         embed_data = {
             "type": data_type,
-            "version": EXPORT_VERSION,
             "created_at": datetime.now().isoformat(),
             "name": data_name,
             "folder_name": folder.name,
@@ -984,20 +1236,20 @@ def export_data_impl(
             "data_type": data_type,
             "name": data_name,
             "format": "png",
-            "filename": f"{_sanitize_folder_name(data_name)}.png",
+            "filename": f"{safe_name}.png",
             "content_base64": base64.b64encode(output_png).decode("ascii"),
             "size": len(output_png),
         }
     
     else:
-        # 直接返回 ZIP
+        # 直接返回 ZIP（不添加类型前缀，因为 ZIP 内有 .st_meta.json 标记类型）
         return {
             "success": True,
             "message": f"成功导出 {data_type}: {data_name}",
             "data_type": data_type,
             "name": data_name,
             "format": "zip",
-            "filename": f"{_sanitize_folder_name(data_name)}.zip",
+            "filename": f"{safe_name}.zip",
             "content_base64": base64.b64encode(zip_data).decode("ascii"),
             "size": len(zip_data),
         }
