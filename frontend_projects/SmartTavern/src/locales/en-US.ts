@@ -875,6 +875,7 @@ const enUS = {
       getLatestFailed: 'Failed to get latest message',
       loadFailed: 'Load failed',
       notFound: 'No saved conversations found',
+      emptyHint: 'No saved conversations yet. Start a new chat and it will appear here.',
       confirm: 'Confirm',
       delete: 'Delete',
     },

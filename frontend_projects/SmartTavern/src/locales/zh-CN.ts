@@ -875,6 +875,7 @@ const zhCN = {
       getLatestFailed: '获取最新消息失败',
       loadFailed: '加载失败',
       notFound: '未找到对话存档',
+      emptyHint: '暂无历史对话，开始新对话后将在此处显示',
       confirm: '确认',
       delete: '删除',
     },

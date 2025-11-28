@@ -1,8 +1,9 @@
 <script setup>
-import { ref, onMounted, nextTick, onBeforeUnmount } from 'vue'
+import { ref, onMounted, nextTick, onBeforeUnmount, watch } from 'vue'
 import Host from '@/workflow/core/host'
 import * as Conversation from '@/workflow/channels/conversation'
 import ChatBranches from '@/services/chatBranches'
+import DataCatalog from '@/services/dataCatalog'
 import { useI18n } from '@/locales'
 
 const { t } = useI18n()
@@ -15,12 +16,14 @@ const emit = defineEmits(['confirm'])
  * 需求：
  *  1) 通过 data_catalog 列出对话文件（conversations）
  *  2) 并发调用 chat_branches/get_latest_message 获取每个文件的最后一条消息
- *  3) 汇总后一次性更新面板显示
+ *  3) 并发读取每个对话的 settings，解析出角色卡与用户画像，并尝试加载头像与显示名称
+ *  4) 汇总后一次性更新面板显示
  */
 
 const loading = ref(false)
 const error = ref('')
-const items = ref([]) // [{ file, name, description, latest: {node_id, role, content, depth} | null, error?: string }]
+// items: [{ file, name, description, latest, character, persona, characterName, personaName, characterAvatarUrl, personaAvatarUrl, error? }]
+const items = ref([])
 
 function baseName(file) {
   const s = String(file || '')
@@ -28,11 +31,22 @@ function baseName(file) {
   return i >= 0 ? s.slice(i + 1) : s
 }
 
+/** POSIX 工具：统一 / 分隔符 */
+function toPosix(p) {
+  return String(p || '').replace(/\\/g, '/')
+}
+
+/** 取父目录（末尾一定保留 /） */
+function dirname(p) {
+  const s = toPosix(p)
+  return s.replace(/[^/]+$/, '')
+}
+
 function characterName(characterPath) {
   const s = String(characterPath || '')
   const parts = s.split('/').filter(Boolean)
-  // 目标：仅显示角色文件所在的目录名（如 心与露）
-  // 路径通常形如 .../characters/心与露/character.json
+  // 目标：仅显示文件所在的目录名（如 心与露 / 用户2）
+  // 路径通常形如 .../characters/心与露/character.json 或 .../personas/用户2/persona.json
   // 优先取倒数第二段（目录名），否则退回最后一段/空串
   return parts.length >= 2 ? parts[parts.length - 2] : (parts[0] || '')
 }
@@ -52,9 +66,27 @@ function roleLabel(role) {
 }
 
 function truncate(text, max = 160) {
-  const t = String(text || '')
-  if (t.length <= max) return t
-  return t.slice(0, max - 1) + '…'
+  const t2 = String(text || '')
+  if (t2.length <= max) return t2
+  return t2.slice(0, max - 1) + '…'
+}
+
+/** 安全释放 ObjectURL，避免内存泄漏 */
+function safeRevoke(url) {
+  if (!url) return
+  try {
+    URL.revokeObjectURL(url)
+  } catch (_) {}
+}
+
+/** 释放一组列表项上的头像 URL */
+function releaseItemAvatars(list) {
+  if (!Array.isArray(list)) return
+  for (const it of list) {
+    if (!it) continue
+    safeRevoke(it.characterAvatarUrl)
+    safeRevoke(it.personaAvatarUrl)
+  }
 }
 
 const __eventOffs = [] // 事件监听清理器
@@ -64,11 +96,18 @@ onBeforeUnmount(() => {
     __eventOffs?.forEach(fn => { try { fn?.() } catch (_) {} })
     __eventOffs.length = 0
   } catch (_) {}
+  try {
+    releaseItemAvatars(items.value)
+  } catch (_) {}
 })
 
 async function loadData() {
   loading.value = true
   error.value = ''
+  // 清理旧头像 URL
+  try {
+    releaseItemAvatars(items.value)
+  } catch (_) {}
   items.value = []
   
   const tag = `list_${Date.now()}`
@@ -86,6 +125,11 @@ async function loadData() {
           description: it.description || '',
           latest: null,
           character: '',
+          persona: '',
+          characterName: '',
+          personaName: '',
+          characterAvatarUrl: '',
+          personaAvatarUrl: '',
           error: ''
         }))
 
@@ -96,25 +140,25 @@ async function loadData() {
             const msgTag = `latest_${idx}_${Date.now()}`
             
             // 监听该文件的最新消息响应（一次性）
-            const offOk = Host.events.on(Conversation.EVT_CONVERSATION_LATEST_MSG_OK, ({ file: resFile, latest, tag: resTag }) => {
-              if (resTag !== msgTag) return
+            const offOkLatest = Host.events.on(Conversation.EVT_CONVERSATION_LATEST_MSG_OK, ({ file: resFile, latest, tag: resTag2 }) => {
+              if (resTag2 !== msgTag) return
               
               combined[idx].latest = latest
-              try { offOk?.() } catch (_) {}
-              try { offFail?.() } catch (_) {}
+              try { offOkLatest?.() } catch (_) {}
+              try { offFailLatest?.() } catch (_) {}
               resolve()
             })
             
-            const offFail = Host.events.on(Conversation.EVT_CONVERSATION_LATEST_MSG_FAIL, ({ file: resFile, message, tag: resTag }) => {
-              if (resTag && resTag !== msgTag) return
+            const offFailLatest = Host.events.on(Conversation.EVT_CONVERSATION_LATEST_MSG_FAIL, ({ file: resFile, message, tag: resTag2 }) => {
+              if (resTag2 && resTag2 !== msgTag) return
               
               combined[idx].error = message || t('home.loadGame.getLatestFailed')
-              try { offOk?.() } catch (_) {}
-              try { offFail?.() } catch (_) {}
+              try { offOkLatest?.() } catch (_) {}
+              try { offFailLatest?.() } catch (_) {}
               resolve()
             })
             
-            __eventOffs.push(offOk, offFail)
+            __eventOffs.push(offOkLatest, offFailLatest)
             
             // 发送最新消息请求
             Host.events.emit(Conversation.EVT_CONVERSATION_LATEST_MSG_REQ, {
@@ -124,20 +168,79 @@ async function loadData() {
             })
           })
         })
-        // 并发获取角色卡设置（直接调用后端 settings API）
+
+        // 并发获取每个对话的 settings 与头像信息（直接调用后端 settings + data_catalog API）
         const settingsPromises = combined.map((row, idx) =>
           ChatBranches.settings({ action: 'get', file: row.file })
-            .then(res => { combined[idx].character = res?.settings?.character || '' })
-            .catch(() => { combined[idx].character = '' })
+            .then(async res => {
+              const settings = res?.settings || {}
+              const charFile = settings.character || ''
+              const personaFile = settings.persona || ''
+
+              combined[idx].character = charFile
+              combined[idx].persona = personaFile
+
+              // 角色卡：名称 + 头像
+              if (charFile) {
+                try {
+                  const detail = await DataCatalog.getCharacterDetail(charFile, { useCache: true })
+                  const meta = detail?.content || {}
+                  combined[idx].characterName = meta.character_name || meta.name || characterName(charFile)
+                } catch (_) {
+                  combined[idx].characterName = characterName(charFile)
+                }
+
+                try {
+                  const dir = dirname(charFile)
+                  const { blob } = await DataCatalog.getDataAssetBlob(`${dir}character.png`)
+                  combined[idx].characterAvatarUrl = URL.createObjectURL(blob)
+                } catch (_) {
+                  combined[idx].characterAvatarUrl = ''
+                }
+              } else {
+                combined[idx].characterName = ''
+                combined[idx].characterAvatarUrl = ''
+              }
+
+              // 用户画像：名称 + 头像
+              if (personaFile) {
+                try {
+                  const detail = await DataCatalog.getPersonaDetail(personaFile, { useCache: true })
+                  const meta = detail?.content || {}
+                  combined[idx].personaName = meta.persona_name || meta.name || characterName(personaFile)
+                } catch (_) {
+                  combined[idx].personaName = characterName(personaFile)
+                }
+
+                try {
+                  const dir = dirname(personaFile)
+                  const { blob } = await DataCatalog.getDataAssetBlob(`${dir}persona.png`)
+                  combined[idx].personaAvatarUrl = URL.createObjectURL(blob)
+                } catch (_) {
+                  combined[idx].personaAvatarUrl = ''
+                }
+              } else {
+                combined[idx].personaName = ''
+                combined[idx].personaAvatarUrl = ''
+              }
+            })
+            .catch(() => {
+              combined[idx].character = ''
+              combined[idx].persona = ''
+              combined[idx].characterName = ''
+              combined[idx].personaName = ''
+              combined[idx].characterAvatarUrl = ''
+              combined[idx].personaAvatarUrl = ''
+            })
         )
+
         await Promise.allSettled([...latestPromises, ...settingsPromises])
 
         // 一次性更新面板
         items.value = combined
 
-        // 刷新外部图标组件
+        // 刷新外部组件（图标由 watch 处理）
         nextTick(() => {
-          try { window?.lucide?.createIcons?.() } catch (_) {}
           if (typeof window.initFlowbite === 'function') {
             try { window.initFlowbite() } catch (_) {}
           }
@@ -170,25 +273,78 @@ async function loadData() {
   }
 }
 
+/** 刷新 Lucide 图标 */
+function refreshLucideIcons() {
+  nextTick(() => {
+    // 延迟一帧确保 DOM 完全渲染
+    requestAnimationFrame(() => {
+      try {
+        window?.lucide?.createIcons?.()
+      } catch (_) {}
+    })
+  })
+}
+
+// 监听 items 变化，刷新图标
+watch(items, () => {
+  refreshLucideIcons()
+}, { flush: 'post' })
+
+// 监听 loading 变化，数据加载完成后刷新图标
+watch(loading, (newVal, oldVal) => {
+  if (oldVal === true && newVal === false) {
+    refreshLucideIcons()
+  }
+})
+
 onMounted(() => {
   loadData()
+  // 组件挂载时也尝试刷新图标
+  refreshLucideIcons()
 })
 </script>
 
 <template>
   <section data-scope="load-game-view" class="lgv">
 
-    <!-- 高级骨架屏加载（微光动画），一行一个卡片 -->
+    <!-- 加载时显示单个骨架卡片 -->
     <div v-if="loading" class="lgv-list">
-      <div v-for="n in 2" :key="'sk'+n" class="lgv-card lgv-item lgv-skel">
+      <div class="lgv-card lgv-item lgv-skel">
         <div class="lgv-row">
-          <div class="lgv-media">
-            <div class="sk-media" aria-hidden="true"></div>
-          </div>
           <div class="lgv-main">
-            <div class="sk-row w-44"></div>
-            <div class="sk-row w-72"></div>
-            <div class="sk-row w-56"></div>
+            <div class="lgv-card-title">
+              <div class="lgv-title-row">
+                <div class="sk-row w-44"></div>
+              </div>
+              <div class="lgv-participants">
+                <div class="lgv-actor lgv-actor-empty">
+                  <div class="lgv-actor-avatar">
+                    <div class="sk-avatar"></div>
+                  </div>
+                  <div class="lgv-actor-body">
+                    <div class="sk-row-sm w-16"></div>
+                    <div class="sk-row-sm w-24"></div>
+                  </div>
+                </div>
+                <div class="lgv-actor lgv-actor-empty">
+                  <div class="lgv-actor-avatar">
+                    <div class="sk-avatar"></div>
+                  </div>
+                  <div class="lgv-actor-body">
+                    <div class="sk-row-sm w-16"></div>
+                    <div class="sk-row-sm w-24"></div>
+                  </div>
+                </div>
+              </div>
+              <div class="sk-row w-72" style="margin-top: 12px;"></div>
+            </div>
+            <div class="lgv-latest">
+              <div class="sk-row w-56"></div>
+            </div>
+          </div>
+          <div class="lgv-card-actions">
+            <div class="sk-btn"></div>
+            <div class="sk-btn"></div>
           </div>
         </div>
       </div>
@@ -206,20 +362,55 @@ onMounted(() => {
         class="lgv-card lgv-item"
       >
         <div class="lgv-row">
-          <div class="lgv-media">
-            <div class="media-ph" aria-label="封面占位"></div>
-          </div>
           <div class="lgv-main">
             <div class="lgv-card-title">
-              <span class="lgv-file">{{ it.name }}</span>
-              <small class="lgv-file-path">{{ conversationSlug(it.file) }}</small>
+              <div class="lgv-title-row">
+                <span class="lgv-file">{{ it.name }}</span>
+                <small class="lgv-file-path">{{ conversationSlug(it.file) }}</small>
+              </div>
+              <div class="lgv-participants">
+                <div class="lgv-actor">
+                  <div class="lgv-actor-avatar">
+                    <img
+                      v-if="it.characterAvatarUrl"
+                      :src="it.characterAvatarUrl"
+                      :alt="it.characterName || characterName(it.character)"
+                      loading="lazy"
+                    >
+                    <span v-else class="lgv-actor-initial">
+                      {{ (it.characterName || characterName(it.character) || it.name || '?').slice(0, 1) }}
+                    </span>
+                  </div>
+                  <div class="lgv-actor-body">
+                    <div class="lgv-actor-role">{{ t('home.loadGame.characterCard') }}</div>
+                    <div class="lgv-actor-name">
+                      {{ it.characterName || characterName(it.character) || '—' }}
+                    </div>
+                  </div>
+                </div>
+                <div class="lgv-actor">
+                  <div class="lgv-actor-avatar">
+                    <img
+                      v-if="it.personaAvatarUrl"
+                      :src="it.personaAvatarUrl"
+                      :alt="it.personaName || characterName(it.persona)"
+                      loading="lazy"
+                    >
+                    <span v-else class="lgv-actor-initial">
+                      {{ (it.personaName || characterName(it.persona) || 'User').slice(0, 1) }}
+                    </span>
+                  </div>
+                  <div class="lgv-actor-body">
+                    <div class="lgv-actor-role">{{ t('home.loadGame.roleUser') }}</div>
+                    <div class="lgv-actor-name">
+                      {{ it.personaName || characterName(it.persona) || '—' }}
+                    </div>
+                  </div>
+                </div>
+              </div>
               <div class="lgv-desc" v-if="it.description">
                 {{ it.description }}
               </div>
-              <div class="lgv-setting" v-if="it.character">
-                  <span class="dim">{{ t('home.loadGame.characterCard') }}</span>
-                  <span class="badge">{{ characterName(it.character) }}</span>
-                </div>
             </div>
 
             <div v-if="it.error" class="lgv-latest error">
@@ -238,19 +429,70 @@ onMounted(() => {
             <div v-else class="lgv-latest muted">{{ t('home.loadGame.noLatestMessage') }}</div>
           </div>
           <div class="lgv-card-actions">
-            <button class="btn primary" :disabled="!!it.error" :title="t('home.loadGame.confirm')" @click="emit('confirm', it.file)">
+            <button
+              class="btn primary"
+              :disabled="!!it.error"
+              :title="t('home.loadGame.confirm')"
+              @click="emit('confirm', it.file)"
+            >
+              <i data-lucide="play" class="btn-icon"></i>
               {{ t('home.loadGame.confirm') }}
             </button>
-            <button class="btn danger" :title="t('home.loadGame.delete')">
+            <button
+              class="btn secondary"
+              :title="t('home.loadGame.delete')"
+            >
+              <i data-lucide="trash-2" class="btn-icon"></i>
               {{ t('home.loadGame.delete') }}
             </button>
           </div>
         </div>
       </div>
 
-      <div v-if="items.length === 0" key="empty" class="lgv-empty">
-        <div class="empty-icon">📂</div>
-        <div class="empty-text">{{ t('home.loadGame.notFound') }}</div>
+      <div v-if="items.length === 0" key="empty" class="lgv-card lgv-item lgv-empty-card">
+        <div class="lgv-row">
+          <div class="lgv-main">
+            <div class="lgv-card-title">
+              <div class="lgv-title-row">
+                <span class="lgv-file lgv-empty-title">{{ t('home.loadGame.notFound') }}</span>
+              </div>
+              <div class="lgv-participants">
+                <div class="lgv-actor lgv-actor-empty">
+                  <div class="lgv-actor-avatar">
+                    <span class="lgv-actor-initial">?</span>
+                  </div>
+                  <div class="lgv-actor-body">
+                    <div class="lgv-actor-role">{{ t('home.loadGame.characterCard') }}</div>
+                    <div class="lgv-actor-name lgv-empty-placeholder">—</div>
+                  </div>
+                </div>
+                <div class="lgv-actor lgv-actor-empty">
+                  <div class="lgv-actor-avatar">
+                    <span class="lgv-actor-initial">?</span>
+                  </div>
+                  <div class="lgv-actor-body">
+                    <div class="lgv-actor-role">{{ t('home.loadGame.roleUser') }}</div>
+                    <div class="lgv-actor-name lgv-empty-placeholder">—</div>
+                  </div>
+                </div>
+              </div>
+              <div class="lgv-desc lgv-empty-desc">
+                {{ t('home.loadGame.emptyHint') || '暂无历史对话，开始新对话后将在此处显示' }}
+              </div>
+            </div>
+            <div class="lgv-latest muted lgv-empty-latest">{{ t('home.loadGame.noLatestMessage') }}</div>
+          </div>
+          <div class="lgv-card-actions lgv-empty-actions">
+            <button class="btn primary" disabled>
+              <i data-lucide="play" class="btn-icon"></i>
+              {{ t('home.loadGame.confirm') }}
+            </button>
+            <button class="btn secondary" disabled>
+              <i data-lucide="trash-2" class="btn-icon"></i>
+              {{ t('home.loadGame.delete') }}
+            </button>
+          </div>
+        </div>
       </div>
     </transition-group>
   </section>
@@ -268,45 +510,81 @@ onMounted(() => {
 
 /* 头部样式已移除（标题在 modal-title，避免重复） */
 
-/* 按钮 */
+/* 按钮：高阶卡片风格（黑白极简 + Lucide 图标） */
 .btn {
   appearance: none;
-  border: 1px solid rgba(var(--st-border), 0.9);
-  background: rgb(var(--st-surface));
-  color: rgb(var(--st-color-text));
+  position: relative;
   border-radius: var(--st-radius-md);
-  padding: 12px 16px; /* 增大内边距提升高度 */
-  min-height: 48px; /* 最小高度满足触摸区域 */
-  width: 100%; /* 确保按钮撑满容器宽度 */
+  padding: 12px 16px;
+  min-height: 48px;
+  width: 100%;
   cursor: pointer;
   display: inline-flex;
   gap: 8px;
   align-items: center;
-  justify-content: center; /* 内容水平居中 */
-  text-align: center; /* 文字居中 */
-  transition: transform .12s ease, box-shadow .12s ease, background .12s ease, border-color .12s ease;
-}
-.btn:hover { transform: translateY(-1px); box-shadow: var(--st-shadow-sm); }
-.btn.primary {
-  /* 黑白极简风格（符合主题，无彩色） */
-  background: transparent;
+  justify-content: center;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 500;
+  border: 1px solid rgba(var(--st-border), 0.85);
+  background: rgba(var(--st-surface), 0.92);
   color: rgb(var(--st-color-text));
-  border-color: rgba(var(--st-border), 0.9);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 2px 8px rgba(0, 0, 0, 0.12);
+  transition:
+    transform .14s cubic-bezier(.22,.61,.36,1),
+    box-shadow .14s cubic-bezier(.22,.61,.36,1),
+    background .14s ease,
+    border-color .14s ease;
 }
-.btn.primary:hover {
-  background: rgba(var(--st-surface-2), 0.85);
+.btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+.btn:hover {
+  transform: translateY(-1px);
+  background: rgba(var(--st-surface-2), 0.95);
+  border-color: rgba(var(--st-border), 1);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 4px 16px rgba(0, 0, 0, 0.18);
+}
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* 按钮图标 */
+.btn-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+/* Primary：主操作，边框稍深 */
+.btn.primary {
   border-color: rgba(var(--st-border), 1);
 }
-.btn.ghost { background: rgba(var(--st-surface-2), 0.6); }
-.btn.danger {
-  /* Outline danger style (no solid fill) */
-  background: transparent;
-  color: rgb(220, 38, 38);
-  border-color: rgba(220, 38, 38, 0.6);
+.btn.primary:hover {
+  background: rgba(var(--st-surface-2), 1);
 }
-.btn.danger:hover {
-  background: rgba(220, 38, 38, 0.08);
-  border-color: rgba(220, 38, 38, 0.8);
+
+/* Secondary：次要操作（删除等），纯黑白风格 */
+.btn.secondary {
+  background: transparent;
+  border-color: rgba(var(--st-border), 0.7);
+  box-shadow: none;
+}
+.btn.secondary:hover {
+  background: rgba(var(--st-surface-2), 0.6);
+  border-color: rgba(var(--st-border), 0.9);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 /* 加载与错误 */
@@ -387,29 +665,83 @@ onMounted(() => {
   border-color: rgba(var(--st-primary), 0.45);
 }
 
-/* 卡片内部三列布局：左 media、中 content、右 actions */
+/* 卡片内部两列布局：左内容、右操作按钮 */
 .lgv-row {
   display: grid;
-  grid-template-columns: 420px 1fr auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 16px;
-  align-items: center; /* 垂直居中所有列，按钮列自然居中于图片高度 */
-}
-.lgv-media { width: 100%; }
-.media-ph {
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  border-radius: var(--st-radius-md);
-  background:
-    linear-gradient(135deg, rgba(var(--st-primary), 0.16), rgba(var(--st-accent), 0.16)),
-    repeating-linear-gradient(45deg, rgba(var(--st-color-text),0.06) 0, rgba(var(--st-color-text),0.06) 8px, transparent 8px, transparent 16px);
-  border: 1px solid rgba(var(--st-border), 0.7);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.15);
+  align-items: stretch;
 }
 .lgv-main {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  align-self: start; /* 内容区从顶部开始，不再stretch */
+  align-self: stretch;
+}
+.lgv-title-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+.lgv-participants {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 8px;
+}
+.lgv-actor {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: var(--st-radius-md);
+  background: rgba(var(--st-surface-2), 0.8);
+  border: 1px solid rgba(var(--st-border), 0.7);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.16);
+}
+.lgv-actor-avatar {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 9999px;
+  overflow: hidden;
+  background: rgba(var(--st-surface), 0.9);
+  border: 1px solid rgba(var(--st-border), 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.lgv-actor-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.lgv-actor-initial {
+  font-size: 16px;
+  font-weight: 700;
+  color: rgb(var(--st-color-text));
+}
+.lgv-actor-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.lgv-actor-role {
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(var(--st-color-text), 0.65);
+}
+.lgv-actor-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: rgb(var(--st-color-text));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 @media (max-width: 980px) {
   .lgv-row {
@@ -464,22 +796,7 @@ onMounted(() => {
 .lgv-item.lgv-enter-active:nth-last-child(2) { transition-delay: 48ms; }
 .lgv-item.lgv-enter-active:nth-last-child(3) { transition-delay: 72ms; }
 
-/* sheen 动画已移除 */
-/* 骨架屏（高端微光） */
-.lgv-skel .sk-media {
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  border-radius: var(--st-radius-md);
-  border: 1px solid rgba(var(--st-border), 0.7);
-  background:
-    linear-gradient(90deg,
-      rgba(var(--st-surface-2), 0.6) 0%,
-      rgba(var(--st-surface-2), 0.85) 20%,
-      rgba(var(--st-surface-2), 0.6) 40%);
-  background-size: 200% 100%;
-  animation: lgv-shimmer 1.4s ease-in-out infinite;
-  margin-bottom: 12px;
-}
+/* 骨架屏样式（高端微光） */
 .lgv-skel .sk-row {
   height: 16px;
   border-radius: 8px;
@@ -490,11 +807,50 @@ onMounted(() => {
       rgba(var(--st-surface-2), 0.6) 40%);
   background-size: 200% 100%;
   animation: lgv-shimmer 1.4s ease-in-out infinite;
-  margin: 8px 0;
+  margin: 4px 0;
 }
+.lgv-skel .sk-row-sm {
+  height: 12px;
+  border-radius: 6px;
+  background:
+    linear-gradient(90deg,
+      rgba(var(--st-surface-2), 0.6) 0%,
+      rgba(var(--st-surface-2), 0.85) 20%,
+      rgba(var(--st-surface-2), 0.6) 40%);
+  background-size: 200% 100%;
+  animation: lgv-shimmer 1.4s ease-in-out infinite;
+  margin: 2px 0;
+}
+.lgv-skel .sk-avatar {
+  width: 100%;
+  height: 100%;
+  border-radius: 9999px;
+  background:
+    linear-gradient(90deg,
+      rgba(var(--st-surface-2), 0.6) 0%,
+      rgba(var(--st-surface-2), 0.85) 20%,
+      rgba(var(--st-surface-2), 0.6) 40%);
+  background-size: 200% 100%;
+  animation: lgv-shimmer 1.4s ease-in-out infinite;
+}
+.lgv-skel .sk-btn {
+  height: 48px;
+  border-radius: var(--st-radius-md);
+  background:
+    linear-gradient(90deg,
+      rgba(var(--st-surface-2), 0.6) 0%,
+      rgba(var(--st-surface-2), 0.85) 20%,
+      rgba(var(--st-surface-2), 0.6) 40%);
+  background-size: 200% 100%;
+  animation: lgv-shimmer 1.4s ease-in-out infinite;
+}
+.lgv-skel .sk-row.w-16 { width: 64px; }
+.lgv-skel .sk-row.w-24 { width: 96px; }
 .lgv-skel .sk-row.w-44 { width: 176px; }
 .lgv-skel .sk-row.w-56 { width: 224px; }
 .lgv-skel .sk-row.w-72 { width: 288px; }
+.lgv-skel .sk-row-sm.w-16 { width: 64px; }
+.lgv-skel .sk-row-sm.w-24 { width: 96px; }
 @media (max-width: 480px) {
   .lgv-skel .sk-row.w-44 { width: 52vw; }
   .lgv-skel .sk-row.w-56 { width: 62vw; }
@@ -596,16 +952,29 @@ onMounted(() => {
 }
 .err-detail { color: rgb(220,38,38); font-size: 12px; }
 
-/* 空状态 */
-.lgv-empty {
-  grid-column: 1 / -1;
-  display: grid;
-  place-items: center;
-  gap: 8px;
-  padding: 60px 20px;
+/* 空状态卡片样式 */
+.lgv-empty-card {
+  opacity: 0.7;
 }
-.empty-icon { font-size: 48px; opacity: 0.6; }
-.empty-text { font-weight: 700; color: rgba(var(--st-color-text), 0.9); }
+.lgv-empty-card .lgv-actor-empty {
+  opacity: 0.6;
+}
+.lgv-empty-title {
+  color: rgba(var(--st-color-text), 0.7);
+}
+.lgv-empty-placeholder {
+  color: rgba(var(--st-color-text), 0.4);
+}
+.lgv-empty-desc {
+  color: rgba(var(--st-color-text), 0.6);
+  font-style: italic;
+}
+.lgv-empty-latest {
+  opacity: 0.5;
+}
+.lgv-empty-actions .btn {
+  opacity: 0.5;
+}
 
 @keyframes st-spin { to { transform: rotate(360deg); } }
 </style>

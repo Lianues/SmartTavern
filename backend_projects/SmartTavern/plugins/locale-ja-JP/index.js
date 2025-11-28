@@ -873,6 +873,7 @@ const jaJP = {
       getLatestFailed: '最新メッセージの取得に失敗しました',
       loadFailed: 'ロード失敗',
       notFound: '保存された会話が見つかりません',
+      emptyHint: '保存された会話がありません。新しいチャットを開始すると、ここに表示されます。',
       confirm: '確認',
       delete: '削除',
     },
