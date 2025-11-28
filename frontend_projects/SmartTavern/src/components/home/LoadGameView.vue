@@ -307,47 +307,10 @@ onMounted(() => {
 <template>
   <section data-scope="load-game-view" class="lgv">
 
-    <!-- 加载时显示单个骨架卡片 -->
-    <div v-if="loading" class="lgv-list">
-      <div class="lgv-card lgv-item lgv-skel">
-        <div class="lgv-row">
-          <div class="lgv-main">
-            <div class="lgv-card-title">
-              <div class="lgv-title-row">
-                <div class="sk-row w-44"></div>
-              </div>
-              <div class="lgv-participants">
-                <div class="lgv-actor lgv-actor-empty">
-                  <div class="lgv-actor-avatar">
-                    <div class="sk-avatar"></div>
-                  </div>
-                  <div class="lgv-actor-body">
-                    <div class="sk-row-sm w-16"></div>
-                    <div class="sk-row-sm w-24"></div>
-                  </div>
-                </div>
-                <div class="lgv-actor lgv-actor-empty">
-                  <div class="lgv-actor-avatar">
-                    <div class="sk-avatar"></div>
-                  </div>
-                  <div class="lgv-actor-body">
-                    <div class="sk-row-sm w-16"></div>
-                    <div class="sk-row-sm w-24"></div>
-                  </div>
-                </div>
-              </div>
-              <div class="sk-row w-72" style="margin-top: 12px;"></div>
-            </div>
-            <div class="lgv-latest">
-              <div class="sk-row w-56"></div>
-            </div>
-          </div>
-          <div class="lgv-card-actions">
-            <div class="sk-btn"></div>
-            <div class="sk-btn"></div>
-          </div>
-        </div>
-      </div>
+    <!-- 加载时显示旋转动画 -->
+    <div v-if="loading" class="lgv-loading-indicator">
+      <div class="lgv-spinner"></div>
+      <span class="lgv-loading-text">{{ t('common.loading') }}</span>
     </div>
 
     <div v-else-if="error" class="lgv-error">
@@ -585,6 +548,46 @@ onMounted(() => {
   background: rgba(var(--st-surface-2), 0.6);
   border-color: rgba(var(--st-border), 0.9);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* 加载指示器（与 NewChatModal 风格一致） */
+.lgv-loading-indicator {
+  display: grid;
+  place-items: center;
+  gap: 8px;
+  padding: 40px 24px;
+  text-align: center;
+  color: #000000;
+}
+
+[data-theme="dark"] .lgv-loading-indicator {
+  color: #ffffff;
+}
+
+.lgv-spinner {
+  width: 32px;
+  height: 32px;
+  border-radius: 9999px;
+  border: 4px solid currentColor;
+  border-top-color: transparent;
+  animation: lgv-spin 0.9s linear infinite;
+  opacity: 0.9;
+}
+
+.lgv-loading-text {
+  font-weight: 700;
+  font-size: 16px;
+}
+
+@keyframes lgv-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 加载中的骨架卡片额外样式 */
+.lgv-skel-loading {
+  opacity: 0.6;
 }
 
 /* 加载与错误 */
