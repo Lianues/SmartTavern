@@ -473,53 +473,49 @@ onMounted(() => {
 
 /* 头部样式已移除（标题在 modal-title，避免重复） */
 
-/* 按钮：高阶卡片风格（黑白极简 + Lucide 图标） */
+/* 按钮：纯黑白极简风格（与 NewChatModal 一致） */
 .btn {
   appearance: none;
-  position: relative;
-  border-radius: var(--st-radius-md);
+  min-width: 120px;
   padding: 12px 16px;
-  min-height: 48px;
-  width: 100%;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 0, 0, 0.16);
+  background: #ffffff;
+  color: #000000;
   cursor: pointer;
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 20px;
   display: inline-flex;
-  gap: 8px;
   align-items: center;
   justify-content: center;
-  text-align: center;
-  font-size: 14px;
-  font-weight: 500;
-  border: 1px solid rgba(var(--st-border), 0.85);
-  background: rgba(var(--st-surface), 0.92);
-  color: rgb(var(--st-color-text));
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.06),
-    0 2px 8px rgba(0, 0, 0, 0.12);
+  gap: 8px;
   transition:
-    transform .14s cubic-bezier(.22,.61,.36,1),
-    box-shadow .14s cubic-bezier(.22,.61,.36,1),
-    background .14s ease,
-    border-color .14s ease;
+    transform 0.12s ease,
+    box-shadow 0.16s ease,
+    background-color 0.16s ease,
+    border-color 0.16s ease;
 }
-.btn::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  border: 1px solid rgba(255, 255, 255, 0.04);
+
+[data-theme="dark"] .btn {
+  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.06);
+  color: #ffffff;
 }
-.btn:hover {
+
+.btn:hover:not(:disabled) {
   transform: translateY(-1px);
-  background: rgba(var(--st-surface-2), 0.95);
-  border-color: rgba(var(--st-border), 1);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    0 4px 16px rgba(0, 0, 0, 0.18);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.26);
 }
+
+[data-theme="dark"] .btn:hover:not(:disabled) {
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.9);
+}
+
 .btn:disabled {
-  opacity: 0.5;
+  opacity: 0.55;
   cursor: not-allowed;
+  box-shadow: none;
   transform: none;
 }
 
@@ -530,24 +526,22 @@ onMounted(() => {
   flex-shrink: 0;
 }
 
-/* Primary：主操作，边框稍深 */
+/* Primary：主操作按钮 */
 .btn.primary {
-  border-color: rgba(var(--st-border), 1);
-}
-.btn.primary:hover {
-  background: rgba(var(--st-surface-2), 1);
+  background: linear-gradient(135deg, #111111, #000000);
+  color: #ffffff;
+  border-color: #000000;
 }
 
-/* Secondary：次要操作（删除等），纯黑白风格 */
-.btn.secondary {
-  background: transparent;
-  border-color: rgba(var(--st-border), 0.7);
-  box-shadow: none;
+[data-theme="dark"] .btn.primary {
+  background: linear-gradient(135deg, #ffffff, #e5e5e5);
+  color: #000000;
+  border-color: #ffffff;
 }
-.btn.secondary:hover {
-  background: rgba(var(--st-surface-2), 0.6);
-  border-color: rgba(var(--st-border), 0.9);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+/* Secondary：次要操作按钮（与 primary 保持相同基础样式） */
+.btn.secondary {
+  /* 继承基础 .btn 样式，无需额外覆盖 */
 }
 
 /* 加载指示器（与 NewChatModal 风格一致） */
@@ -619,19 +613,24 @@ onMounted(() => {
   box-sizing: border-box;
 }
 
-/* 高级卡片（玻璃+渐变描边+微光） */
+/* 高级卡片（纯黑白边框风格，与 NewChatModal 一致） */
 .lgv-card {
   position: relative;
   display: flex;
   flex-direction: column;
   gap: 12px;
   width: 100%;
-  border: 1px solid rgba(var(--st-border), 0.75);
-  border-radius: var(--st-radius-lg);
-  background: rgb(var(--st-surface) / 0.78) !important;
-  backdrop-filter: blur(10px) saturate(130%);
-  -webkit-backdrop-filter: blur(10px) saturate(130%);
-  padding: 16px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 4px;
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.94),
+    rgba(242, 242, 246, 0.98)
+  );
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(12px) saturate(130%);
+  -webkit-backdrop-filter: blur(12px) saturate(130%);
+  padding: 20px;
   transition:
     transform .22s cubic-bezier(.22,.61,.36,1),
     box-shadow .22s cubic-bezier(.22,.61,.36,1),
@@ -640,32 +639,25 @@ onMounted(() => {
   will-change: transform, box-shadow, background, border-color;
 }
 
-/* 渐变描边（伪元素） */
-.lgv-card::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  padding: 1px; /* 伪边框宽度 */
-  background: linear-gradient(135deg, rgba(var(--st-primary), .34), rgba(var(--st-accent), .34)) border-box;
-  -webkit-mask:
-    linear-gradient(#000 0 0) padding-box,
-    linear-gradient(#000 0 0);
-  /* Add standard mask for compatibility */
-  mask:
-    linear-gradient(#000 0 0) padding-box,
-    linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-          mask-composite: exclude;
+[data-theme="dark"] .lgv-card {
+  border-color: rgba(255, 255, 255, 0.14);
+  background: linear-gradient(
+    145deg,
+    rgba(20, 20, 24, 0.96),
+    rgba(32, 32, 38, 0.98)
+  );
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.85);
 }
 
-/* 关闭光泽扫过动画（按需求移除 ::after 效果） */
-
 .lgv-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 18px 44px rgba(0,0,0,0.14);
-  border-color: rgba(var(--st-primary), 0.45);
+  transform: translateY(-2px);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.16);
+  border-color: rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .lgv-card:hover {
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.9);
+  border-color: rgba(255, 255, 255, 0.22);
 }
 
 /* 卡片内部两列布局：左内容、右操作按钮 */
