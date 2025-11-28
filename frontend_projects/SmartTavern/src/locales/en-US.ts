@@ -641,6 +641,12 @@ const enUS = {
       label: 'Backend API URL',
       placeholder: 'http://localhost:8050',
     },
+    
+    uiScale: {
+      label: 'UI Scale',
+      placeholder: '1.0',
+      hint: 'Adjust global UI scale (0.5 - 2.0), default is 1.0',
+    },
   },
 
   // ==================== Toast Messages ====================

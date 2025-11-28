@@ -80,6 +80,52 @@ function resetBackendBase() {
   saveBackendBase()
 }
 
+// ============== UI 缩放（持久化 + 全局应用） ==============
+const defaultUIScale = 1.0
+const uiScale = ref('1.0')
+
+function loadUIScale() {
+  let v = defaultUIScale
+  if (typeof window !== 'undefined') {
+    try {
+      const ls = localStorage.getItem('st.ui_scale')
+      if (ls && typeof ls === 'string') {
+        const parsed = parseFloat(ls)
+        if (!isNaN(parsed) && parsed >= 0.5 && parsed <= 2.0) {
+          v = parsed
+        }
+      }
+    } catch (_) {}
+  }
+  uiScale.value = String(v)
+  applyUIScale(v)
+}
+
+function applyUIScale(scale) {
+  if (typeof window !== 'undefined' && document.documentElement) {
+    // 使用 zoom 属性实现全局缩放（更好地处理布局和滚动条）
+    document.documentElement.style.zoom = String(scale)
+  }
+}
+
+function saveUIScale() {
+  const v = parseFloat(uiScale.value)
+  if (isNaN(v) || v < 0.5 || v > 2.0) {
+    // 如果输入无效，恢复为当前保存的值
+    loadUIScale()
+    return
+  }
+  if (typeof window !== 'undefined') {
+    try { localStorage.setItem('st.ui_scale', String(v)) } catch (_) {}
+  }
+  applyUIScale(v)
+}
+
+function resetUIScale() {
+  uiScale.value = String(defaultUIScale)
+  saveUIScale()
+}
+
 // 外部主题变化时，同步内部视图
 watch(() => props.theme, (v) => {
   if (!v) return
@@ -99,6 +145,8 @@ onMounted(() => {
   applyThemeToRoot(currentTheme.value)
   // 同步后端地址
   loadBackendBase()
+  // 同步 UI 缩放
+  loadUIScale()
 })
 </script>
 
@@ -195,6 +243,31 @@ onMounted(() => {
                   <span>{{ t('common.save') }}</span>
                 </button>
                 <button class="action-btn" type="button" @click="resetBackendBase">
+                  <i data-lucide="refresh-cw" class="icon-16" aria-hidden="true"></i>
+                  <span>{{ t('common.reset') }}</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- UI 缩放（持久化到 localStorage，键：st.ui_scale） -->
+            <div class="opt-row">
+              <label class="opt-label">{{ t('appSettings.uiScale.label') }}</label>
+              <div class="backend-input-row">
+                <input
+                  class="opt-input backend-input"
+                  v-model="uiScale"
+                  type="number"
+                  step="0.1"
+                  min="0.5"
+                  max="2.0"
+                  :placeholder="t('appSettings.uiScale.placeholder')"
+                  :title="t('appSettings.uiScale.hint')"
+                />
+                <button class="action-btn" type="button" @click="saveUIScale">
+                  <i data-lucide="check" class="icon-16" aria-hidden="true"></i>
+                  <span>{{ t('common.apply') }}</span>
+                </button>
+                <button class="action-btn" type="button" @click="resetUIScale">
                   <i data-lucide="refresh-cw" class="icon-16" aria-hidden="true"></i>
                   <span>{{ t('common.reset') }}</span>
                 </button>

@@ -1240,7 +1240,7 @@ def _allowed_data_dirs() -> List[Path]:
     return [
         root / "backend_projects" / "SmartTavern" / "data" / "characters",
         root / "backend_projects" / "SmartTavern" / "data" / "presets",
-        root / "backend_projects" / "SmartTavern" / "data" / "persona",
+        root / "backend_projects" / "SmartTavern" / "data" / "personas",
         root / "backend_projects" / "SmartTavern" / "data" / "regex_rules",
         root / "backend_projects" / "SmartTavern" / "data" / "world_books",
         root / "backend_projects" / "SmartTavern" / "data" / "llm_configs",

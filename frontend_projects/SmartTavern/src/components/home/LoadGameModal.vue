@@ -27,6 +27,7 @@ function onClose() {
     :show="props.show"
     :title="effectiveTitle"
     :icon="props.icon"
+    :autoHeight="true"
     @update:show="(v) => emit('update:show', v)"
     @close="onClose"
   >

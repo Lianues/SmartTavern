@@ -9,6 +9,7 @@ const props = defineProps({
   show: { type: Boolean, default: false },
   title: { type: String, default: '' },
   icon: { type: String, default: '' }, // lucide icon name
+  autoHeight: { type: Boolean, default: false },
 })
 
 const effectiveTitle = computed(() => props.title || t('components.modal.defaultTitle'))
@@ -42,7 +43,7 @@ watch(() => props.show, (v) => {
   <Teleport to="body">
     <transition name="modal-fade">
       <div v-if="show" class="modal-overlay" @click.self="close">
-        <div class="modal-container glass">
+        <div class="modal-container glass" :class="{ 'is-auto-height': autoHeight }">
           <!-- 顶部栏 -->
           <header class="modal-header">
             <div class="modal-title">
@@ -54,9 +55,9 @@ watch(() => props.show, (v) => {
 
           <!-- 内容区域 -->
           <div class="modal-body">
-            <CustomScrollbar class="modal-scroll">
+            <CustomScrollbar2 class="modal-scroll">
               <slot />
-            </CustomScrollbar>
+            </CustomScrollbar2>
           </div>
         </div>
       </div>
@@ -82,7 +83,7 @@ watch(() => props.show, (v) => {
   position: relative;
   width: 100%;
   max-width: 1400px;
-  height: auto;
+  height: 90vh;
   max-height: 90vh;
   display: flex;
   flex-direction: column;
@@ -91,6 +92,12 @@ watch(() => props.show, (v) => {
   background: rgb(255, 255, 255);
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   overflow: hidden;
+}
+
+/* 自适应高度模式：高度由内容决定，但不超过视口 90vh */
+.modal-container.is-auto-height {
+  height: auto;
+  max-height: 90vh;
 }
 
 [data-theme="dark"] .modal-container {
@@ -153,6 +160,17 @@ watch(() => props.show, (v) => {
   position: absolute;
   inset: 0;
   padding: 20px;
+}
+
+/* 自适应高度模式下，改为正常文档流，避免 height:auto 时内容区域高度为 0 */
+.modal-container.is-auto-height .modal-body {
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow: visible;
+}
+
+.modal-container.is-auto-height .modal-scroll {
+  position: static;
 }
 
 /* Transitions */

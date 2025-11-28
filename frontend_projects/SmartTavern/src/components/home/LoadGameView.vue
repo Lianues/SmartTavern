@@ -324,7 +324,7 @@ onMounted(() => {
               </div>
               <div class="lgv-participants">
                 <div class="lgv-actor">
-                  <div class="lgv-actor-avatar">
+                  <div class="lgv-actor-avatar" :class="{ 'role-assistant': !it.characterAvatarUrl }">
                     <img
                       v-if="it.characterAvatarUrl"
                       :src="it.characterAvatarUrl"
@@ -343,7 +343,7 @@ onMounted(() => {
                   </div>
                 </div>
                 <div class="lgv-actor">
-                  <div class="lgv-actor-avatar">
+                  <div class="lgv-actor-avatar" :class="{ 'role-user': !it.personaAvatarUrl }">
                     <img
                       v-if="it.personaAvatarUrl"
                       :src="it.personaAvatarUrl"
@@ -412,7 +412,7 @@ onMounted(() => {
               </div>
               <div class="lgv-participants">
                 <div class="lgv-actor lgv-actor-empty">
-                  <div class="lgv-actor-avatar">
+                  <div class="lgv-actor-avatar role-assistant">
                     <span class="lgv-actor-initial">?</span>
                   </div>
                   <div class="lgv-actor-body">
@@ -421,7 +421,7 @@ onMounted(() => {
                   </div>
                 </div>
                 <div class="lgv-actor lgv-actor-empty">
-                  <div class="lgv-actor-avatar">
+                  <div class="lgv-actor-avatar role-user">
                     <span class="lgv-actor-initial">?</span>
                   </div>
                   <div class="lgv-actor-body">
@@ -705,6 +705,22 @@ onMounted(() => {
   font-size: 16px;
   font-weight: 700;
   color: rgb(var(--st-color-text));
+}
+
+/* 默认头像渐变背景（与楼层对话页面一致） */
+.lgv-actor-avatar.role-user {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.85), rgba(99, 102, 241, 0.85));
+  border-color: transparent;
+}
+.lgv-actor-avatar.role-user .lgv-actor-initial {
+  color: #ffffff;
+}
+.lgv-actor-avatar.role-assistant {
+  background: linear-gradient(135deg, rgba(14, 165, 233, 0.85), rgba(94, 234, 212, 0.85));
+  border-color: transparent;
+}
+.lgv-actor-avatar.role-assistant .lgv-actor-initial {
+  color: #ffffff;
 }
 .lgv-actor-body {
   display: flex;

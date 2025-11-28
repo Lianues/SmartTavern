@@ -191,6 +191,17 @@ watch(view, (v) => {
 onMounted(() => {
   initTheme()
   
+  // 初始化全局 UI 缩放
+  try {
+    const savedScale = localStorage.getItem('st.ui_scale')
+    if (savedScale) {
+      const scale = parseFloat(savedScale)
+      if (!isNaN(scale) && scale >= 0.5 && scale <= 2.0) {
+        document.documentElement.style.zoom = String(scale)
+      }
+    }
+  } catch (_) {}
+  
   // 在应用启动时立即加载外观设置（从 localStorage 恢复）
   try { appearanceThreaded.initFromCSS() } catch (_) {}
   try { appearanceSandbox.initFromCSS() } catch (_) {}

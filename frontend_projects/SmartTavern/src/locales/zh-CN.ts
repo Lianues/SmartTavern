@@ -641,6 +641,12 @@ const zhCN = {
       label: '后端 API 地址',
       placeholder: 'http://localhost:8050',
     },
+    
+    uiScale: {
+      label: 'UI 缩放',
+      placeholder: '1.0',
+      hint: '调整全局界面缩放比例（0.5 - 2.0），默认为 1.0',
+    },
   },
 
   // ==================== 提示消息 ====================

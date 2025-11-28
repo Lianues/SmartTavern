@@ -20,7 +20,7 @@
             class="avatar-image"
             @error="onAvatarError"
           />
-          <span v-else class="avatar-letter">{{ nameOf(msg).charAt(0) }}</span>
+          <span v-else class="avatar-letter">{{ (displayName || nameOf(msg)).charAt(0) }}</span>
         </div>
         <div class="role-badge" v-if="badgeText">{{ badgeText }}</div>
         <div class="floor-index-left" :title="t('chat.message.floorIndex')">#{{ idx + 1 }}</div>
