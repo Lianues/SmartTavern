@@ -282,21 +282,27 @@ watch(() => props.show, (v) => {
 })
  
 async function onSubmit() {
-  const name = (newChatName.value ?? '').trim() || t('common.unknown')
-  if (!selectedLLMConfig.value || !selectedPreset.value || !selectedCharacter.value || !selectedPersona.value) {
+  const name = (newChatName.value ?? '').trim()
+
+  // 必填字段：新对话名称 / 预设 / 角色卡 / 用户信息（persona）
+  if (!name || !selectedPreset.value || !selectedCharacter.value || !selectedPersona.value) {
     newGameError.value = t('home.newChat.requiredError')
     return
   }
+
+  // 重名校验
   if (nameDupByFile.value || nameDupByTitle.value) {
     newGameError.value = t('home.newChat.duplicateError')
     return
   }
+
   newGameError.value = ''
   const payload = {
     name,
     description: (newChatDesc.value ?? '').trim(),
     type: newChatType.value,
-    llm_config: selectedLLMConfig.value,
+    // LLM 配置为可选：允许为空，由后端按需使用默认配置
+    llm_config: selectedLLMConfig.value || null,
     preset: selectedPreset.value,
     character: selectedCharacter.value,
     persona: selectedPersona.value,
@@ -370,255 +376,664 @@ function onCancel() {
     </div>
 
     <!-- 加载失败 -->
-    <div v-else-if="fetchError" class="form-error">{{ fetchError }}</div>
+    <div v-else-if="fetchError" class="form-error" role="alert">{{ fetchError }}</div>
 
     <!-- 表单 -->
     <form v-else class="new-chat-form" @submit.prevent="onSubmit">
-      <div class="form-row">
-        <label for="new-chat-name">{{ t('home.newChat.nameLabel') }}</label>
-        <input
-          id="new-chat-name"
-          type="text"
-          v-model="newChatName"
-          :disabled="submitting"
-          :placeholder="t('home.newChat.namePlaceholder')"
-          aria-describedby="name-help name-warn"
-        />
-        <div id="name-help" class="form-hint">
-          {{ t('home.newChat.nameHelp') }}
-        </div>
-        <div id="name-warn" class="form-hint warn" aria-live="polite" v-if="nameReplaced">
-          {{ t('home.newChat.nameReplaced') }}
-        </div>
-        <div class="form-hint warn" v-if="nameDupByFile">
-          {{ t('home.newChat.nameDupFile', { name: toFileBase(newChatName) }) }}
-        </div>
-        <div class="form-hint warn" v-if="!nameDupByFile && nameDupByTitle">
-          {{ t('home.newChat.nameDupTitle', { name: (newChatName || '').trim() }) }}
-        </div>
+      <div class="new-chat-layout">
+        <!-- 左侧：基础信息与类型 -->
+        <section class="new-chat-panel new-chat-panel-main" aria-label="basic-settings">
+          <header class="panel-header">
+            <h2 class="panel-title">
+              {{ t('home.newChat.title') }}
+            </h2>
+            <p class="panel-subtitle">
+              {{ t('home.newChat.descPlaceholder') }}
+            </p>
+          </header>
+
+          <div class="form-row">
+            <label for="new-chat-name">{{ t('home.newChat.nameLabel') }}</label>
+            <input
+              id="new-chat-name"
+              type="text"
+              v-model="newChatName"
+              :disabled="submitting"
+              :placeholder="t('home.newChat.namePlaceholder')"
+              aria-describedby="name-help name-warn"
+            />
+            <div id="name-help" class="form-hint">
+              {{ t('home.newChat.nameHelp') }}
+            </div>
+            <div
+              id="name-warn"
+              class="form-hint warn"
+              aria-live="polite"
+              v-if="nameReplaced"
+            >
+              {{ t('home.newChat.nameReplaced') }}
+            </div>
+            <div class="form-hint warn" v-if="nameDupByFile">
+              {{ t('home.newChat.nameDupFile', { name: toFileBase(newChatName) }) }}
+            </div>
+            <div class="form-hint warn" v-if="!nameDupByFile && nameDupByTitle">
+              {{ t('home.newChat.nameDupTitle', { name: (newChatName || '').trim() }) }}
+            </div>
+          </div>
+
+          <div class="form-row">
+            <label for="new-chat-desc">{{ t('home.newChat.descLabel') }}</label>
+            <textarea
+              id="new-chat-desc"
+              v-model="newChatDesc"
+              :disabled="submitting"
+              rows="3"
+              :placeholder="t('home.newChat.descPlaceholder')"
+            ></textarea>
+          </div>
+
+          <div class="form-row">
+            <label>{{ t('home.newChat.typeLabel') }}</label>
+            <div class="type-options">
+              <label class="type-option">
+                <input
+                  class="type-radio"
+                  type="radio"
+                  value="threaded"
+                  v-model="newChatType"
+                  :disabled="submitting"
+                />
+                <div class="type-content">
+                  <span class="type-title">{{ t('home.newChat.typeThreaded') }}</span>
+                  <small class="type-subtitle">{{ t('home.newChat.typeThreadedSub') }}</small>
+                </div>
+              </label>
+              <label class="type-option">
+                <input
+                  class="type-radio"
+                  type="radio"
+                  value="sandbox"
+                  v-model="newChatType"
+                  :disabled="submitting"
+                />
+                <div class="type-content">
+                  <span class="type-title">{{ t('home.newChat.typeSandbox') }}</span>
+                  <small class="type-subtitle">{{ t('home.newChat.typeSandboxSub') }}</small>
+                </div>
+              </label>
+            </div>
+          </div>
+        </section>
+
+        <!-- 右侧：对话配置选择 -->
+        <section class="new-chat-panel new-chat-panel-config" aria-label="config-selection">
+          <header class="panel-header">
+            <h2 class="panel-title">
+              {{ t('home.newChat.configPanelTitle') }}
+            </h2>
+            <p class="panel-subtitle">
+              {{ t('home.newChat.configPanelSubtitle') }}
+            </p>
+          </header>
+
+          <div class="panel-grid">
+            <!-- 行1：预设 + 角色卡 -->
+            <div class="form-row">
+              <label for="new-chat-preset">{{ t('home.newChat.presetLabel') }}</label>
+              <select
+                id="new-chat-preset"
+                v-model="selectedPreset"
+                :disabled="submitting"
+              >
+                <option
+                  v-for="opt in presetOptions"
+                  :key="opt.value"
+                  :value="opt.value"
+                  :disabled="opt.value === ''"
+                >
+                  {{ opt.label }}
+                </option>
+              </select>
+            </div>
+
+            <div class="form-row">
+              <label for="new-chat-character">{{ t('home.newChat.characterLabel') }}</label>
+              <select
+                id="new-chat-character"
+                v-model="selectedCharacter"
+                :disabled="submitting"
+              >
+                <option
+                  v-for="opt in characterOptions"
+                  :key="opt.value"
+                  :value="opt.value"
+                  :disabled="opt.value === ''"
+                >
+                  {{ opt.label }}
+                </option>
+              </select>
+            </div>
+
+            <!-- 行2：用户信息 + 正则 -->
+            <div class="form-row">
+              <label for="new-chat-persona">{{ t('home.newChat.personaLabel') }}</label>
+              <select
+                id="new-chat-persona"
+                v-model="selectedPersona"
+                :disabled="submitting"
+              >
+                <option
+                  v-for="opt in personaOptions"
+                  :key="opt.value"
+                  :value="opt.value"
+                  :disabled="opt.value === ''"
+                >
+                  {{ opt.label }}
+                </option>
+              </select>
+            </div>
+
+            <div class="form-row">
+              <label for="new-chat-regex">{{ t('home.newChat.regexLabel') }}</label>
+              <select
+                id="new-chat-regex"
+                v-model="selectedRegex"
+                :disabled="submitting"
+              >
+                <option
+                  v-for="opt in regexOptions"
+                  :key="opt.value"
+                  :value="opt.value"
+                >
+                  {{ opt.label }}
+                </option>
+              </select>
+            </div>
+
+            <!-- 行3：世界书 + AI 配置 -->
+            <div class="form-row">
+              <label for="new-chat-worldbook">{{ t('home.newChat.worldbookLabel') }}</label>
+              <select
+                id="new-chat-worldbook"
+                v-model="selectedWorldbook"
+                :disabled="submitting"
+              >
+                <option
+                  v-for="opt in worldbookOptions"
+                  :key="opt.value"
+                  :value="opt.value"
+                >
+                  {{ opt.label }}
+                </option>
+              </select>
+            </div>
+
+            <div class="form-row">
+              <label for="new-chat-llmconfig">{{ t('home.newChat.llmConfigLabel') }}</label>
+              <select
+                id="new-chat-llmconfig"
+                v-model="selectedLLMConfig"
+                :disabled="submitting"
+              >
+                <option
+                  v-for="opt in llmConfigOptions"
+                  :key="opt.value"
+                  :value="opt.value"
+                  :disabled="opt.value === ''"
+                >
+                  {{ opt.label }}
+                </option>
+              </select>
+            </div>
+          </div>
+        </section>
       </div>
 
-      <div class="form-row">
-        <label for="new-chat-desc">{{ t('home.newChat.descLabel') }}</label>
-        <textarea id="new-chat-desc" v-model="newChatDesc" :disabled="submitting" rows="3" :placeholder="t('home.newChat.descPlaceholder')"></textarea>
+      <div
+        v-if="newGameError"
+        class="form-error"
+        role="alert"
+      >
+        {{ newGameError }}
       </div>
- 
-      <div class="form-row">
-        <label for="new-chat-llmconfig">{{ t('home.newChat.llmConfigLabel') }}</label>
-        <select id="new-chat-llmconfig" v-model="selectedLLMConfig" :disabled="submitting">
-          <option v-for="opt in llmConfigOptions" :key="opt.value" :value="opt.value" :disabled="opt.value === ''">{{ opt.label }}</option>
-        </select>
-      </div>
-
-      <div class="form-row">
-        <label for="new-chat-preset">{{ t('home.newChat.presetLabel') }}</label>
-        <select id="new-chat-preset" v-model="selectedPreset" :disabled="submitting">
-          <option v-for="opt in presetOptions" :key="opt.value" :value="opt.value" :disabled="opt.value === ''">{{ opt.label }}</option>
-        </select>
-      </div>
-
-      <div class="form-row">
-        <label for="new-chat-character">{{ t('home.newChat.characterLabel') }}</label>
-        <select id="new-chat-character" v-model="selectedCharacter" :disabled="submitting">
-          <option v-for="opt in characterOptions" :key="opt.value" :value="opt.value" :disabled="opt.value === ''">{{ opt.label }}</option>
-        </select>
-      </div>
-
-      <div class="form-row">
-        <label for="new-chat-persona">{{ t('home.newChat.personaLabel') }}</label>
-        <select id="new-chat-persona" v-model="selectedPersona" :disabled="submitting">
-          <option v-for="opt in personaOptions" :key="opt.value" :value="opt.value" :disabled="opt.value === ''">{{ opt.label }}</option>
-        </select>
-      </div>
-
-      <div class="form-row">
-        <label for="new-chat-regex">{{ t('home.newChat.regexLabel') }}</label>
-        <select id="new-chat-regex" v-model="selectedRegex" :disabled="submitting">
-          <option v-for="opt in regexOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
-        </select>
-      </div>
-
-      <div class="form-row">
-        <label for="new-chat-worldbook">{{ t('home.newChat.worldbookLabel') }}</label>
-        <select id="new-chat-worldbook" v-model="selectedWorldbook" :disabled="submitting">
-          <option v-for="opt in worldbookOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
-        </select>
-      </div>
-
-      <div class="form-row">
-        <label>{{ t('home.newChat.typeLabel') }}</label>
-        <div class="type-options">
-          <label class="type-option">
-            <input type="radio" value="threaded" v-model="newChatType" :disabled="submitting" />
-            <span>{{ t('home.newChat.typeThreaded') }}</span>
-            <small>{{ t('home.newChat.typeThreadedSub') }}</small>
-          </label>
-          <label class="type-option">
-            <input type="radio" value="sandbox" v-model="newChatType" :disabled="submitting" />
-            <span>{{ t('home.newChat.typeSandbox') }}</span>
-            <small>{{ t('home.newChat.typeSandboxSub') }}</small>
-          </label>
-        </div>
-      </div>
-
-      <div v-if="newGameError" class="form-error">{{ newGameError }}</div>
 
       <div class="form-actions">
-        <button type="submit" class="btn primary" :disabled="submitting || nameDupByFile || nameDupByTitle">
+        <button
+          type="submit"
+          class="btn primary"
+          :disabled="submitting || nameDupByFile || nameDupByTitle"
+        >
           <span v-if="!submitting">{{ t('home.newChat.confirm') }}</span>
-          <span v-else class="btn-loading"><span class="spinner spinner-sm" aria-hidden="true"></span> {{ t('home.newChat.creating') }}</span>
+          <span v-else class="btn-loading">
+            <span class="spinner spinner-sm" aria-hidden="true"></span>
+            {{ t('home.newChat.creating') }}
+          </span>
         </button>
-        <button type="button" class="btn" :disabled="submitting" @click="onCancel">{{ t('home.newChat.cancel') }}</button>
+        <button
+          type="button"
+          class="btn"
+          :disabled="submitting"
+          @click="onCancel"
+        >
+          {{ t('home.newChat.cancel') }}
+        </button>
       </div>
     </form>
   </ContentViewModal>
 </template>
 
 <style scoped>
-.new-chat-form {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-/* 顶部加载块 */
 .new-chat-loading {
   display: grid;
   place-items: center;
   gap: 8px;
-  padding: 40px 20px;
-  color: rgba(var(--st-color-text), 0.9);
+  padding: 40px 24px;
+  text-align: center;
+  color: #000000;
 }
-.loading-text { font-weight: 700; font-size: 14px; }
+
+[data-theme="dark"] .new-chat-loading {
+  color: #ffffff;
+}
+
+.loading-text {
+  font-weight: 700;
+  font-size: 16px;
+}
+
 .spinner {
-  width: 22px; height: 22px; border-radius: 50%;
-  border: 3px solid currentColor; border-top-color: transparent;
+  width: 32px;
+  height: 32px;
+  border-radius: 9999px;
+  border: 4px solid currentColor;
+  border-top-color: transparent;
   animation: st-spin 0.9s linear infinite;
   opacity: 0.9;
 }
-.spinner-sm { width: 16px; height: 16px; border-width: 2px; }
-@keyframes st-spin { to { transform: rotate(360deg); } }
- 
-.new-chat-form .form-row label {
-  display: block;
-  margin-bottom: 6px;
+
+.spinner-sm {
+  width: 20px;
+  height: 20px;
+  border-width: 2px;
+}
+
+@keyframes st-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.new-chat-form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  color: #000000;
+}
+
+[data-theme="dark"] .new-chat-form {
+  color: #ffffff;
+}
+
+.new-chat-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(0, 2fr);
+  gap: 24px;
+}
+
+@media (max-width: 1024px) {
+  .new-chat-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.new-chat-panel {
+  position: relative;
+  padding: 20px 20px;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.94),
+    rgba(242, 242, 246, 0.98)
+  );
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(12px) saturate(130%);
+  -webkit-backdrop-filter: blur(12px) saturate(130%);
+}
+
+[data-theme="dark"] .new-chat-panel {
+  border-color: rgba(255, 255, 255, 0.14);
+  background: linear-gradient(
+    145deg,
+    rgba(20, 20, 24, 0.96),
+    rgba(32, 32, 38, 0.98)
+  );
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.85);
+}
+
+.new-chat-panel-main {
+  align-self: stretch;
+}
+
+.new-chat-panel-config {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+}
+
+.panel-header {
+  margin-bottom: 16px;
+}
+
+.panel-title {
+  font-size: 20px;
+  line-height: 28px;
+  font-weight: 700;
+}
+
+.panel-subtitle {
+  margin-top: 8px;
+  font-size: 14px;
+  line-height: 24px;
+  opacity: 0.82;
+}
+
+.panel-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px 20px;
+  flex: 1;
+  align-content: space-between;
+}
+
+/* 右侧配置区：使用 grid 的行间距，不再让第二列额外下移 */
+.new-chat-panel-config .panel-grid .form-row + .form-row {
+  margin-top: 0;
+}
+
+@media (max-width: 1024px) {
+  .panel-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.form-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-row + .form-row {
+  margin-top: 16px;
+}
+
+.form-row label {
   font-weight: 600;
-  color: rgb(var(--st-color-text));
+  font-size: 14px;
 }
-.new-chat-form .form-row input[type="text"] {
+
+.form-row input[type="text"],
+.form-row textarea,
+.form-row select {
   width: 100%;
-  padding: 10px 12px;
-  border-radius: var(--st-radius-md);
-  border: 1px solid rgb(var(--st-border) / 0.9);
-  background: rgb(var(--st-surface));
-  color: rgb(var(--st-color-text));
+  padding: 12px 12px;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  background: rgba(255, 255, 255, 0.96);
+  color: #000000;
   outline: none;
+  transition:
+    border-color 0.16s ease,
+    box-shadow 0.16s ease,
+    background-color 0.16s ease,
+    transform 0.12s ease;
 }
-.new-chat-form .form-row input[type="text"]::placeholder {
-  color: rgb(var(--st-color-text) / 0.55);
+
+/* 描述输入框禁用拖拽调整，避免挤压下方按钮区域 */
+.form-row textarea {
+  resize: none;
 }
-.new-chat-form .form-row textarea {
-  width: 100%;
-  padding: 10px 12px;
-  border-radius: var(--st-radius-md);
-  border: 1px solid rgb(var(--st-border) / 0.9);
-  background: rgb(var(--st-surface));
-  color: rgb(var(--st-color-text));
-  outline: none;
-  resize: vertical;
+
+[data-theme="dark"] .form-row input[type="text"],
+[data-theme="dark"] .form-row textarea,
+[data-theme="dark"] .form-row select {
+  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(18, 18, 22, 0.96);
+  color: #ffffff;
 }
+
+.form-row input[type="text"]::placeholder,
+.form-row textarea::placeholder {
+  color: #000000;
+  opacity: 0.45;
+}
+
+[data-theme="dark"] .form-row input[type="text"]::placeholder,
+[data-theme="dark"] .form-row textarea::placeholder {
+  color: #ffffff;
+  opacity: 0.5;
+}
+
+.form-row input[type="text"]:focus,
+.form-row textarea:focus,
+.form-row select:focus {
+  border-color: #000000;
+  box-shadow: 0 0 0 1px #000000;
+  background: #ffffff;
+  transform: translateY(-1px);
+}
+
+[data-theme="dark"] .form-row input[type="text"]:focus,
+[data-theme="dark"] .form-row textarea:focus,
+[data-theme="dark"] .form-row select:focus {
+  border-color: #ffffff;
+  box-shadow: 0 0 0 1px #ffffff;
+  background: rgba(10, 10, 14, 1);
+}
+
 .form-hint {
-  margin-top: 6px;
   font-size: 12px;
-  color: rgba(var(--st-color-text), 0.65);
+  line-height: 20px;
+  opacity: 0.9;
 }
+
 .form-hint.warn {
-  color: rgb(245, 158, 11); /* 提醒色：amber-500 */
+  position: relative;
+  padding: 8px 10px;
+  margin-top: 4px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.04);
+  color: #000000;
 }
-.new-chat-form .form-row select {
-  width: 100%;
-  padding: 10px 12px;
-  border-radius: var(--st-radius-md);
-  border: 1px solid rgb(var(--st-border) / 0.9);
-  background: rgb(var(--st-surface));
-  color: rgb(var(--st-color-text));
-  outline: none;
-}
-.new-chat-form .type-options {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(180px, 1fr));
-  gap: 12px;
-}
-@media (max-width: 720px) {
-  .new-chat-form .type-options { grid-template-columns: 1fr; }
-}
-.new-chat-form .type-option {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  grid-template-rows: auto auto;
-  grid-template-areas:
-    "radio title"
-    "radio sub";
+
+.form-hint.warn::before {
+  content: '!';
+  display: inline-flex;
   align-items: center;
-  column-gap: 10px;
-  row-gap: 4px;
-  padding: 12px;
-  border-radius: var(--st-radius-lg);
-  border: 1px solid rgb(var(--st-border) / 0.9);
-  background: rgb(var(--st-surface) / 0.72);
-  backdrop-filter: blur(6px) saturate(130%);
-  -webkit-backdrop-filter: blur(6px) saturate(130%);
-}
-.new-chat-form .type-option input[type="radio"] {
-  grid-area: radio;
+  justify-content: center;
   width: 16px;
   height: 16px;
-  accent-color: rgb(var(--st-primary));
-}
-.new-chat-form .type-option span {
-  grid-area: title;
-  font-weight: 700;
-  color: rgb(var(--st-color-text));
-}
-.new-chat-form .type-option small {
-  grid-area: sub;
+  border-radius: 9999px;
+  margin-right: 8px;
   font-size: 12px;
-  color: rgb(var(--st-color-text) / 0.7);
+  font-weight: 700;
+  background: #000000;
+  color: #ffffff;
 }
-.new-chat-form .form-actions {
+
+[data-theme="dark"] .form-hint.warn {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+}
+
+[data-theme="dark"] .form-hint.warn::before {
+  background: #ffffff;
+  color: #000000;
+}
+
+/* 类型切换 */
+.type-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+@media (max-width: 720px) {
+  .type-options {
+    grid-template-columns: 1fr;
+  }
+}
+
+.type-option {
+  display: flex;
+  align-items: stretch;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  background: rgba(255, 255, 255, 0.86);
+  cursor: pointer;
+  transition:
+    border-color 0.16s ease,
+    background-color 0.16s ease,
+    box-shadow 0.16s ease,
+    transform 0.12s ease;
+}
+
+[data-theme="dark"] .type-option {
+  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(18, 18, 22, 0.9);
+}
+
+.type-option:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+}
+
+[data-theme="dark"] .type-option:hover {
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.85);
+}
+
+.type-radio {
+  width: 20px;
+  height: 20px;
+  margin-top: 2px;
+}
+
+.type-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.type-title {
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.type-subtitle {
+  font-size: 12px;
+  line-height: 20px;
+  opacity: 0.86;
+}
+
+/* 高亮当前选择 */
+.type-option:has(.type-radio:checked) {
+  border-color: #000000;
+  background: #000000;
+  color: #ffffff;
+}
+
+[data-theme="dark"] .type-option:has(.type-radio:checked) {
+  border-color: #ffffff;
+  background: #ffffff;
+  color: #000000;
+}
+
+/* 错误与操作区 */
+.form-error {
+  margin-top: 4px;
+  padding: 12px 12px;
+  border-radius: 4px;
+  border: 1px solid #000000;
+  background: rgba(0, 0, 0, 0.04);
+  color: #000000;
+  font-size: 13px;
+}
+
+[data-theme="dark"] .form-error {
+  border-color: #ffffff;
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+}
+
+.form-actions {
   display: flex;
   gap: 12px;
   justify-content: flex-end;
   margin-top: 8px;
 }
-.new-chat-form .btn {
+
+.btn {
   appearance: none;
-  border: 1px solid rgb(var(--st-border));
-  background: rgb(var(--st-surface));
-  padding: 10px 14px;
-  border-radius: var(--st-radius-md);
-  color: rgb(var(--st-color-text));
+  min-width: 120px;
+  padding: 12px 16px;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 0, 0, 0.16);
+  background: #ffffff;
+  color: #000000;
   cursor: pointer;
-  transition: transform .12s ease, box-shadow .12s ease, background .12s ease, border-color .12s ease;
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.16s ease,
+    background-color 0.16s ease,
+    border-color 0.16s ease;
 }
-.new-chat-form .btn:hover {
+
+[data-theme="dark"] .btn {
+  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.06);
+  color: #ffffff;
+}
+
+.btn:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: var(--st-shadow-sm);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.26);
 }
-.new-chat-form .btn.primary {
-  background: linear-gradient(135deg, rgb(var(--st-primary) / 1), rgb(var(--st-accent) / 1));
-  color: var(--st-primary-contrast);
-  border-color: transparent;
+
+[data-theme="dark"] .btn:hover:not(:disabled) {
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.9);
 }
+
+.btn.primary {
+  background: linear-gradient(135deg, #111111, #000000);
+  color: #ffffff;
+  border-color: #000000;
+}
+
+[data-theme="dark"] .btn.primary {
+  background: linear-gradient(135deg, #ffffff, #e5e5e5);
+  color: #000000;
+  border-color: #ffffff;
+}
+
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
 .btn-loading {
-  display: inline-flex; align-items: center; gap: 8px;
-}
-.new-chat-form .form-error {
-  margin-top: 4px;
-  padding: 10px 12px;
-  border-radius: var(--st-radius-md);
-  border: 1px solid rgba(220, 38, 38, 0.6);
-  background: rgba(220, 38, 38, 0.08);
-  color: rgb(220, 38, 38);
-  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 </style>

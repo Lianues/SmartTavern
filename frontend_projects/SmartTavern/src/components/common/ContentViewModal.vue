@@ -1,6 +1,7 @@
 <script setup>
 import { ref, watch, computed } from 'vue'
 import { useI18n } from '@/locales'
+import CustomScrollbar2 from '@/components/common/CustomScrollbar2.vue'
 
 const { t } = useI18n()
 
@@ -81,7 +82,8 @@ watch(() => props.show, (v) => {
   position: relative;
   width: 100%;
   max-width: 1400px;
-  height: 90vh;
+  height: auto;
+  max-height: 90vh;
   display: flex;
   flex-direction: column;
   border-radius: var(--st-radius-lg);

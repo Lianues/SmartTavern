@@ -367,19 +367,84 @@ input[type="checkbox"]:disabled {
   background-color: rgb(20, 20, 25);
 }
 
-/* 下拉选择框美化 */
+/* 下拉选择框美化（全局） */
 select {
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
+
+  /* 尺寸与排版：遵循 4/8pt 间距节奏 */
+  width: 100%;
+  padding: 8px 32px 8px 12px;
+  border-radius: 3px;
+  border: 1px solid rgba(0, 0, 0, 0.16);
+  background-color: rgba(255, 255, 255, 0.96);
+  color: #000000;
+
+  font-size: 14px;
+  line-height: 20px;
+  cursor: pointer;
+
+  /* 下拉箭头：中性灰色，靠右对齐 */
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 10px center;
-  padding-right: 32px !important;
+  background-size: 12px 12px;
+
+  transition:
+    border-color 0.16s ease,
+    box-shadow 0.16s ease,
+    background-color 0.16s ease,
+    transform 0.12s ease;
 }
 
+select:hover:not(:disabled) {
+  border-color: rgba(0, 0, 0, 0.32);
+  background-color: rgba(255, 255, 255, 1);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+}
+
+select:focus-visible {
+  outline: none;
+  border-color: #000000;
+  box-shadow: 0 0 0 1px #000000;
+  background-color: #ffffff;
+  transform: translateY(-1px);
+}
+
+select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+/* 暗色主题下拉样式 */
 [data-theme="dark"] select {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23aaa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  border-color: rgba(255, 255, 255, 0.22);
+  background-color: rgba(18, 18, 22, 0.96);
+  color: #ffffff;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23d4d4d4' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+}
+
+[data-theme="dark"] select:hover:not(:disabled) {
+  border-color: rgba(255, 255, 255, 0.38);
+  background-color: rgba(12, 12, 16, 1);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.85);
+}
+
+[data-theme="dark"] select:focus-visible {
+  border-color: #ffffff;
+  box-shadow: 0 0 0 1px #ffffff;
+  background-color: rgba(8, 8, 12, 1);
+}
+
+[data-theme="dark"] select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
 }
 
 /* ========================== */
