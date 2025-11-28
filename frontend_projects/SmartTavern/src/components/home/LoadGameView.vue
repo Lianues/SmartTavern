@@ -169,7 +169,8 @@ async function loadData() {
           })
         })
 
-        // 并发获取每个对话的 settings 与头像信息（直接调用后端 settings + data_catalog API）
+        // 并发获取每个对话的 settings 与头像信息
+        // 名称直接从路径提取目录名，无需读取后端 JSON
         const settingsPromises = combined.map((row, idx) =>
           ChatBranches.settings({ action: 'get', file: row.file })
             .then(async res => {
@@ -180,16 +181,11 @@ async function loadData() {
               combined[idx].character = charFile
               combined[idx].persona = personaFile
 
-              // 角色卡：名称 + 头像
+              // 角色卡：名称直接从路径提取目录名
               if (charFile) {
-                try {
-                  const detail = await DataCatalog.getCharacterDetail(charFile, { useCache: true })
-                  const meta = detail?.content || {}
-                  combined[idx].characterName = meta.character_name || meta.name || characterName(charFile)
-                } catch (_) {
-                  combined[idx].characterName = characterName(charFile)
-                }
+                combined[idx].characterName = characterName(charFile)
 
+                // 头像仍需从后端加载
                 try {
                   const dir = dirname(charFile)
                   const { blob } = await DataCatalog.getDataAssetBlob(`${dir}character.png`)
@@ -202,16 +198,11 @@ async function loadData() {
                 combined[idx].characterAvatarUrl = ''
               }
 
-              // 用户画像：名称 + 头像
+              // 用户画像：名称直接从路径提取目录名
               if (personaFile) {
-                try {
-                  const detail = await DataCatalog.getPersonaDetail(personaFile, { useCache: true })
-                  const meta = detail?.content || {}
-                  combined[idx].personaName = meta.persona_name || meta.name || characterName(personaFile)
-                } catch (_) {
-                  combined[idx].personaName = characterName(personaFile)
-                }
+                combined[idx].personaName = characterName(personaFile)
 
+                // 头像仍需从后端加载
                 try {
                   const dir = dirname(personaFile)
                   const { blob } = await DataCatalog.getDataAssetBlob(`${dir}persona.png`)
@@ -539,10 +530,7 @@ onMounted(() => {
   border-color: #ffffff;
 }
 
-/* Secondary：次要操作按钮（与 primary 保持相同基础样式） */
-.btn.secondary {
-  /* 继承基础 .btn 样式，无需额外覆盖 */
-}
+/* Secondary 按钮继承基础 .btn 样式 */
 
 /* 加载指示器（与 NewChatModal 风格一致） */
 .lgv-loading-indicator {

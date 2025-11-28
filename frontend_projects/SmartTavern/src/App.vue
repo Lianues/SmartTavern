@@ -400,6 +400,7 @@ async function onLoadGameConfirm(file) {
         
         closeHomeModal()
         view.value = 'threaded'
+        drawerOpen.value = false // 加载对话后收起侧边栏
         nextTick(() => refreshIcons())
       } catch (e) {
         console.error(t('app.error.loadFailed') + ':', e)
