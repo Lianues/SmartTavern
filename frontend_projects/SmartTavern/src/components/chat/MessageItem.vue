@@ -2,7 +2,7 @@
   <article
     :data-scope="'message-item'"
     :data-role="msg.role"
-    class="floor-card glass"
+    :class="['floor-card', 'glass', { 'is-editing': isEditing }]"
     :style="stripeStyle(msg)"
   >
     <div class="floor-layout">
@@ -94,16 +94,17 @@
         <!-- 编辑模式：显示 textarea -->
         <section v-if="isEditing" data-part="content" class="floor-content editing">
           <textarea
-            ref="editTextareaRef"
-            v-model="editingContent"
-            class="edit-textarea"
-            :disabled="saveStatus === 'saving'"
-            :placeholder="t('chat.message.editPlaceholder')"
-            @keydown.ctrl.enter="saveEdit"
-            @keydown.meta.enter="saveEdit"
-            @keydown.esc="cancelEdit"
-            @input="autoResizeTextarea"
-          ></textarea>
+             ref="editTextareaRef"
+             v-model="editingContent"
+             class="edit-textarea"
+             rows="1"
+             :disabled="saveStatus === 'saving'"
+             :placeholder="t('chat.message.editPlaceholder')"
+             @keydown.ctrl.enter="saveEdit"
+             @keydown.meta.enter="saveEdit"
+             @keydown.esc="cancelEdit"
+             @input="autoResizeTextarea"
+           ></textarea>
         </section>
 
         <!-- 正常模式：显示消息内容 -->
@@ -819,9 +820,15 @@ async function saveEdit() {
   white-space: pre-wrap;
   padding: 8px 12px;
 }
-/* 编辑模式的 floor-content 不需要 padding，因为 textarea 自己有 */
+/* 编辑模式：保持外层 padding 一致，确保切换时高度不变；添加背景色区分 */
 .floor-content.editing {
-  padding: 0;
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.06);
+  border-radius: var(--st-radius-md);
+}
+
+[data-theme="dark"] .floor-content.editing {
+  background: rgba(255, 255, 255, 0.08);
 }
 .floor-content p { margin: 0; }
 .floor-content p + p { margin-top: 8px; }
@@ -919,52 +926,40 @@ async function saveEdit() {
   color: rgb(248, 113, 113);
 }
 
-/* 编辑模式样式 */
+/* 编辑模式样式
+   - 无 padding/margin/border，由外层 .floor-content 统一控制
+   - 确保文字位置和展示态完全一致 */
 .edit-textarea {
-  width: calc(100% + 2px);
-  min-height: auto;
-  padding: 8px 12px;
-  margin: -1px;
-  border: 1px solid rgba(0, 0, 0, 0.15);
-  border-radius: var(--st-radius-md);
-  background: rgba(0, 0, 0, 0.06);
-  color: rgba(var(--st-color-text), 0.95);
-  font-family: var(--st-font-body);
-  font-size: var(--st-content-font-size, 18px);
-  line-height: var(--st-content-line-height, 1.75);
-  letter-spacing: .2px;
+  display: block;
+  width: 100%;
+  min-height: 0;
+  padding: 0;
+  margin: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  letter-spacing: inherit;
   word-break: break-word;
   white-space: pre-wrap;
-  resize: vertical;
-  overflow-y: auto;
+  /* 不使用内部滚动条，由 autoResizeTextarea 控制高度 */
+  resize: none;
+  overflow-y: hidden;
   outline: none;
   box-sizing: border-box;
-  transition: border-color .2s ease, background .2s ease;
+  /* 高度变化做过渡，让当前楼层"撑开"时平滑挤压下面楼层 */
+  transition: height .18s cubic-bezier(.25,.8,.25,1);
+  will-change: height;
 }
 .edit-textarea:focus {
   outline: none;
-  border-color: rgba(var(--st-primary), 0.6);
-  background: rgba(0, 0, 0, 0.09);
-  box-shadow: 0 0 0 3px rgba(var(--st-primary), 0.12);
 }
 .edit-textarea:disabled {
   opacity: 0.6;
   cursor: not-allowed;
-  background: rgba(0, 0, 0, 0.04);
-}
-
-[data-theme="dark"] .edit-textarea {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.15);
-}
-
-[data-theme="dark"] .edit-textarea:focus {
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(var(--st-primary), 0.7);
-}
-
-[data-theme="dark"] .edit-textarea:disabled {
-  background: rgba(255, 255, 255, 0.05);
 }
 
 /* 编辑模式的操作按钮样式 */
@@ -1128,57 +1123,57 @@ async function saveEdit() {
 }
 
 @keyframes st-spin { to { transform: rotate(360deg); } }
-/* 与父 <transition-group name="msg"> 对齐的过渡样式，使动画在根节点生效 */
-.msg-enter-from {
-  opacity: 0;
-  transform: translateY(8px) scale(0.985);
-  filter: blur(8px) saturate(0.9);
-}
-.msg-enter-to {
-  opacity: 1;
-  transform: translateY(0) scale(1);
-  filter: blur(0);
-}
-.msg-enter-active {
-  transition:
-    opacity .28s cubic-bezier(.22,.61,.36,1),
-    transform .36s cubic-bezier(.22,.61,.36,1),
-    filter .36s ease;
-}
-.msg-leave-to {
-  opacity: 0;
-  transform: translateY(-6px) scale(0.985);
-  filter: blur(4px);
-}
-.msg-leave-active {
-  transition:
-    opacity .18s ease,
-    transform .22s ease,
-    filter .22s ease;
-}
-/* 列表重排移动过渡（transition-group v-move） */
+/* 与父 <transition-group name="msg"> 对齐的过渡样式（列表重排 + 进出场） */
+
+/* 列表重排移动过渡（transition-group v-move）
+   - 默认启用平滑位移动画，让插入/删除历史消息时列表移动更自然
+   - 编辑多行场景下再在下面用 .floor-card.is-editing 覆盖，避免回弹 */
 .msg-move {
-  transition: transform .32s cubic-bezier(.22,.61,.36,1);
+  transition: transform .26s cubic-bezier(.22,.61,.36,1);
   will-change: transform;
 }
 
-/* 高级消息出现动画（更自然的入场与微超调） */
+/* 编辑中：当前楼层及其后续楼层不做 v-move 动画，只跟随高度变化挤压下移，避免“从下方回弹到上方”的错觉 */
+.floor-card.is-editing.msg-move,
+.floor-card.is-editing ~ .floor-card.msg-move {
+  transition: none !important;
+  transform: none !important;
+  will-change: auto;
+}
+
+/* 楼层消息进场/退场：轻微淡入 + 位移，更克制、丝滑 */
 .floor-card.msg-enter-from {
   opacity: 0;
-  transform: translateY(10px) scale(0.985);
-  filter: blur(10px) saturate(0.9);
+  transform: translateY(6px);
 }
 .floor-card.msg-enter-to {
   opacity: 1;
-  transform: translateY(0) scale(1);
-  filter: blur(0);
+  transform: translateY(0);
 }
 .floor-card.msg-enter-active {
   transition:
-    opacity .34s cubic-bezier(.22,.61,.36,1),
-    transform .44s cubic-bezier(.22,.61,.36,1),
-    filter .44s ease;
-  will-change: opacity, transform, filter;
+    opacity .22s cubic-bezier(.22,.61,.36,1),
+    transform .26s cubic-bezier(.22,.61,.36,1);
+  will-change: opacity, transform;
+}
+
+.floor-card.msg-leave-from {
+  opacity: 1;
+  transform: translateY(0);
+}
+.floor-card.msg-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+.floor-card.msg-leave-active {
+  /* 离场元素使用 absolute 定位，让其他元素可以平滑填充空位 */
+  position: absolute;
+  left: 0;
+  right: 0;
+  transition:
+    opacity .18s ease-out,
+    transform .20s ease-out;
+  will-change: opacity, transform;
 }
 
 /* 减少动画偏好 */

@@ -904,7 +904,7 @@ function getDisplayParts(msg) {
       :width="8"
     >
       <div data-scope="message-list" class="tch-list-inner">
-        <transition-group name="msg" tag="div">
+        <transition-group name="msg" tag="div" appear>
             <MessageItem
               v-for="(m, idx) in props.messages"
               :key="m.id"
@@ -1565,39 +1565,7 @@ function getDisplayParts(msg) {
   letter-spacing: .2px;
 }
 
-/* 消息出现/离场与重排过渡（丝滑高质感） */
-.msg-enter-from {
-  opacity: 0;
-  transform: translateY(8px) scale(0.985);
-  filter: blur(8px) saturate(0.9);
-}
-.msg-enter-to {
-  opacity: 1;
-  transform: translateY(0) scale(1);
-  filter: blur(0);
-}
-.msg-enter-active {
-  transition:
-    opacity .28s cubic-bezier(.22,.61,.36,1),
-    transform .36s cubic-bezier(.22,.61,.36,1),
-    filter .36s ease;
-}
-.msg-leave-to {
-  opacity: 0;
-  transform: translateY(-6px) scale(0.985);
-  filter: blur(4px);
-}
-.msg-leave-active {
-  transition:
-    opacity .18s ease,
-    transform .22s ease,
-    filter .22s ease;
-}
-/* 列表重排移动过渡（transition-group v-move） */
-.msg-move {
-  transition: transform .32s cubic-bezier(.22,.61,.36,1);
-  will-change: transform;
-}
+/* 消息进出场动画由 MessageItem.vue 统一定义，这里不再重复定义 msg-* 相关样式 */
 
 /* 等待占位动画（右上角 chip，位于更多操作按钮左侧） */
 .pending-chip {
