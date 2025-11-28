@@ -1,13 +1,18 @@
 <script setup>
-import { ref, computed, watch, nextTick, onMounted } from 'vue'
+import { ref, computed, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import WorldBookCard from './cards/WorldBookCard.vue'
 import RegexRuleCard from './cards/RegexRuleCard.vue'
 import { useI18n } from '@/locales'
+import Host from '@/workflow/core/host'
+import * as Catalog from '@/workflow/channels/catalog'
+import { useCharacterStore } from '@/stores/character'
+import { useChatSettingsStore } from '@/stores/chatSettings'
 
 const { t } = useI18n()
 
 const props = defineProps({
-  characterData: { type: Object, default: null }
+  characterData: { type: Object, default: null },
+  file: { type: String, default: '' }
 })
 
 
@@ -400,6 +405,95 @@ watch([
   await nextTick()
   window.lucide?.createIcons?.()
 }, { flush: 'post' })
+
+// 保存状态
+const saving = ref(false)
+const savedOk = ref(false)
+let __saveTimer = null
+const __eventOffs = []
+
+onBeforeUnmount(() => {
+  try {
+    __eventOffs?.forEach(fn => { try { fn?.() } catch (_) {} })
+    __eventOffs.length = 0
+    if (__saveTimer) clearTimeout(__saveTimer)
+  } catch (_) {}
+})
+
+// 保存到后端
+async function save() {
+  const file = props.file
+  if (!file) {
+    try { alert(t('error.missingFilePath')); } catch (_) {}
+    return
+  }
+  
+  // 先保存当前草稿
+  saveMeta()
+  
+  // 构建保存内容
+  const content = {
+    name: currentData.value.name || '',
+    description: currentData.value.description || '',
+    message: Array.isArray(currentData.value.message) ? currentData.value.message : [],
+    world_book: currentData.value.world_book || { name: '', entries: [] },
+    regex_rules: Array.isArray(currentData.value.regex_rules) ? currentData.value.regex_rules : []
+  }
+  
+  saving.value = true
+  savedOk.value = false
+  if (__saveTimer) { try { clearTimeout(__saveTimer) } catch {} __saveTimer = null }
+  
+  const tag = `character_save_${Date.now()}`
+  
+  // 监听保存结果（一次性）
+  const offOk = Host.events.on(Catalog.EVT_CATALOG_CHARACTER_UPDATE_OK, async ({ file: resFile, tag: resTag }) => {
+    if (resFile !== file || resTag !== tag) return
+    console.log('[CharacterDetailView] 保存成功（事件）')
+    savedOk.value = true
+    saving.value = false
+    if (savedOk.value) {
+      __saveTimer = setTimeout(() => { savedOk.value = false }, 1800)
+    }
+    
+    // 保存成功后，检查是否是当前使用的角色卡，如果是则刷新 store
+    try {
+      const chatSettingsStore = useChatSettingsStore()
+      const characterStore = useCharacterStore()
+      const currentCharacterFile = chatSettingsStore.characterFile
+      if (currentCharacterFile && currentCharacterFile === file) {
+        console.log('[CharacterDetailView] 刷新角色卡 store')
+        await characterStore.refreshFromCharacterFile(file)
+      }
+    } catch (err) {
+      console.warn('[CharacterDetailView] 刷新角色卡 store 失败:', err)
+    }
+    
+    try { offOk?.() } catch (_) {}
+    try { offFail?.() } catch (_) {}
+  })
+  
+  const offFail = Host.events.on(Catalog.EVT_CATALOG_CHARACTER_UPDATE_FAIL, ({ file: resFile, message, tag: resTag }) => {
+    if (resFile && resFile !== file) return
+    if (resTag && resTag !== tag) return
+    console.error('[CharacterDetailView] 保存失败（事件）:', message)
+    try { alert(t('detail.character.saveFailed') + '：' + message) } catch (_) {}
+    saving.value = false
+    try { offOk?.() } catch (_) {}
+    try { offFail?.() } catch (_) {}
+  })
+  
+  __eventOffs.push(offOk, offFail)
+  
+  // 发送保存请求事件
+  Host.events.emit(Catalog.EVT_CATALOG_CHARACTER_UPDATE_REQ, {
+    file,
+    content,
+    name: content.name,
+    description: content.description,
+    tag
+  })
+}
 </script>
 
 <template>
@@ -411,8 +505,22 @@ watch([
           <i data-lucide="user" class="w-5 h-5 text-black"></i>
           <h2 class="text-lg font-bold text-black">{{ t('detail.character.pageTitle') }}</h2>
         </div>
-        <div class="px-3 py-1 rounded-4 bg-gray-100 border border-gray-300 text-black text-sm">
-          {{ t('detail.character.editMode') }}
+        <div class="flex items-center gap-2">
+          <!-- 保存状态：左侧提示区 -->
+          <div class="save-indicator min-w-[72px] h-7 flex items-center justify-center">
+            <span v-if="saving" class="save-spinner" :aria-label="t('detail.preset.saving')"></span>
+            <span v-else-if="savedOk" class="save-done"><strong>{{ t('detail.preset.saved') }}</strong></span>
+          </div>
+          <button
+            type="button"
+            class="px-3 py-1 rounded-4 bg-transparent border border-gray-900 text-black text-sm hover:bg-gray-100 active:bg-gray-200 transition-all duration-200 ease-soft disabled:opacity-50"
+            :disabled="saving"
+            @click="save"
+            :title="t('detail.preset.saveToBackend')"
+          >{{ t('common.save') }}</button>
+          <div class="px-3 py-1 rounded-4 bg-gray-100 border border-gray-300 text-black text-sm">
+            {{ t('detail.character.editMode') }}
+          </div>
         </div>
       </div>
       <p class="mt-2 text-xs text-black/60">{{ t('detail.character.editHint') }}</p>
@@ -827,5 +935,21 @@ watch([
   background-color: rgb(38, 38, 42) !important;
   color: rgb(235, 235, 240) !important;
 }
+
+/* 保存状态样式 */
+.save-indicator { min-width: 72px; }
+.save-spinner {
+  width: 16px; height: 16px; display: inline-block;
+  border: 2px solid rgba(17,17,17,0.2);
+  border-top-color: #111; border-radius: 9999px;
+  animation: st-spin 0.8s linear infinite;
+}
+[data-theme="dark"] .save-spinner {
+  border: 2px solid rgba(232,236,244,0.25);
+  border-top-color: rgb(232,236,244);
+}
+.save-done { font-size: 12px; color: #111; }
+[data-theme="dark"] .save-done { color: rgb(232,236,244); }
+@keyframes st-spin { to { transform: rotate(360deg); } }
 
 </style>

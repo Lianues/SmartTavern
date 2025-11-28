@@ -8,6 +8,8 @@
 import * as SettingsChannel from '@/workflow/channels/settings'
 import ChatBranches from '@/services/chatBranches'
 import { i18n } from '@/locales'
+import { useChatSettingsStore } from '@/stores/chatSettings'
+import { useMessagesStore } from '@/stores/chatMessages'
 
 // 类型定义
 interface EventBus {
@@ -103,6 +105,18 @@ export function initSettingsBridge(bus: EventBus): void {
       // 更新本地缓存
       SettingsChannel.updateSettingsCache(conversationFile, patch)
       SettingsChannel.setLoading(conversationFile, false)
+      
+      // 同步刷新 chatSettings store（如果是当前对话）
+      try {
+        const messagesStore = useMessagesStore()
+        if (messagesStore.conversationFile === conversationFile) {
+          const chatSettingsStore = useChatSettingsStore()
+          await chatSettingsStore.refresh()
+          console.log('[SettingsBridge] 已刷新 chatSettings store')
+        }
+      } catch (err) {
+        console.warn('[SettingsBridge] 刷新 chatSettings store 失败:', err)
+      }
       
       bus.emit(SettingsChannel.EVT_SETTINGS_UPDATE_RES, {
         requestId,

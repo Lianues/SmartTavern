@@ -348,7 +348,11 @@ def assemble(
     # 1) 收集 relative 预设（仅 enabled==True，保持文档顺序；跳过 in-chat）
     rel_entries = _collect_relative_presets(presets_relative, presets_doc)
 
-    # 2) 按顺序遍历 relative 构建（在 chatHistory 位置插入历史）
+    # 2) 如果没有预设，直接返回历史消息
+    if not rel_entries:
+        return {"messages": normalized_history}
+
+    # 3) 按顺序遍历 relative 构建（在 chatHistory 位置插入历史）
     combined: List[Dict[str, Any]] = []
     for e in rel_entries:
         p = e["data"]

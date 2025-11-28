@@ -5,6 +5,8 @@ import RegexRuleCard from './cards/RegexRuleCard.vue'
 import Host from '@/workflow/core/host'
 import * as Catalog from '@/workflow/channels/catalog'
 import { useI18n } from '@/locales'
+import { usePresetStore } from '@/stores/preset'
+import { useChatSettingsStore } from '@/stores/chatSettings'
 
 const { t } = useI18n()
 
@@ -561,7 +563,7 @@ async function save() {
   const tag = `preset_save_${Date.now()}`
   
   // 监听保存结果（一次性）
-  const offOk = Host.events.on(Catalog.EVT_CATALOG_PRESET_UPDATE_OK, ({ file: resFile, tag: resTag }) => {
+  const offOk = Host.events.on(Catalog.EVT_CATALOG_PRESET_UPDATE_OK, async ({ file: resFile, tag: resTag }) => {
     if (resFile !== file || resTag !== tag) return
     console.log('[PresetDetailView] 保存成功（事件）')
     savedOk.value = true
@@ -569,6 +571,20 @@ async function save() {
     if (savedOk.value) {
       __saveTimer = setTimeout(() => { savedOk.value = false }, 1800)
     }
+    
+    // 保存成功后，检查是否是当前使用的预设，如果是则刷新 store
+    try {
+      const chatSettingsStore = useChatSettingsStore()
+      const presetStore = usePresetStore()
+      const currentPresetFile = chatSettingsStore.presetFile
+      if (currentPresetFile && currentPresetFile === file) {
+        console.log('[PresetDetailView] 刷新预设 store')
+        await presetStore.refreshFromPresetFile(file)
+      }
+    } catch (err) {
+      console.warn('[PresetDetailView] 刷新预设 store 失败:', err)
+    }
+    
     try { offOk?.() } catch (_) {}
     try { offFail?.() } catch (_) {}
   })

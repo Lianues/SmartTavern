@@ -4,6 +4,8 @@ import RegexRuleCard from './cards/RegexRuleCard.vue'
 import Host from '@/workflow/core/host'
 import * as Catalog from '@/workflow/channels/catalog'
 import { useI18n } from '@/locales'
+import { useRegexRulesStore } from '@/stores/regexRules'
+import { useChatSettingsStore } from '@/stores/chatSettings'
 
 const { t } = useI18n()
 
@@ -207,11 +209,14 @@ watch(() => currentData.value.regex_rules, async () => {
 
 const __eventOffs = [] // 事件监听清理器
 const saving = ref(false)
+const savedOk = ref(false)
+let __saveTimer = null
 
 onBeforeUnmount(() => {
   try {
     __eventOffs?.forEach(fn => { try { fn?.() } catch (_) {} })
     __eventOffs.length = 0
+    if (__saveTimer) clearTimeout(__saveTimer)
   } catch (_) {}
 })
 
@@ -229,13 +234,33 @@ async function save() {
   }
   
   saving.value = true
+  savedOk.value = false
+  if (__saveTimer) { try { clearTimeout(__saveTimer) } catch {} __saveTimer = null }
   const tag = `regex_save_${Date.now()}`
   
   // 监听保存结果（一次性）
-  const offOk = Host.events.on(Catalog.EVT_CATALOG_REGEX_UPDATE_OK, ({ file: resFile, tag: resTag }) => {
+  const offOk = Host.events.on(Catalog.EVT_CATALOG_REGEX_UPDATE_OK, async ({ file: resFile, tag: resTag }) => {
     if (resFile !== file || resTag !== tag) return
     console.log('[RegexRuleDetailView] 保存成功（事件）')
+    savedOk.value = true
     saving.value = false
+    if (savedOk.value) {
+      __saveTimer = setTimeout(() => { savedOk.value = false }, 1800)
+    }
+    
+    // 保存成功后，检查是否是当前使用的正则规则之一，如果是则刷新 store
+    try {
+      const chatSettingsStore = useChatSettingsStore()
+      const regexRulesStore = useRegexRulesStore()
+      const currentRegexRulesFiles = chatSettingsStore.regexRulesFiles || []
+      if (currentRegexRulesFiles.includes(file)) {
+        console.log('[RegexRuleDetailView] 刷新正则规则 store')
+        await regexRulesStore.refreshFromRegexRuleFiles(currentRegexRulesFiles)
+      }
+    } catch (err) {
+      console.warn('[RegexRuleDetailView] 刷新正则规则 store 失败:', err)
+    }
+    
     try { offOk?.() } catch (_) {}
     try { offFail?.() } catch (_) {}
   })
@@ -273,13 +298,18 @@ async function save() {
           <h2 class="text-lg font-bold text-black">{{ t('detail.regexRule.pageTitle') }}</h2>
         </div>
         <div class="flex items-center gap-2">
+          <!-- 保存状态：左侧提示区 -->
+          <div class="save-indicator min-w-[72px] h-7 flex items-center justify-center">
+            <span v-if="saving" class="save-spinner" :aria-label="t('detail.preset.saving')"></span>
+            <span v-else-if="savedOk" class="save-done"><strong>{{ t('detail.preset.saved') }}</strong></span>
+          </div>
           <button
             type="button"
             class="px-3 py-1 rounded-4 bg-transparent border border-gray-900 text-black text-sm hover:bg-gray-100 active:bg-gray-200 transition-all duration-200 ease-soft disabled:opacity-50"
             :disabled="saving"
             @click="save"
             :title="t('detail.preset.saveToBackend')"
-          >{{ saving ? t('common.saving') : t('common.save') }}</button>
+          >{{ t('common.save') }}</button>
           <div class="px-3 py-1 rounded-4 bg-gray-100 border border-gray-300 text-black text-sm">
             {{ t('detail.regexRule.editMode') }}
           </div>
@@ -583,5 +613,21 @@ async function save() {
   background-color: rgb(38, 38, 42) !important;
   color: rgb(235, 235, 240) !important;
 }
+
+/* 保存状态样式 */
+.save-indicator { min-width: 72px; }
+.save-spinner {
+  width: 16px; height: 16px; display: inline-block;
+  border: 2px solid rgba(17,17,17,0.2);
+  border-top-color: #111; border-radius: 9999px;
+  animation: st-spin 0.8s linear infinite;
+}
+[data-theme="dark"] .save-spinner {
+  border: 2px solid rgba(232,236,244,0.25);
+  border-top-color: rgb(232,236,244);
+}
+.save-done { font-size: 12px; color: #111; }
+[data-theme="dark"] .save-done { color: rgb(232,236,244); }
+@keyframes st-spin { to { transform: rotate(360deg); } }
 
 </style>

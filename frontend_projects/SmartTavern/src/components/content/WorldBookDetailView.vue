@@ -4,6 +4,8 @@ import WorldBookCard from './cards/WorldBookCard.vue'
 import Host from '@/workflow/core/host'
 import * as Catalog from '@/workflow/channels/catalog'
 import { useI18n } from '@/locales'
+import { useWorldBooksStore } from '@/stores/worldBooks'
+import { useChatSettingsStore } from '@/stores/chatSettings'
 
 const { t } = useI18n()
 
@@ -228,11 +230,14 @@ watch(() => currentData.value.world_books, async () => {
 
 const __eventOffs = [] // 事件监听清理器
 const saving = ref(false)
+const savedOk = ref(false)
+let __saveTimer = null
 
 onBeforeUnmount(() => {
   try {
     __eventOffs?.forEach(fn => { try { fn?.() } catch (_) {} })
     __eventOffs.length = 0
+    if (__saveTimer) clearTimeout(__saveTimer)
   } catch (_) {}
 })
 
@@ -264,11 +269,31 @@ async function save() {
   saving.value = true
   const tag = `worldbook_save_${Date.now()}`
   
+  if (__saveTimer) { try { clearTimeout(__saveTimer) } catch {} __saveTimer = null }
+  
   // 监听保存结果（一次性）
-  const offOk = Host.events.on(Catalog.EVT_CATALOG_WORLDBOOK_UPDATE_OK, ({ file: resFile, tag: resTag }) => {
+  const offOk = Host.events.on(Catalog.EVT_CATALOG_WORLDBOOK_UPDATE_OK, async ({ file: resFile, tag: resTag }) => {
     if (resFile !== file || resTag !== tag) return
     console.log('[WorldBookDetailView] 保存成功（事件）')
+    savedOk.value = true
     saving.value = false
+    if (savedOk.value) {
+      __saveTimer = setTimeout(() => { savedOk.value = false }, 1800)
+    }
+    
+    // 保存成功后，检查是否是当前使用的世界书之一，如果是则刷新 store
+    try {
+      const chatSettingsStore = useChatSettingsStore()
+      const worldBooksStore = useWorldBooksStore()
+      const currentWorldBookFiles = chatSettingsStore.worldBooksFiles || []
+      if (currentWorldBookFiles.includes(file)) {
+        console.log('[WorldBookDetailView] 刷新世界书 store')
+        await worldBooksStore.refreshFromWorldBookFiles(currentWorldBookFiles)
+      }
+    } catch (err) {
+      console.warn('[WorldBookDetailView] 刷新世界书 store 失败:', err)
+    }
+    
     try { offOk?.() } catch (_) {}
     try { offFail?.() } catch (_) {}
   })
@@ -306,13 +331,18 @@ async function save() {
           <h2 class="text-lg font-bold text-black">{{ currentData.name || t('detail.worldBook.pageTitle') }}</h2>
         </div>
         <div class="flex items-center gap-2">
+          <!-- 保存状态：左侧提示区 -->
+          <div class="save-indicator min-w-[72px] h-7 flex items-center justify-center">
+            <span v-if="saving" class="save-spinner" :aria-label="t('detail.preset.saving')"></span>
+            <span v-else-if="savedOk" class="save-done"><strong>{{ t('detail.preset.saved') }}</strong></span>
+          </div>
           <button
             type="button"
             class="px-3 py-1 rounded-4 bg-transparent border border-gray-900 text-black text-sm hover:bg-gray-100 active:bg-gray-200 transition-all duration-200 ease-soft disabled:opacity-50"
             :disabled="saving"
             @click="save"
             :title="t('detail.preset.saveToBackend')"
-          >{{ saving ? t('common.saving') : t('common.save') }}</button>
+          >{{ t('common.save') }}</button>
           <div class="px-3 py-1 rounded-4 bg-gray-100 border border-gray-300 text-black text-sm">
             {{ t('detail.worldBook.editMode') }}
           </div>
@@ -601,5 +631,21 @@ async function save() {
   background-color: rgb(38, 38, 42) !important;
   color: rgb(235, 235, 240) !important;
 }
+
+/* 保存状态样式 */
+.save-indicator { min-width: 72px; }
+.save-spinner {
+  width: 16px; height: 16px; display: inline-block;
+  border: 2px solid rgba(17,17,17,0.2);
+  border-top-color: #111; border-radius: 9999px;
+  animation: st-spin 0.8s linear infinite;
+}
+[data-theme="dark"] .save-spinner {
+  border: 2px solid rgba(232,236,244,0.25);
+  border-top-color: rgb(232,236,244);
+}
+.save-done { font-size: 12px; color: #111; }
+[data-theme="dark"] .save-done { color: rgb(232,236,244); }
+@keyframes st-spin { to { transform: rotate(360deg); } }
 
 </style>

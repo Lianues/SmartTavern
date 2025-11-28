@@ -1,5 +1,5 @@
 {
-  "preset": "backend_projects/SmartTavern/data/presets/默认预设_1/preset.json",
+  "preset": "backend_projects/SmartTavern/data/presets/Default/preset.json",
   "world_books": [
     "backend_projects/SmartTavern/data/world_books/参考用main_world/worldbook.json"
   ],

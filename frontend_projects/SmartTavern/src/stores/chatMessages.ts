@@ -10,6 +10,11 @@ import { ref, watch, computed } from 'vue'
 import { defineStore } from 'pinia'
 import Host from '@/workflow/core/host'
 import * as Completion from '@/workflow/channels/completion'
+import { usePresetStore } from './preset'
+import { useCharacterStore } from './character'
+import { useWorldBooksStore } from './worldBooks'
+import { useRegexRulesStore } from './regexRules'
+import { usePersonaStore } from './persona'
 
 // ========== 类型定义 ==========
 
@@ -437,6 +442,96 @@ export const useMessagesStore = defineStore('chatMessages', () => {
 		{ deep: true, immediate: true }
 	)
 	
+	// ========== 配置状态监听（响应式更新）==========
+	// 当预设/角色卡/世界书/正则规则/用户信息变化时，自动调用 processMessagesView
+	// 排除：llmConfig 和插件开关
+	
+	// 防抖计时器，避免多个配置同时变化时重复调用
+	let configChangeDebounceTimer: ReturnType<typeof setTimeout> | null = null
+	const CONFIG_DEBOUNCE_MS = 100
+	
+	function scheduleConfigRefresh() {
+		// 没有对话或没有消息时跳过
+		if (!conversationFile.value || !rawMessages.value?.length) return
+		// 流式期间跳过
+		if (activeStreamCount.value > 0) return
+		// 正在处理中跳过
+		if (isProcessing.value) return
+		
+		if (configChangeDebounceTimer) {
+			clearTimeout(configChangeDebounceTimer)
+		}
+		configChangeDebounceTimer = setTimeout(async () => {
+			configChangeDebounceTimer = null
+			try {
+				await processMessagesView()
+			} catch (err) {
+				console.warn('[chatMessages] Config change refresh failed:', err)
+			}
+		}, CONFIG_DEBOUNCE_MS)
+	}
+	
+	// 延迟初始化配置监听（避免循环依赖）
+	let configWatchersInitialized = false
+	function initConfigWatchers() {
+		if (configWatchersInitialized) return
+		configWatchersInitialized = true
+		
+		try {
+			// 监听预设变化（meta 包含完整预设内容）
+			const presetStore = usePresetStore()
+			watch(
+				() => presetStore.meta,
+				() => { scheduleConfigRefresh() },
+				{ deep: true }
+			)
+			
+			// 监听角色卡变化
+			const characterStore = useCharacterStore()
+			watch(
+				() => characterStore.meta,
+				() => { scheduleConfigRefresh() },
+				{ deep: true }
+			)
+			
+			// 监听世界书变化（文件列表或内容）
+			const worldBooksStore = useWorldBooksStore()
+			watch(
+				[() => worldBooksStore.currentWorldBookFiles, () => worldBooksStore.metas],
+				() => { scheduleConfigRefresh() },
+				{ deep: true }
+			)
+			
+			// 监听正则规则变化
+			const regexRulesStore = useRegexRulesStore()
+			watch(
+				[() => regexRulesStore.currentRegexRuleFiles, () => regexRulesStore.metas],
+				() => { scheduleConfigRefresh() },
+				{ deep: true }
+			)
+			
+			// 监听用户信息变化
+			const personaStore = usePersonaStore()
+			watch(
+				() => personaStore.meta,
+				() => { scheduleConfigRefresh() },
+				{ deep: true }
+			)
+			
+			console.log('[chatMessages] Config watchers initialized')
+		} catch (err) {
+			console.warn('[chatMessages] Failed to init config watchers:', err)
+		}
+	}
+	
+	// 在 loadConversation 时初始化配置监听
+	const originalLoadConversation = loadConversation
+	async function loadConversationWithWatchers(file: string, initialMessages: Message[] = []): Promise<void> {
+		// 首次调用时初始化配置监听
+		initConfigWatchers()
+		return originalLoadConversation(file, initialMessages)
+	}
+	
 	return {
 		// 状态
 		conversationFile,
@@ -452,7 +547,7 @@ export const useMessagesStore = defineStore('chatMessages', () => {
 		hasEditing,
 		
 		// 方法
-		loadConversation,
+		loadConversation: loadConversationWithWatchers,
 		updateRawMessages,
 		processMessagesView,
 		startEdit,
