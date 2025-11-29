@@ -341,8 +341,8 @@ async function onSubmit() {
       
       __eventOffs.push(offOk, offFail)
       
-      // 发送创建请求
-      Host.events.emit(Conversation.EVT_CONVERSATION_CREATE_REQ, { payload, tag: createTag })
+      // 发送创建请求（展开 payload，避免嵌套）
+      Host.events.emit(Conversation.EVT_CONVERSATION_CREATE_REQ, { ...payload, tag: createTag })
     } catch (e) {
       newGameError.value = e?.message || t('home.newChat.createFailed')
       submitting.value = false

@@ -2,19 +2,16 @@
   "name": "默认预设",
   "description": "这是默认预设的描述",
   "api_config": {
-    "enabled": true,
+    "enabled": false,
     "temperature": 1,
     "top_p": 1,
     "top_k": 0,
-    "max_context": 4095,
-    "max_tokens": 300,
+    "max_context": 200000,
+    "max_tokens": 30000,
     "stream": true,
     "frequency_penalty": 0,
     "presence_penalty": 0,
-    "enabled_fields": [
-      "temperature",
-      "top_p"
-    ]
+    "enabled_fields": []
   },
   "prompts": [
     {
@@ -24,14 +21,6 @@
       "role": "user",
       "position": "relative",
       "content": "Write {{char}}'s next reply in a fictional chat between {{char}} and {{user}}."
-    },
-    {
-      "identifier": "884ac5ce-3ce7-4e9a-9fec-9978fe5c0064",
-      "name": "测试",
-      "enabled": null,
-      "role": "user",
-      "position": "relative",
-      "content": "你好222233333"
     },
     {
       "identifier": "charBefore",
@@ -53,14 +42,6 @@
       "enabled": true,
       "role": "system",
       "position": "relative"
-    },
-    {
-      "identifier": "2322",
-      "name": "2322",
-      "content": "在这里输入提示词内容",
-      "role": "system",
-      "position": "relative",
-      "enabled": null
     },
     {
       "identifier": "charPersonality",
@@ -120,35 +101,7 @@
       "role": "system",
       "position": "relative",
       "content": ""
-    },
-    {
-      "identifier": "57cf3151-9cf6-4499-a50a-f03135a3deb6",
-      "name": "庄园领主",
-      "enabled": true,
-      "role": "system",
-      "position": "in-chat",
-      "depth": 0,
-      "order": 98,
-      "content": "2222222222222222222"
     }
   ],
-  "regex_rules": [
-    {
-      "id": "preset_rule_example",
-      "name": "预设示例规则",
-      "enabled": true,
-      "mode": "always",
-      "find_regex": "示例",
-      "replace_regex": "【预设替换】",
-      "targets": [
-        "user",
-        "assistant"
-      ],
-      "placement": "after_macro",
-      "views": [
-        "user_view",
-        "assistant_view"
-      ]
-    }
-  ]
+  "regex_rules": []
 }
