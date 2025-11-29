@@ -904,7 +904,7 @@ function getDisplayParts(msg) {
       :width="8"
     >
       <div data-scope="message-list" class="tch-list-inner">
-        <transition-group name="msg" tag="div" appear>
+        <transition-group name="msg" tag="div" class="msg-group" appear>
             <MessageItem
               v-for="(m, idx) in props.messages"
               :key="m.id"
@@ -963,7 +963,7 @@ function getDisplayParts(msg) {
 .tch-container {
   display: flex;
   flex-direction: column;
-  gap: var(--st-message-gap, 12px);
+  gap: 0;
   padding: 16px;
   height: 100%;
   min-height: 0;
@@ -993,11 +993,24 @@ function getDisplayParts(msg) {
 
 /* 内部容器（供过渡动画使用） */
 .tch-list-inner {
-  display: flex;
-  flex-direction: column;
-  gap: var(--st-message-gap, 12px);
   padding-right: 4px;
   padding-bottom: 24px;
+}
+
+/* transition-group 生成的容器，必须是 flex 以确保消息间隔稳定 */
+/* 统一背景容器：所有消息共享一个玻璃拟态背景 */
+.msg-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--st-message-gap, 0px);
+  padding: 12px;
+  border-radius: var(--st-card-radius, var(--st-radius-lg));
+  border: 1px solid rgba(var(--st-border), 0.9);
+  background: rgb(var(--st-surface) / var(--st-threaded-msg-bg-opacity, 0.82)) !important;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  box-shadow: none;
+  transition: background .18s ease, border-color .18s ease;
 }
 
 /* 楼层卡（玻璃拟态） */
@@ -1014,8 +1027,6 @@ function getDisplayParts(msg) {
   will-change: transform, opacity, filter;
 }
 .floor-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 16px 40px rgba(0,0,0,0.10);
   border-color: rgba(var(--st-primary), 0.35);
   background: rgb(var(--st-surface) / var(--st-threaded-msg-bg-opacity, 0.82)) !important;
   z-index: 2;
@@ -1681,6 +1692,7 @@ function getDisplayParts(msg) {
   gap: 8px;
   flex-shrink: 0;
   height: auto;
+  margin-bottom: var(--st-input-bottom-margin, 0px);
 }
 
 /* 发送错误提示（绝对定位在输入框上方） */

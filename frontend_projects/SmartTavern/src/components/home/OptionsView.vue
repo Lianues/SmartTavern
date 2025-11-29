@@ -66,12 +66,58 @@ function resetBackendBase() {
   saveBackendBase()
 }
 
+// ============== UI 缩放（持久化 + 全局应用） ==============
+const defaultUIScale = 1.0
+const uiScale = ref('1.0')
+
+function loadUIScale() {
+  let v = defaultUIScale
+  if (typeof window !== 'undefined') {
+    try {
+      const ls = localStorage.getItem('st.ui_scale')
+      if (ls && typeof ls === 'string') {
+        const parsed = parseFloat(ls)
+        if (!isNaN(parsed) && parsed >= 0.5 && parsed <= 2.0) {
+          v = parsed
+        }
+      }
+    } catch (_) {}
+  }
+  uiScale.value = String(v)
+}
+
+function applyUIScale(scale) {
+  if (typeof window !== 'undefined' && document.documentElement) {
+    document.documentElement.style.zoom = String(scale)
+    document.documentElement.style.setProperty('--st-ui-scale', String(scale))
+  }
+}
+
+function saveUIScale() {
+  const v = parseFloat(uiScale.value)
+  if (isNaN(v) || v < 0.5 || v > 2.0) {
+    loadUIScale()
+    return
+  }
+  if (typeof window !== 'undefined') {
+    try { localStorage.setItem('st.ui_scale', String(v)) } catch (_) {}
+  }
+  applyUIScale(v)
+}
+
+function resetUIScale() {
+  uiScale.value = String(defaultUIScale)
+  saveUIScale()
+}
+
 onMounted(() => {
   // 初始化图标 + 根据 props.theme 同步一次根节点主题
   window.lucide?.createIcons?.()
   applyThemeToRoot(currentTheme.value)
   // 初始化后端地址
   loadBackendBase()
+  // 初始化 UI 缩放
+  loadUIScale()
 })
 
 // 外部主题变化时，同步内部视图
@@ -170,7 +216,30 @@ function handleLangChange(newLang) {
         </div>
       </div>
 
-      <!-- 音量已按要求移除 -->
+      <!-- UI 缩放（持久化到 localStorage，键：st.ui_scale） -->
+      <div class="opt-row">
+        <label class="opt-label">{{ t('appSettings.uiScale.label') }}</label>
+        <div class="backend-input-row">
+          <input
+            class="opt-input backend-input"
+            v-model="uiScale"
+            type="number"
+            step="0.1"
+            min="0.5"
+            max="2.0"
+            :placeholder="t('appSettings.uiScale.placeholder')"
+            :title="t('appSettings.uiScale.hint')"
+          />
+          <button class="action-btn" type="button" @click="saveUIScale">
+            <i data-lucide="check" class="icon-16" aria-hidden="true"></i>
+            <span>{{ t('common.apply') }}</span>
+          </button>
+          <button class="action-btn" type="button" @click="resetUIScale">
+            <i data-lucide="refresh-cw" class="icon-16" aria-hidden="true"></i>
+            <span>{{ t('home.options.reset') }}</span>
+          </button>
+        </div>
+      </div>
     </div>
   </section>
 </template>

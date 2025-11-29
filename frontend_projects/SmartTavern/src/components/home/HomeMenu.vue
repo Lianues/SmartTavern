@@ -150,11 +150,11 @@ function onClick(btn) {
 </template>
 
 <style scoped>
-/* Home vertical menu (bottom-left) */
+/* Home vertical menu (bottom-left) - 使用百分比布局固定在左下角 */
 .st-home-menu {
-  position: absolute;
-  left: 24px;
-  bottom: 24px;
+  position: fixed;
+  left: 3%;
+  bottom: 5%;
   z-index: 2;
 }
 .home-menu {

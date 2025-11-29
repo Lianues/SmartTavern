@@ -75,7 +75,10 @@ const props = defineProps({
   z-index: 1;
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  /* 使用 calc 补偿 zoom 缩放导致的高度不足问题 */
+  /* 当 zoom < 1 时，100vh 会被缩小，需要除以 scale 来补偿 */
+  height: calc(100vh / var(--st-ui-scale, 1));
+  min-height: calc(100vh / var(--st-ui-scale, 1));
   overflow: hidden;
 }
 .st-body {

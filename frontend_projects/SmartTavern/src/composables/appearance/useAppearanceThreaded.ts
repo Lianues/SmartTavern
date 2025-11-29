@@ -30,12 +30,12 @@ interface AppearanceThreadedState {
   avatarSize: Ref<number>
   chatWidth: Ref<number>
   inputHeight: Ref<number>
+  inputBottomMargin: Ref<number>
   contentLineHeight: Ref<number>
   messageGap: Ref<number>
   cardRadius: Ref<number>
   stripeWidth: Ref<number>
   threadedBgOpacityPct: Ref<number>
-  threadedMsgBgOpacityPct: Ref<number>
   threadedListBgOpacityPct: Ref<number>
   threadedInputBgOpacityPct: Ref<number>
   threadedBgBlurPx: Ref<number>
@@ -55,12 +55,12 @@ interface AppearanceThreadedSnapshot {
   avatarSize: number
   chatWidth: number
   inputHeight: number
+  inputBottomMargin: number
   contentLineHeight: number
   messageGap: number
   cardRadius: number | null
   stripeWidth: number
   threadedBgOpacityPct: number
-  threadedMsgBgOpacityPct: number
   threadedListBgOpacityPct: number
   threadedInputBgOpacityPct: number
   threadedBgBlurPx: number
@@ -122,16 +122,16 @@ function createState(): AppearanceThreadedState {
   const avatarSize = ref(56)
   const chatWidth = ref(80)
   const inputHeight = ref(100)
+  const inputBottomMargin = ref(0)
 
   // 常用外观
   const contentLineHeight = ref(1.75)
-  const messageGap = ref(12)
+  const messageGap = ref(0)
   const cardRadius = ref(NaN) // NaN 表示未覆盖（沿用默认）
   const stripeWidth = ref(8)
 
   // 透明度（%）
   const threadedBgOpacityPct = ref(12)
-  const threadedMsgBgOpacityPct = ref(82)
   const threadedListBgOpacityPct = ref(62)
   const threadedInputBgOpacityPct = ref(80)
   // 背景遮罩模糊（px）
@@ -149,9 +149,9 @@ function createState(): AppearanceThreadedState {
  
   return {
     contentFontSize, nameFontSize, badgeFontSize, floorFontSize, avatarSize,
-    chatWidth, inputHeight,
+    chatWidth, inputHeight, inputBottomMargin,
     contentLineHeight, messageGap, cardRadius, stripeWidth,
-    threadedBgOpacityPct, threadedMsgBgOpacityPct, threadedListBgOpacityPct, threadedInputBgOpacityPct,
+    threadedBgOpacityPct, threadedListBgOpacityPct, threadedInputBgOpacityPct,
     // 新增
     threadedBgBlurPx,
     thAspectX, thAspectY, thMaxWidthPct, thPadding, thRadius,
@@ -169,14 +169,14 @@ function buildSnapshot(state: AppearanceThreadedState): AppearanceThreadedSnapsh
     avatarSize: Number(state.avatarSize.value),
     chatWidth: Number(state.chatWidth.value),
     inputHeight: Number(state.inputHeight.value),
- 
+    inputBottomMargin: Number(state.inputBottomMargin.value),
+
     contentLineHeight: Number(state.contentLineHeight.value),
     messageGap: Number(state.messageGap.value),
     cardRadius: Number.isFinite(state.cardRadius.value) ? Number(state.cardRadius.value) : null,
     stripeWidth: Number(state.stripeWidth.value),
  
     threadedBgOpacityPct: Number(state.threadedBgOpacityPct.value),
-    threadedMsgBgOpacityPct: Number(state.threadedMsgBgOpacityPct.value),
     threadedListBgOpacityPct: Number(state.threadedListBgOpacityPct.value),
     threadedInputBgOpacityPct: Number(state.threadedInputBgOpacityPct.value),
     // 新增：背景遮罩模糊（px）
@@ -205,9 +205,10 @@ function applyState(state: AppearanceThreadedState, s: Partial<AppearanceThreade
   state.avatarSize.value = num(s.avatarSize, 56); setRootVar('--st-avatar-size', state.avatarSize.value)
   state.chatWidth.value = num(s.chatWidth, 80); setRootVar('--st-chat-width', state.chatWidth.value)
   state.inputHeight.value = num(s.inputHeight, 100); setRootVar('--st-input-height', state.inputHeight.value)
+  state.inputBottomMargin.value = num(s.inputBottomMargin, 0); setRootVar('--st-input-bottom-margin', state.inputBottomMargin.value)
 
   state.contentLineHeight.value = num(s.contentLineHeight, 1.75); setRootVarUnitless('--st-content-line-height', String(state.contentLineHeight.value))
-  state.messageGap.value = num(s.messageGap, 12); setRootVar('--st-message-gap', state.messageGap.value)
+  state.messageGap.value = num(s.messageGap, 0); setRootVar('--st-message-gap', state.messageGap.value)
 
   if (s.cardRadius === null) {
     state.cardRadius.value = NaN
@@ -219,9 +220,11 @@ function applyState(state: AppearanceThreadedState, s: Partial<AppearanceThreade
   state.stripeWidth.value = num(s.stripeWidth, 8); setRootVar('--st-stripe-width', state.stripeWidth.value)
 
   state.threadedBgOpacityPct.value = num(s.threadedBgOpacityPct, 12); setRootVarUnitless('--st-threaded-bg-opacity', String(state.threadedBgOpacityPct.value / 100))
-  state.threadedMsgBgOpacityPct.value = num(s.threadedMsgBgOpacityPct, 82); setRootVarUnitless('--st-threaded-msg-bg-opacity', String(state.threadedMsgBgOpacityPct.value / 100))
   state.threadedListBgOpacityPct.value = num(s.threadedListBgOpacityPct, 62); setRootVarUnitless('--st-threaded-list-bg-opacity', String(state.threadedListBgOpacityPct.value / 100))
   state.threadedInputBgOpacityPct.value = num(s.threadedInputBgOpacityPct, 80); setRootVarUnitless('--st-threaded-input-bg-opacity', String(state.threadedInputBgOpacityPct.value / 100))
+  
+  // 楼层消息背景固定为完全透明
+  setRootVarUnitless('--st-threaded-msg-bg-opacity', '0')
 
   // 新增：背景遮罩模糊
   state.threadedBgBlurPx.value = num(s.threadedBgBlurPx, 0); setRootVar('--st-threaded-bg-blur', state.threadedBgBlurPx.value)
@@ -261,9 +264,10 @@ function initFromCSS(state: AppearanceThreadedState): void {
     state.chatWidth.value = widthVar ? parseInt(widthVar, 10) : 80
   }
   state.inputHeight.value = readCssVar('--st-input-height', 100)
+  state.inputBottomMargin.value = readCssVar('--st-input-bottom-margin', 0)
 
   state.contentLineHeight.value = readCssVarFloat('--st-content-line-height', 1.75)
-  state.messageGap.value = readCssVarFloat('--st-message-gap', 12)
+  state.messageGap.value = readCssVarFloat('--st-message-gap', 0)
   {
     const cr = readCssVarFloat('--st-card-radius', NaN)
     state.cardRadius.value = Number.isFinite(cr) ? cr : NaN
@@ -271,7 +275,6 @@ function initFromCSS(state: AppearanceThreadedState): void {
   state.stripeWidth.value = readCssVarFloat('--st-stripe-width', 8)
 
   state.threadedBgOpacityPct.value = Math.round(readCssVarFloat('--st-threaded-bg-opacity', 0.12) * 100)
-  state.threadedMsgBgOpacityPct.value = Math.round(readCssVarFloat('--st-threaded-msg-bg-opacity', 0.82) * 100)
   state.threadedListBgOpacityPct.value = Math.round(readCssVarFloat('--st-threaded-list-bg-opacity', 0.62) * 100)
   state.threadedInputBgOpacityPct.value = Math.round(readCssVarFloat('--st-threaded-input-bg-opacity', 0.80) * 100)
 
@@ -304,14 +307,16 @@ function initFromCSS(state: AppearanceThreadedState): void {
   setRootVar('--st-avatar-size', state.avatarSize.value)
   setRootVar('--st-chat-width', state.chatWidth.value)
   setRootVar('--st-input-height', state.inputHeight.value)
+  setRootVar('--st-input-bottom-margin', state.inputBottomMargin.value)
   setRootVarUnitless('--st-content-line-height', String(state.contentLineHeight.value))
   setRootVar('--st-message-gap', state.messageGap.value)
   if (Number.isFinite(state.cardRadius.value)) setRootVar('--st-card-radius', state.cardRadius.value)
   setRootVar('--st-stripe-width', state.stripeWidth.value)
   setRootVarUnitless('--st-threaded-bg-opacity', String(state.threadedBgOpacityPct.value / 100))
-  setRootVarUnitless('--st-threaded-msg-bg-opacity', String(state.threadedMsgBgOpacityPct.value / 100))
   setRootVarUnitless('--st-threaded-list-bg-opacity', String(state.threadedListBgOpacityPct.value / 100))
   setRootVarUnitless('--st-threaded-input-bg-opacity', String(state.threadedInputBgOpacityPct.value / 100))
+  // 楼层消息背景固定为完全透明
+  setRootVarUnitless('--st-threaded-msg-bg-opacity', '0')
   setRootVar('--st-threaded-bg-blur', state.threadedBgBlurPx.value)
   setRootVarUnitless('--st-threaded-stage-aspect', `${state.thAspectX.value} / ${state.thAspectY.value}`)
   setRootVarUnitless('--st-threaded-stage-maxw', state.thMaxWidthPct.value)

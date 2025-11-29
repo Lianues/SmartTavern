@@ -105,6 +105,8 @@ function applyUIScale(scale) {
   if (typeof window !== 'undefined' && document.documentElement) {
     // 使用 zoom 属性实现全局缩放（更好地处理布局和滚动条）
     document.documentElement.style.zoom = String(scale)
+    // 同时设置 CSS 变量，用于高度补偿计算
+    document.documentElement.style.setProperty('--st-ui-scale', String(scale))
   }
 }
 

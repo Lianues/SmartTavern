@@ -684,66 +684,71 @@ async function saveEdit() {
 </script>
 
 <style scoped>
-/* 卡片与布局（与 ThreadedChatPreview 保持一致的外观语言，自身内聚） */
+/* 消息条目（作为列表项，不再有独立背景容器） */
 .floor-card {
-  padding: 12px;
-  border-radius: var(--st-card-radius, var(--st-radius-lg));
-  border: 1px solid rgba(var(--st-border), 0.9);
-  background: rgb(var(--st-surface) / var(--st-threaded-msg-bg-opacity, 0.82)) !important;
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  padding: 12px 0;
+  border-radius: 0;
+  border: none;
+  background: transparent !important;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
   box-shadow: none;
   overflow: visible;
-  transition: transform .18s ease, box-shadow .18s ease, background .18s ease, border-color .18s ease;
+  transition: transform .18s ease, opacity .18s ease;
   will-change: transform, opacity, filter;
+  position: relative;
 }
 .floor-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 16px 40px rgba(0,0,0,0.10);
-  border-color: rgba(var(--st-primary), 0.35);
-  background: rgb(var(--st-surface) / var(--st-threaded-msg-bg-opacity, 0.82)) !important;
   z-index: 2;
 }
-
-/* 智能渐变色条（变量驱动，带柔和光晕），assistant/system 左侧，user 右侧 */
-.floor-card { position: relative; }
-.floor-card::before,
-.floor-card::after {
+/* 消息之间的分隔线 */
+.floor-card:not(:last-child)::after {
   content: '';
   position: absolute;
-  top: 0; bottom: 0;
-  width: var(--st-stripe-width, 8px);
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: rgba(var(--st-border), 0.15);
   pointer-events: none;
-  z-index: 1;
 }
-/* 主色条（渐变） - 默认左侧 */
-.floor-card::before {
+
+/* 简化的角色指示色条（使用 CSS 变量控制宽度） */
+.floor-card[data-role="assistant"]::before,
+.floor-card[data-role="system"]::before {
+  content: '';
+  position: absolute;
   left: 0;
-  border-top-left-radius: var(--st-card-radius, var(--st-radius-lg));
-  border-bottom-left-radius: var(--st-card-radius, var(--st-radius-lg));
+  top: 12px;
+  bottom: 12px;
+  width: var(--st-stripe-width, 5px);
+  border-radius: calc(var(--st-stripe-width, 5px) * 0.6);
   background: linear-gradient(180deg,
     var(--stripe-start, rgb(var(--st-primary))),
-    var(--stripe-end,   rgb(var(--st-accent))));
-  box-shadow: 0 0 0 1px rgba(0,0,0,0.02) inset;
+    var(--stripe-end, rgb(var(--st-accent))));
+  pointer-events: none;
+  opacity: 0.6;
+  transition: opacity .18s ease, width .18s ease;
 }
-/* 柔光外晕 */
-.floor-card::after {
-  left: 0;
-  filter: blur(12px);
-  opacity: .28;
-  background: linear-gradient(180deg,
-    var(--stripe-start, rgb(var(--st-primary))),
-    transparent 72%);
-}
-/* 用户在右侧显示色条与光晕 */
 .floor-card[data-role="user"]::before {
-  left: auto; right: 0;
-  border-top-left-radius: 0;
-  border-bottom-left-radius: 0;
-  border-top-right-radius: var(--st-card-radius, var(--st-radius-lg));
-  border-bottom-right-radius: var(--st-card-radius, var(--st-radius-lg));
+  content: '';
+  position: absolute;
+  right: 0;
+  left: auto;
+  top: 12px;
+  bottom: 12px;
+  width: var(--st-stripe-width, 5px);
+  border-radius: calc(var(--st-stripe-width, 5px) * 0.6);
+  background: linear-gradient(180deg,
+    var(--stripe-start, rgb(var(--st-primary))),
+    var(--stripe-end, rgb(var(--st-accent))));
+  pointer-events: none;
+  opacity: 0.6;
+  transition: opacity .18s ease, width .18s ease;
 }
-.floor-card[data-role="user"]::after { left: auto; right: 0; }
+.floor-card:hover::before {
+  opacity: 1;
+}
 
 /* 楼层布局 */
 .floor-layout { display: flex; gap: 12px; }

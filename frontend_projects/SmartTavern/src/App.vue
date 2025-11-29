@@ -198,6 +198,7 @@ onMounted(() => {
       const scale = parseFloat(savedScale)
       if (!isNaN(scale) && scale >= 0.5 && scale <= 2.0) {
         document.documentElement.style.zoom = String(scale)
+        document.documentElement.style.setProperty('--st-ui-scale', String(scale))
       }
     }
   } catch (_) {}

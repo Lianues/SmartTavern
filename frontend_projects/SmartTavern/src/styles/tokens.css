@@ -47,6 +47,9 @@ button,
 }
 
 :root {
+  /* UI 缩放变量（默认 1.0，由 JS 在 zoom 时同步设置） */
+  --st-ui-scale: 1;
+  
   /* 基础语义令牌（RGB 形式，便于调优） */
   --st-color-bg: 246 248 253;
   --st-color-text: 18 24 38;

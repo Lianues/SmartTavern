@@ -592,6 +592,7 @@ const enUS = {
       avatarSize: 'Avatar Size',
       chatWidth: 'Chat Page Width',
       inputHeight: 'Input Box Height',
+      inputBottomMargin: 'Input Box Bottom Margin',
       lineHeight: 'Line Height',
       messageGap: 'Message Gap',
       cardRadius: 'Message Card Radius',

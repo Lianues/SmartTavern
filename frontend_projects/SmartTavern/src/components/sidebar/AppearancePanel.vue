@@ -472,6 +472,7 @@ body[data-active-slider="floorFontSize"]          [data-scope="settings-view"] .
 body[data-active-slider="avatarSize"]             [data-scope="settings-view"] .st-control[data-slider="avatarSize"],
 body[data-active-slider="chatWidth"]              [data-scope="settings-view"] .st-control[data-slider="chatWidth"],
 body[data-active-slider="inputHeight"]            [data-scope="settings-view"] .st-control[data-slider="inputHeight"],
+body[data-active-slider="inputBottomMargin"]      [data-scope="settings-view"] .st-control[data-slider="inputBottomMargin"],
 body[data-active-slider="contentLineHeight"]      [data-scope="settings-view"] .st-control[data-slider="contentLineHeight"],
 body[data-active-slider="messageGap"]             [data-scope="settings-view"] .st-control[data-slider="messageGap"],
 body[data-active-slider="cardRadius"]             [data-scope="settings-view"] .st-control[data-slider="cardRadius"],
@@ -505,7 +506,8 @@ body.st-live-tuning [data-scope="settings-view"] .st-control[data-slider] {
 }
 
 /* 隐藏外观面板右侧自定义滚动条（轨道与滑块），避免干扰预览 */
-body.st-live-tuning [data-scope="settings-view"] .custom-scrollbar-wrapper .scroll-track {
+body.st-live-tuning [data-scope="settings-view"] .custom-scrollbar-wrapper .scroll-track,
+body.st-live-tuning [data-scope="settings-view"] .custom-scrollbar2-wrapper .scroll-track2 {
   display: none !important;
   visibility: hidden !important;
   pointer-events: none !important;

@@ -74,9 +74,9 @@ const {
 // Destructure refs for template parity
 const {
   contentFontSize, nameFontSize, badgeFontSize, floorFontSize, avatarSize,
-  chatWidth, inputHeight,
+  chatWidth, inputHeight, inputBottomMargin,
   contentLineHeight, messageGap, cardRadius, stripeWidth,
-  threadedBgOpacityPct, threadedMsgBgOpacityPct, threadedListBgOpacityPct, threadedInputBgOpacityPct,
+  threadedBgOpacityPct, threadedListBgOpacityPct, threadedInputBgOpacityPct,
   // 新增：背景图片遮罩模糊（px）
   threadedBgBlurPx,
   thAspectX, thAspectY, thMaxWidthPct, thPadding, thRadius,
@@ -120,13 +120,16 @@ function onWidthInput(e) { chatWidth.value = Number(e.target.value); setRootVar(
 function onWidthNumberInput(e) { const v = Number(e.target.value); if (v >= 30 && v <= 100) { chatWidth.value = v; setRootVar('--st-chat-width', v) } }
 
 function onInputHeightInput(e) { inputHeight.value = Number(e.target.value); setRootVar('--st-input-height', inputHeight.value) }
-function onInputHeightNumberInput(e) { const v = Number(e.target.value); if (v >= 60 && v <= 300) { inputHeight.value = v; setRootVar('--st-input-height', v) } }
+function onInputHeightNumberInput(e) { const v = Number(e.target.value); if (v >= 80 && v <= 300) { inputHeight.value = v; setRootVar('--st-input-height', v) } }
+
+function onInputBottomMarginInput(e) { inputBottomMargin.value = Number(e.target.value); setRootVar('--st-input-bottom-margin', inputBottomMargin.value) }
+function onInputBottomMarginNumberInput(e) { const v = Number(e.target.value); if (v >= 0 && v <= 100) { inputBottomMargin.value = v; setRootVar('--st-input-bottom-margin', v) } }
 
 // Common appearance
 function onContentLineHeightNumberInput(e) { const v = Number(e.target.value); if (v >= 1.2 && v <= 2.0) { contentLineHeight.value = v; setRootVarUnitless('--st-content-line-height', String(v)) } }
 function onContentLineHeightRangeInput(e) { contentLineHeight.value = Number(e.target.value); setRootVarUnitless('--st-content-line-height', String(contentLineHeight.value)) }
 
-function onMessageGapNumberInput(e) { const v = Number(e.target.value); if (v >= 6 && v <= 24) { messageGap.value = v; setRootVar('--st-message-gap', v) } }
+function onMessageGapNumberInput(e) { const v = Number(e.target.value); if (v >= 0 && v <= 24) { messageGap.value = v; setRootVar('--st-message-gap', v) } }
 function onMessageGapRangeInput(e) { messageGap.value = Number(e.target.value); setRootVar('--st-message-gap', messageGap.value) }
 
 function onCardRadiusNumberInput(e) { const v = Number(e.target.value); if (v >= 0 && v <= 24) { cardRadius.value = v; setRootVar('--st-card-radius', v) } }
@@ -142,9 +145,6 @@ function onThreadedBgOpacityRangeInput(e) { threadedBgOpacityPct.value = Number(
 /* Blur handlers (px) */
 function onThreadedBgBlurNumberInput(e) { const v = Number(e.target.value); if (v >= 0 && v <= 50) { threadedBgBlurPx.value = v; setRootVar('--st-threaded-bg-blur', v) } }
 function onThreadedBgBlurRangeInput(e) { threadedBgBlurPx.value = Number(e.target.value); setRootVar('--st-threaded-bg-blur', threadedBgBlurPx.value) }
-
-function onThreadedMsgBgOpacityNumberInput(e) { const v = Number(e.target.value); if (v >= 0 && v <= 100) { threadedMsgBgOpacityPct.value = v; setRootVarUnitless('--st-threaded-msg-bg-opacity', String(v / 100)) } }
-function onThreadedMsgBgOpacityRangeInput(e) { threadedMsgBgOpacityPct.value = Number(e.target.value); setRootVarUnitless('--st-threaded-msg-bg-opacity', String(threadedMsgBgOpacityPct.value / 100)) }
 
 function onThreadedListBgOpacityNumberInput(e) { const v = Number(e.target.value); if (v >= 0 && v <= 100) { threadedListBgOpacityPct.value = v; setRootVarUnitless('--st-threaded-list-bg-opacity', String(v / 100)) } }
 function onThreadedListBgOpacityRangeInput(e) { threadedListBgOpacityPct.value = Number(e.target.value); setRootVarUnitless('--st-threaded-list-bg-opacity', String(threadedListBgOpacityPct.value / 100)) }
@@ -267,11 +267,22 @@ onBeforeUnmount(() => {
       <label class="st-control-label">
         <span class="label-text">{{ t('appearance.threaded.inputHeight') }}</span>
         <div class="value-group">
-          <input type="number" class="st-number-input" :value="inputHeight" min="60" max="300" @input="onInputHeightNumberInput" />
+          <input type="number" class="st-number-input" :value="inputHeight" min="80" max="300" @input="onInputHeightNumberInput" />
           <span class="unit">px</span>
         </div>
       </label>
-      <input type="range" min="60" max="300" step="10" :value="inputHeight" @pointerdown="onTuningStart('inputHeight')" @input="onInputHeightInput" />
+      <input type="range" min="80" max="300" step="10" :value="inputHeight" @pointerdown="onTuningStart('inputHeight')" @input="onInputHeightInput" />
+    </div>
+
+    <div class="st-control" data-slider="inputBottomMargin">
+      <label class="st-control-label">
+        <span class="label-text">{{ t('appearance.threaded.inputBottomMargin') }}</span>
+        <div class="value-group">
+          <input type="number" class="st-number-input" :value="inputBottomMargin" min="0" max="100" @input="onInputBottomMarginNumberInput" />
+          <span class="unit">px</span>
+        </div>
+      </label>
+      <input type="range" min="0" max="100" step="1" :value="inputBottomMargin" @pointerdown="onTuningStart('inputBottomMargin')" @input="onInputBottomMarginInput" />
     </div>
 
     <!-- 常用外观 -->
@@ -290,11 +301,11 @@ onBeforeUnmount(() => {
       <label class="st-control-label">
         <span class="label-text">{{ t('appearance.threaded.messageGap') }}</span>
         <div class="value-group">
-          <input type="number" class="st-number-input" :value="messageGap" min="6" max="24" step="1" @input="onMessageGapNumberInput" />
+          <input type="number" class="st-number-input" :value="messageGap" min="0" max="24" step="1" @input="onMessageGapNumberInput" />
           <span class="unit">px</span>
         </div>
       </label>
-      <input type="range" min="6" max="24" step="1" :value="messageGap" @pointerdown="onTuningStart('messageGap')" @input="onMessageGapRangeInput" />
+      <input type="range" min="0" max="24" step="1" :value="messageGap" @pointerdown="onTuningStart('messageGap')" @input="onMessageGapRangeInput" />
     </div>
 
     <div class="st-control" data-slider="cardRadius">
@@ -343,17 +354,6 @@ onBeforeUnmount(() => {
       <div class="st-control-hint">
         <span class="muted" style="font-size:12px;">{{ t('appearance.threaded.bgMaskBlurHint') }}</span>
       </div>
-    </div>
-
-    <div class="st-control" data-slider="threadedMsgBgOpacity">
-      <label class="st-control-label">
-        <span class="label-text">{{ t('appearance.threaded.msgBgOpacity') }}</span>
-        <div class="value-group">
-          <input type="number" class="st-number-input" :value="threadedMsgBgOpacityPct" min="0" max="100" @input="onThreadedMsgBgOpacityNumberInput" />
-          <span class="unit">%</span>
-        </div>
-      </label>
-      <input type="range" min="0" max="100" step="1" :value="threadedMsgBgOpacityPct" @pointerdown="onTuningStart('threadedMsgBgOpacity')" @input="onThreadedMsgBgOpacityRangeInput" />
     </div>
 
     <div class="st-control" data-slider="threadedListBgOpacity">

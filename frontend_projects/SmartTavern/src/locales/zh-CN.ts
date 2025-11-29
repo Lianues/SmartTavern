@@ -592,6 +592,7 @@ const zhCN = {
       avatarSize: '角色头像大小',
       chatWidth: '对话页面宽度',
       inputHeight: '底部输入框高度',
+      inputBottomMargin: '底部输入框底边距',
       lineHeight: '正文行距',
       messageGap: '消息间距',
       cardRadius: '消息卡圆角',
