@@ -1,0 +1,343 @@
+/* ============================
+   DetailView 组件共享样式
+   用于所有 DetailView 组件（Character, LLMConfig, Persona, Preset, RegexRule, WorldBook）
+   ============================ */
+
+/* 基础样式类 */
+.rounded-4 {
+  border-radius: var(--st-radius-card);
+}
+
+.card-shadow {
+  box-shadow: var(--st-shadow-sm);
+}
+
+.hover\:shadow-elevate:hover {
+  box-shadow: var(--st-shadow-md);
+}
+
+.ease-soft {
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ============================
+   拖拽交互样式
+   ============================ */
+
+/* 拖拽手柄 */
+.cursor-grab {
+  cursor: grab;
+}
+
+.cursor-grab:active {
+  cursor: grabbing;
+}
+
+.icon-grip::before {
+  content: var(--st-drag-grip-icon-content);
+  display: inline-block;
+  line-height: 1;
+  font-weight: var(--st-drag-grip-icon-weight);
+  color: var(--st-drag-grip-color-light);
+}
+
+[data-theme="dark"] .icon-grip::before {
+  color: var(--st-drag-grip-color-dark);
+}
+
+/* 拖拽列表项 */
+.draglist-item {
+  position: relative;
+}
+
+/* 拖拽指示器 - 上方 */
+.drag-over-top::before {
+  content: '';
+  position: absolute;
+  left: var(--st-spacing-md);
+  right: var(--st-spacing-md);
+  top: var(--st-drag-indicator-offset-top);
+  height: var(--st-drag-indicator-height);
+  background: var(--st-drag-indicator-color-light);
+  border-radius: var(--st-radius-xs);
+  z-index: 10;
+  pointer-events: none;
+}
+
+[data-theme="dark"] .drag-over-top::before {
+  background: var(--st-drag-indicator-color-dark);
+}
+
+/* 拖拽指示器 - 下方 */
+.drag-over-bottom::after {
+  content: '';
+  position: absolute;
+  left: var(--st-spacing-md);
+  right: var(--st-spacing-md);
+  bottom: var(--st-drag-indicator-offset-bottom);
+  height: var(--st-drag-indicator-height);
+  background: var(--st-drag-indicator-color-light);
+  border-radius: var(--st-radius-xs);
+  z-index: 10;
+  pointer-events: none;
+}
+
+[data-theme="dark"] .drag-over-bottom::after {
+  background: var(--st-drag-indicator-color-dark);
+}
+
+/* 正在拖拽的项 */
+.dragging-item {
+  transform: scale(var(--st-drag-item-scale));
+  box-shadow: var(--st-drag-item-shadow);
+  opacity: var(--st-drag-item-opacity);
+  z-index: var(--st-drag-item-z-index);
+  transition: 
+    transform var(--st-drag-transition-duration) var(--st-drag-transition-easing),
+    box-shadow var(--st-drag-transition-duration) var(--st-drag-transition-easing),
+    opacity var(--st-drag-transition-duration) var(--st-drag-transition-easing);
+}
+
+/* 拖拽结束区 */
+.draglist-end {
+  position: relative;
+}
+
+.drag-over-end::after {
+  content: '';
+  position: absolute;
+  left: var(--st-spacing-md);
+  right: var(--st-spacing-md);
+  top: var(--st-drag-indicator-offset-end);
+  height: var(--st-drag-indicator-height);
+  background: var(--st-drag-indicator-color-light);
+  border-radius: var(--st-radius-xs);
+}
+
+[data-theme="dark"] .drag-over-end::after {
+  background: var(--st-drag-indicator-color-dark);
+}
+
+/* ============================
+   保存状态样式
+   ============================ */
+
+.save-indicator {
+  min-width: var(--st-save-indicator-min-width);
+}
+
+.save-spinner {
+  width: var(--st-icon-md);
+  height: var(--st-icon-md);
+  display: inline-block;
+  border: var(--st-save-spinner-border-width) solid var(--st-save-spinner-border-light);
+  border-top-color: var(--st-save-spinner-top-light);
+  border-radius: var(--st-radius-full);
+  animation: st-spin var(--st-save-spinner-duration) linear infinite;
+}
+
+[data-theme="dark"] .save-spinner {
+  border: var(--st-save-spinner-border-width) solid var(--st-save-spinner-border-dark);
+  border-top-color: var(--st-save-spinner-top-dark);
+}
+
+.save-done {
+  font-size: var(--st-font-sm);
+  color: var(--st-save-done-color-light);
+}
+
+[data-theme="dark"] .save-done {
+  color: var(--st-save-done-color-dark);
+}
+
+@keyframes st-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ============================
+   暗色主题适配 - 使用中性灰色
+   ============================ */
+
+[data-theme="dark"] .bg-white {
+  background-color: var(--st-card-bg-dark) !important;
+}
+
+[data-theme="dark"] .bg-gray-50 {
+  background-color: var(--st-card-bg-gray-50-dark) !important;
+}
+
+[data-theme="dark"] .bg-gray-100 {
+  background-color: var(--st-card-hover-bg-dark) !important;
+}
+
+[data-theme="dark"] .text-black {
+  color: var(--st-card-text-dark) !important;
+}
+
+[data-theme="dark"] .text-black\/50 {
+  color: var(--st-card-text-dark-50) !important;
+}
+
+[data-theme="dark"] .text-black\/60 {
+  color: var(--st-card-text-dark-60) !important;
+}
+
+[data-theme="dark"] .text-black\/70 {
+  color: var(--st-card-text-dark-70) !important;
+}
+
+[data-theme="dark"] .text-black\/80 {
+  color: var(--st-card-text-dark-80) !important;
+}
+
+[data-theme="dark"] .border-gray-200 {
+  border-color: var(--st-card-border-200-dark) !important;
+}
+
+[data-theme="dark"] .border-gray-300 {
+  border-color: var(--st-card-border-300-dark) !important;
+}
+
+[data-theme="dark"] .border-gray-400 {
+  border-color: var(--st-card-border-400-dark) !important;
+}
+
+[data-theme="dark"] .border-gray-800 {
+  border-color: var(--st-card-border-800-dark) !important;
+}
+
+[data-theme="dark"] .border-gray-900 {
+  border-color: var(--st-card-border-900-dark) !important;
+}
+
+[data-theme="dark"] .hover\:bg-gray-100:hover {
+  background-color: var(--st-card-hover-bg-dark) !important;
+}
+
+[data-theme="dark"] .text-red-600 {
+  color: var(--st-card-error-text-dark) !important;
+}
+
+/* ============================
+   暗色主题 - 输入框适配
+   ============================ */
+
+[data-theme="dark"] input,
+[data-theme="dark"] textarea,
+[data-theme="dark"] select {
+  background-color: var(--st-card-input-bg-dark) !important;
+  color: var(--st-card-input-text-dark) !important;
+  border-color: var(--st-card-input-border-dark) !important;
+}
+
+[data-theme="dark"] input::placeholder,
+[data-theme="dark"] textarea::placeholder {
+  color: var(--st-card-input-placeholder-dark) !important;
+}
+
+[data-theme="dark"] input:focus,
+[data-theme="dark"] textarea:focus,
+[data-theme="dark"] select:focus {
+  border-color: var(--st-card-input-focus-border-dark) !important;
+  box-shadow: 0 0 0 2px var(--st-card-input-focus-shadow-dark) !important;
+}
+
+[data-theme="dark"] input:disabled,
+[data-theme="dark"] textarea:disabled,
+[data-theme="dark"] select:disabled {
+  background-color: var(--st-card-bg-dark) !important;
+  color: var(--st-card-disabled-text-dark) !important;
+}
+
+[data-theme="dark"] select option {
+  background-color: var(--st-card-select-option-bg-dark) !important;
+  color: var(--st-card-select-option-text-dark) !important;
+}
+
+/* ============================
+   图标上传区域样式 (Icon Upload)
+   ============================ */
+
+.icon-upload-area {
+  width: var(--st-icon-upload-size);
+  height: var(--st-icon-upload-size);
+  border: var(--st-icon-upload-border-width) dashed currentColor;
+  border-radius: var(--st-radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: all var(--st-transition-normal);
+  background: rgb(var(--st-surface));
+  color: rgba(var(--st-color-text), 0.3);
+}
+
+.icon-upload-area:hover {
+  border-color: rgb(var(--st-primary));
+  color: rgb(var(--st-primary));
+  background: rgba(var(--st-primary), 0.05);
+}
+
+.icon-upload-area.has-icon {
+  border-style: solid;
+  border-color: rgba(var(--st-color-text), 0.3);
+  color: inherit;
+}
+
+.icon-upload-area.has-icon:hover {
+  border-color: rgb(var(--st-primary));
+}
+
+.icon-preview {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.icon-remove-btn {
+  position: absolute;
+  top: var(--st-icon-remove-btn-offset);
+  right: var(--st-icon-remove-btn-offset);
+  width: var(--st-icon-remove-btn-size);
+  height: var(--st-icon-remove-btn-size);
+  border-radius: var(--st-radius-circle);
+  border: 1px solid rgba(var(--st-border), 0.5);
+  background: var(--st-icon-remove-btn-bg);
+  color: #ffffff;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity var(--st-transition-normal);
+}
+
+.icon-upload-area:hover .icon-remove-btn {
+  opacity: 1;
+}
+
+.icon-remove-btn:hover {
+  background: var(--st-icon-remove-btn-hover-bg);
+}
+
+.icon-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--st-spacing-sm);
+  color: rgba(var(--st-color-text), 0.4);
+  text-align: center;
+}
+
+.icon-placeholder i {
+  opacity: 0.6;
+}
+
+.icon-placeholder span {
+  font-size: var(--st-font-xs);
+}

@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PromptEditor 提示词编辑器</title>
+
+    <!-- Tailwind CSS（CDN） -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tailwind 配置（CDN 版动态扩展） -->
+    <script>
+      window.tailwind = window.tailwind || {};
+      window.tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Inter', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'Arial', 'sans-serif'],
+              mono: ['JetBrains Mono','Fira Code','Source Code Pro','IBM Plex Mono','ui-monospace','SFMono-Regular','Menlo','Monaco','Consolas','Liberation Mono','monospace']
+            },
+            borderRadius: { 4: '4px' },
+            boxShadow: { elevate: '0 1px 2px rgba(0,0,0,0.06), 0 6px 12px rgba(0,0,0,0.08)' },
+            transitionTimingFunction: { soft: 'cubic-bezier(0.2, 0, 0, 1)' }
+          }
+        }
+      }
+    </script>
+    <!-- Lucide 图标（CDN） -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <!-- 全局样式覆盖（遵循 UI 规范） -->
+    <style>
+      :root { color-scheme: light !important; }
+      html, body { height: 100%; }
+      body {
+        font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif !important;
+        color: #111111 !important;
+        background: #F9FAFB !important;
+      }
+      h1 {
+        font-size: 36px !important;
+        line-height: 44px !important;
+        font-weight: 700 !important;
+        color: #000000 !important;
+        margin: 0 !important;
+      }
+      h2 {
+        font-size: 28px !important;
+        line-height: 36px !important;
+        font-weight: 700 !important;
+        color: #000000 !important;
+        margin: 0 !important;
+      }
+      .rounded-4 { border-radius: 4px !important; }
+      .card-shadow {
+        box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+        transition: all 180ms ease-in-out;
+      }
+      .card-shadow:hover {
+        box-shadow: 0 6px 12px rgba(0,0,0,0.08);
+        transform: translateY(-1px);
+      }
+      /* 选区高亮（黑白） */
+      ::selection { background: #111; color: #fff; }
+
+      /* 滚动条（微弱对比） */
+      *::-webkit-scrollbar { width: 10px; height: 10px; }
+      *::-webkit-scrollbar-track { background: transparent; }
+      *::-webkit-scrollbar-thumb {
+        background: rgba(17,17,17,0.18);
+        border-radius: 8px;
+        border: 2px solid transparent;
+        background-clip: padding-box;
+      }
+      *::-webkit-scrollbar-thumb:hover { background: rgba(17,17,17,0.32); }
+
+      /* 降低动效偏好尊重 */
+      @media (prefers-reduced-motion: reduce) {
+        * { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+      }
+    </style>
+  </head>
+  <body class="bg-gray-50 min-h-screen text-black overflow-hidden antialiased">
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

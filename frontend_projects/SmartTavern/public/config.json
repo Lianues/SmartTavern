@@ -1,0 +1,25 @@
+{
+  "app": "SmartTavern",
+  "version": "1.0.0",
+  "theme": {
+    "contractUrl": "/themes/contract.json",
+    "allowScript": false,
+    "exposeWindowAPI": false,
+    "defaultThemeUrl": null,
+    "persistKey": "st.themePack.v1"
+  },
+  "appearance": {
+    "persistKey": "st.appearance.v1",
+    "backgroundKeys": {
+      "start": "st.bg.start",
+      "threaded": "st.bg.threaded",
+      "sandbox": "st.bg.sandbox"
+    }
+  },
+  "notes": [
+    "Theme.allowScript remains false by default for safety; scripts are not executed.",
+    "Theme.contractUrl references the public contract for stable selectors and tokens.",
+    "Appearance.persistKey defines the localStorage key used by the UI panel.",
+    "BackgroundKeys map to localStorage keys used for per-page background overrides."
+  ]
+}

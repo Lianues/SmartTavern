@@ -1,0 +1,9 @@
+{
+  "enabled": [
+    "prompt-router",
+    "context-variables",
+    "postprocess_orchestrator",
+    "locale-ja-JP"
+  ],
+  "disabled": []
+}

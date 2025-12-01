@@ -1,0 +1,107 @@
+{
+  "name": "默认预设",
+  "description": "这是默认预设的描述",
+  "api_config": {
+    "enabled": false,
+    "temperature": 1,
+    "top_p": 1,
+    "top_k": 0,
+    "max_context": 200000,
+    "max_tokens": 30000,
+    "stream": true,
+    "frequency_penalty": 0,
+    "presence_penalty": 0,
+    "enabled_fields": []
+  },
+  "prompts": [
+    {
+      "identifier": "main",
+      "name": "Main Prompt",
+      "enabled": false,
+      "role": "user",
+      "position": "relative",
+      "content": "Write {{char}}'s next reply in a fictional chat between {{char}} and {{user}}."
+    },
+    {
+      "identifier": "charBefore",
+      "name": "char Before",
+      "enabled": null,
+      "role": "system",
+      "position": "relative"
+    },
+    {
+      "identifier": "personaDescription",
+      "name": "Persona Description",
+      "enabled": false,
+      "role": "system",
+      "position": "relative"
+    },
+    {
+      "identifier": "charDescription",
+      "name": "Char Description",
+      "enabled": true,
+      "role": "system",
+      "position": "relative"
+    },
+    {
+      "identifier": "charPersonality",
+      "name": "Char Personality",
+      "enabled": null,
+      "role": "system",
+      "position": "relative"
+    },
+    {
+      "identifier": "scenario",
+      "name": "Scenario",
+      "enabled": false,
+      "role": "system",
+      "position": "relative"
+    },
+    {
+      "identifier": "enhanceDefinitions",
+      "name": "Enhance Definitions",
+      "enabled": true,
+      "role": "system",
+      "position": "relative",
+      "content": "If you have more knowledge of {{char}}, add to the character's lore and personality to enhance them but keep the Character Sheet's definitions absolute."
+    },
+    {
+      "identifier": "nsfw",
+      "name": "Auxiliary Prompt",
+      "enabled": false,
+      "role": "system",
+      "position": "relative",
+      "content": ""
+    },
+    {
+      "identifier": "charAfter",
+      "name": "char After",
+      "enabled": true,
+      "role": "system",
+      "position": "relative"
+    },
+    {
+      "identifier": "dialogueExamples",
+      "name": "Chat Examples",
+      "enabled": true,
+      "role": "system",
+      "position": "relative"
+    },
+    {
+      "identifier": "chatHistory",
+      "name": "Chat History",
+      "enabled": true,
+      "role": "system",
+      "position": "relative"
+    },
+    {
+      "identifier": "jailbreak",
+      "name": "Post-History Instructions",
+      "enabled": false,
+      "role": "system",
+      "position": "relative",
+      "content": ""
+    }
+  ],
+  "regex_rules": []
+}

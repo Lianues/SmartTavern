@@ -1,0 +1,929 @@
+/* SmartTavern Global Styles
+   Note: This file contains actual CSS rules and selectors.
+   For design tokens (CSS variables), see tokens.css
+*/
+
+/* ========================== */
+/* 全局禁用文本选择光标         */
+/* ========================== */
+
+/**
+ * 禁用非输入元素的文本编辑光标（闪烁的竖线）
+ * 只有真正的输入框才显示光标
+ */
+
+/* 全局隐藏光标 */
+*:not(input):not(textarea):not([contenteditable="true"]) {
+  caret-color: transparent !important;
+}
+
+/* 确保输入框显示光标 */
+input,
+textarea,
+[contenteditable="true"] {
+  caret-color: auto;
+}
+
+/* 禁止非输入区域的文本选择（可选，减少误触） */
+button,
+[role="button"],
+.st-preview-card,
+.st-sidebar-nav,
+[data-scope="sidebar"],
+[data-scope="sidebar-nav"] {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* 允许某些区域的文本选择（如消息内容） */
+.st-selectable,
+[data-selectable],
+.message-content,
+.chat-content {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+/* ========================== */
+/* 自定义表单控件样式          */
+/* ========================== */
+
+/* 数字输入框 - 隐藏原生箭头 */
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* 数字输入框 - 自定义样式容器 */
+.st-number-input {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.st-number-input input {
+  padding-right: 28px;
+}
+
+.st-number-input .st-number-controls {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.st-number-input .st-number-btn {
+  width: 18px;
+  height: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.05);
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  padding: 0;
+}
+
+.st-number-input .st-number-btn:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.st-number-input .st-number-btn:active {
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.st-number-input .st-number-btn svg {
+  width: 10px;
+  height: 10px;
+  stroke: currentColor;
+  stroke-width: 2;
+  fill: none;
+}
+
+[data-theme="dark"] .st-number-input .st-number-btn {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .st-number-input .st-number-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+[data-theme="dark"] .st-number-input .st-number-btn:active {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* 勾选框 - 自定义样式 */
+input[type="checkbox"].st-checkbox,
+input[type="checkbox"] {
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  width: 18px !important;
+  height: 18px !important;
+  min-width: 18px !important;
+  min-height: 18px !important;
+  border: 2px solid rgb(180, 180, 185) !important;
+  border-radius: 4px !important;
+  background: rgb(255, 255, 255) !important;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s ease;
+  vertical-align: middle;
+}
+
+input[type="checkbox"]:hover {
+  border-color: rgb(140, 140, 150) !important;
+  background: rgb(248, 248, 250) !important;
+}
+
+input[type="checkbox"]:focus {
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(140, 140, 160, 0.2) !important;
+}
+
+input[type="checkbox"]:checked {
+  background: rgb(60, 60, 70) !important;
+  border-color: rgb(60, 60, 70) !important;
+}
+
+input[type="checkbox"]:checked::after {
+  content: '' !important;
+  position: absolute !important;
+  left: 5px !important;
+  top: 1px !important;
+  width: 5px !important;
+  height: 10px !important;
+  border: solid white !important;
+  border-width: 0 2px 2px 0 !important;
+  transform: rotate(45deg) !important;
+}
+
+input[type="checkbox"]:disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+}
+
+/* 暗色主题勾选框 */
+[data-theme="dark"] input[type="checkbox"],
+[data-theme="dark"] input[type="checkbox"].st-checkbox {
+  background: rgb(45, 45, 50) !important;
+  border-color: rgb(80, 80, 90) !important;
+}
+
+[data-theme="dark"] input[type="checkbox"]:hover {
+  border-color: rgb(110, 110, 120) !important;
+  background: rgb(55, 55, 60) !important;
+}
+
+[data-theme="dark"] input[type="checkbox"]:focus {
+  box-shadow: 0 0 0 3px rgba(140, 140, 160, 0.3) !important;
+}
+
+[data-theme="dark"] input[type="checkbox"]:checked {
+  background: rgb(120, 120, 140) !important;
+  border-color: rgb(120, 120, 140) !important;
+}
+
+[data-theme="dark"] input[type="checkbox"]:checked::after {
+  border-color: rgb(20, 20, 22) !important;
+}
+
+/* 开关样式（可选，用于替代部分勾选框） */
+.st-switch {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 22px;
+}
+
+.st-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.st-switch .st-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgb(200, 200, 205);
+  border-radius: 22px;
+  transition: all 0.3s ease;
+}
+
+.st-switch .st-slider::before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+.st-switch input:checked + .st-slider {
+  background-color: rgb(80, 80, 100);
+}
+
+.st-switch input:checked + .st-slider::before {
+  transform: translateX(18px);
+}
+
+.st-switch input:focus + .st-slider {
+  box-shadow: 0 0 0 3px rgba(140, 140, 160, 0.2);
+}
+
+.st-switch input:disabled + .st-slider {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+[data-theme="dark"] .st-switch .st-slider {
+  background-color: rgb(60, 60, 68);
+}
+
+[data-theme="dark"] .st-switch .st-slider::before {
+  background-color: rgb(200, 200, 205);
+}
+
+[data-theme="dark"] .st-switch input:checked + .st-slider {
+  background-color: rgb(120, 120, 140);
+}
+
+[data-theme="dark"] .st-switch input:checked + .st-slider::before {
+  background-color: rgb(20, 20, 25);
+}
+
+/* 下拉选择框美化（全局） */
+select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+
+  /* 尺寸与排版：遵循 4/8pt 间距节奏 */
+  width: 100%;
+  padding: 8px 32px 8px 12px;
+  border-radius: 3px;
+  border: 1px solid rgba(0, 0, 0, 0.16);
+  background-color: rgba(255, 255, 255, 0.96);
+  color: #000000;
+
+  font-size: 14px;
+  line-height: 20px;
+  cursor: pointer;
+
+  /* 下拉箭头：中性灰色，靠右对齐 */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 12px 12px;
+
+  transition:
+    border-color 0.16s ease,
+    box-shadow 0.16s ease,
+    background-color 0.16s ease,
+    transform 0.12s ease;
+}
+
+select:hover:not(:disabled) {
+  border-color: rgba(0, 0, 0, 0.32);
+  background-color: rgba(255, 255, 255, 1);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+}
+
+select:focus-visible {
+  outline: none;
+  border-color: #000000;
+  box-shadow: 0 0 0 1px #000000;
+  background-color: #ffffff;
+  transform: translateY(-1px);
+}
+
+select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+/* 暗色主题下拉样式 */
+[data-theme="dark"] select {
+  border-color: rgba(255, 255, 255, 0.22);
+  background-color: rgba(18, 18, 22, 0.96);
+  color: #ffffff;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23d4d4d4' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+}
+
+[data-theme="dark"] select:hover:not(:disabled) {
+  border-color: rgba(255, 255, 255, 0.38);
+  background-color: rgba(12, 12, 16, 1);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.85);
+}
+
+[data-theme="dark"] select:focus-visible {
+  border-color: #ffffff;
+  box-shadow: 0 0 0 1px #ffffff;
+  background-color: rgba(8, 8, 12, 1);
+}
+
+[data-theme="dark"] select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+/* ========================== */
+/* 文本区域（textarea）样式    */
+/* ========================== */
+
+/* 自定义 textarea 调整手柄 */
+textarea::-webkit-resizer {
+  background-color: rgb(220, 220, 225);
+  border-radius: 0 0 4px 0;
+}
+
+[data-theme="dark"] textarea::-webkit-resizer {
+  background-color: rgb(60, 60, 68);
+}
+
+/* ========================== */
+/* 自定义滚动条样式            */
+/* ========================== */
+
+/* 适用于所有输入框和文本区域的滚动条 */
+input,
+textarea,
+select {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(140, 140, 160, 0.4) transparent;
+}
+
+/* Webkit 浏览器滚动条样式 */
+input::-webkit-scrollbar,
+textarea::-webkit-scrollbar,
+select::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+input::-webkit-scrollbar-track,
+textarea::-webkit-scrollbar-track,
+select::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 4px;
+}
+
+input::-webkit-scrollbar-thumb,
+textarea::-webkit-scrollbar-thumb,
+select::-webkit-scrollbar-thumb {
+  background: rgba(140, 140, 160, 0.35);
+  border-radius: 4px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+  transition: background 0.2s ease;
+}
+
+input::-webkit-scrollbar-thumb:hover,
+textarea::-webkit-scrollbar-thumb:hover,
+select::-webkit-scrollbar-thumb:hover {
+  background: rgba(140, 140, 160, 0.55);
+  background-clip: content-box;
+}
+
+input::-webkit-scrollbar-thumb:active,
+textarea::-webkit-scrollbar-thumb:active,
+select::-webkit-scrollbar-thumb:active {
+  background: rgba(140, 140, 160, 0.7);
+  background-clip: content-box;
+}
+
+input::-webkit-scrollbar-corner,
+textarea::-webkit-scrollbar-corner,
+select::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* 暗色主题滚动条 */
+[data-theme="dark"] input,
+[data-theme="dark"] textarea,
+[data-theme="dark"] select {
+  scrollbar-color: rgba(140, 140, 160, 0.35) transparent;
+}
+
+[data-theme="dark"] input::-webkit-scrollbar-thumb,
+[data-theme="dark"] textarea::-webkit-scrollbar-thumb,
+[data-theme="dark"] select::-webkit-scrollbar-thumb {
+  background: rgba(160, 160, 180, 0.3);
+  background-clip: content-box;
+}
+
+[data-theme="dark"] input::-webkit-scrollbar-thumb:hover,
+[data-theme="dark"] textarea::-webkit-scrollbar-thumb:hover,
+[data-theme="dark"] select::-webkit-scrollbar-thumb:hover {
+  background: rgba(160, 160, 180, 0.5);
+  background-clip: content-box;
+}
+
+[data-theme="dark"] input::-webkit-scrollbar-thumb:active,
+[data-theme="dark"] textarea::-webkit-scrollbar-thumb:active,
+[data-theme="dark"] select::-webkit-scrollbar-thumb:active {
+  background: rgba(160, 160, 180, 0.65);
+  background-clip: content-box;
+}
+
+/* 全局容器滚动条样式（用于有 overflow 的 div 等） */
+.st-scrollbar,
+[data-st-scrollbar] {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(140, 140, 160, 0.35) transparent;
+}
+
+.st-scrollbar::-webkit-scrollbar,
+[data-st-scrollbar]::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.st-scrollbar::-webkit-scrollbar-track,
+[data-st-scrollbar]::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 4px;
+}
+
+.st-scrollbar::-webkit-scrollbar-thumb,
+[data-st-scrollbar]::-webkit-scrollbar-thumb {
+  background: rgba(140, 140, 160, 0.35);
+  border-radius: 4px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+.st-scrollbar::-webkit-scrollbar-thumb:hover,
+[data-st-scrollbar]::-webkit-scrollbar-thumb:hover {
+  background: rgba(140, 140, 160, 0.55);
+  background-clip: content-box;
+}
+
+[data-theme="dark"] .st-scrollbar,
+[data-theme="dark"] [data-st-scrollbar] {
+  scrollbar-color: rgba(160, 160, 180, 0.3) transparent;
+}
+
+[data-theme="dark"] .st-scrollbar::-webkit-scrollbar-thumb,
+[data-theme="dark"] [data-st-scrollbar]::-webkit-scrollbar-thumb {
+  background: rgba(160, 160, 180, 0.3);
+  background-clip: content-box;
+}
+
+[data-theme="dark"] .st-scrollbar::-webkit-scrollbar-thumb:hover,
+[data-theme="dark"] [data-st-scrollbar]::-webkit-scrollbar-thumb:hover {
+  background: rgba(160, 160, 180, 0.5);
+  background-clip: content-box;
+}
+
+/* ========================== */
+/* 语言自适应样式（i18n）       */
+/* ========================== */
+
+/**
+ * 为翻译文字提供自适应样式
+ * - 自动缩小：当文字过长时自动缩小字体
+ * - 文字溢出：使用省略号处理
+ * - 最小字体：确保文字可读性
+ */
+
+/* 按钮文字自适应 */
+.st-btn-text,
+[data-i18n-shrink] {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+/* 标签文字自适应 */
+.st-label-text,
+[data-i18n-label] {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.4;
+}
+
+/* 多行文字截断 */
+.st-multiline-clamp,
+[data-i18n-clamp] {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* 3行截断 */
+.st-multiline-clamp-3,
+[data-i18n-clamp="3"] {
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+}
+
+/* 标题文字：可适当缩小 */
+.st-title-shrink,
+[data-i18n-title] {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+  /* 使用 CSS clamp 实现响应式字体 */
+  font-size: clamp(12px, 1em, 18px);
+}
+
+/* 面板头部标题 */
+.st-panel-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+  min-width: 0; /* flex 子元素需要 */
+}
+
+/* 按钮内文字自适应（用于可能较长的翻译文字） */
+.st-btn-shrinkable {
+  padding-left: 8px;
+  padding-right: 8px;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  /* 字体缩放：最小 10px，默认继承，最大 14px */
+  font-size: clamp(10px, 0.9em, 14px);
+}
+
+/* 菜单项文字 */
+.st-menu-item-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+
+/* 卡片标题 */
+.st-card-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+  min-width: 0;
+  font-weight: 700;
+}
+
+/* 卡片描述 */
+.st-card-desc {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 12px;
+  line-height: 1.4;
+  color: rgba(var(--st-color-text), 0.75);
+}
+
+/* 弹窗标题 */
+.st-modal-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: calc(100% - 40px); /* 为关闭按钮留出空间 */
+  min-width: 0;
+}
+
+/* 错误/警告消息：允许换行但限制行数 */
+.st-message-text {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-word;
+}
+
+/* ========================== */
+/* 特定语言适配                */
+/* ========================== */
+
+/* 日语：可能需要更紧凑的行高 */
+html[lang="ja-JP"] {
+  --st-line-height-compact: 1.35;
+}
+
+html[lang="ja-JP"] .st-compact-text {
+  line-height: var(--st-line-height-compact);
+}
+
+/* 阿拉伯语/希伯来语：RTL 支持 */
+html[dir="rtl"] {
+  direction: rtl;
+}
+
+html[dir="rtl"] .st-btn-text,
+html[dir="rtl"] .st-label-text,
+html[dir="rtl"] .st-card-title {
+  text-align: right;
+}
+
+/* ========================== */
+/* 响应式字体缩放              */
+/* ========================== */
+
+/* 小屏幕上缩小字体 */
+@media (max-width: 640px) {
+  .st-btn-shrinkable {
+    font-size: clamp(9px, 0.85em, 12px);
+    padding-left: 6px;
+    padding-right: 6px;
+  }
+  
+  .st-title-shrink,
+  [data-i18n-title] {
+    font-size: clamp(11px, 0.9em, 16px);
+  }
+  
+  .st-panel-title {
+    font-size: 14px;
+  }
+}
+
+/* ========================== */
+/* 滑条（Range Slider）样式    */
+/* ========================== */
+
+/**
+ * 统一的滑条样式设计
+ * 设计原则：
+ * - 中性灰色配色，遵循 60-30-10 法则
+ * - 圆角 < 4px（规范要求）
+ * - 微妙的阴影和过渡动画
+ * - 明暗主题完美适配
+ */
+
+/* 基础重置 - 使用 !important 确保覆盖 Tailwind */
+input[type="range"] {
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  background: transparent !important;
+  width: 100%;
+  height: 24px;
+  cursor: pointer;
+  margin: 0;
+  padding: 0;
+}
+
+input[type="range"]:focus {
+  outline: none !important;
+}
+
+/* ===== 轨道样式 (Track) ===== */
+
+/* Webkit (Chrome, Safari, Edge) */
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 6px !important;
+  border-radius: 3px !important;
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.08) 0%,
+    rgba(0, 0, 0, 0.12) 100%
+  ) !important;
+  border: 1px solid rgba(0, 0, 0, 0.15) !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.06) !important;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+/* Firefox */
+input[type="range"]::-moz-range-track {
+  height: 6px !important;
+  border-radius: 3px !important;
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.08) 0%,
+    rgba(0, 0, 0, 0.12) 100%
+  ) !important;
+  border: 1px solid rgba(0, 0, 0, 0.15) !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.06) !important;
+}
+
+/* 悬停时轨道 */
+input[type="range"]:hover::-webkit-slider-runnable-track {
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.10) 0%,
+    rgba(0, 0, 0, 0.16) 100%
+  ) !important;
+  border-color: rgba(0, 0, 0, 0.20) !important;
+}
+
+input[type="range"]:hover::-moz-range-track {
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.10) 0%,
+    rgba(0, 0, 0, 0.16) 100%
+  ) !important;
+  border-color: rgba(0, 0, 0, 0.20) !important;
+}
+
+/* ===== 滑块样式 (Thumb) ===== */
+
+/* Webkit (Chrome, Safari, Edge) */
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  width: 16px !important;
+  height: 16px !important;
+  border-radius: 3px !important;
+  background: #22c55e !important;
+  border: 2px solid #15803d !important;
+  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.5) !important;
+  margin-top: -6px !important;
+  cursor: grab;
+  transition: all 0.15s ease;
+}
+
+/* Firefox */
+input[type="range"]::-moz-range-thumb {
+  width: 16px !important;
+  height: 16px !important;
+  border-radius: 3px !important;
+  background: #22c55e !important;
+  border: 2px solid #15803d !important;
+  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.5) !important;
+  cursor: grab;
+  transition: all 0.15s ease;
+}
+
+/* 悬停时滑块 */
+input[type="range"]:hover::-webkit-slider-thumb {
+  transform: scale(1.1);
+  background: #4ade80 !important;
+  border-color: #16a34a !important;
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.6) !important;
+}
+
+input[type="range"]:hover::-moz-range-thumb {
+  transform: scale(1.1);
+  background: #4ade80 !important;
+  border-color: #16a34a !important;
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.6) !important;
+}
+
+/* 激活/拖拽时滑块 */
+input[type="range"]:active::-webkit-slider-thumb {
+  cursor: grabbing;
+  transform: scale(1.02);
+  background: #16a34a !important;
+  border-color: #14532d !important;
+  box-shadow: 0 2px 6px rgba(22, 163, 74, 0.5) !important;
+}
+
+input[type="range"]:active::-moz-range-thumb {
+  cursor: grabbing;
+  transform: scale(1.02);
+  background: #16a34a !important;
+  border-color: #14532d !important;
+  box-shadow: 0 2px 6px rgba(22, 163, 74, 0.5) !important;
+}
+
+/* 聚焦时滑块 */
+input[type="range"]:focus::-webkit-slider-thumb {
+  box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.4) !important;
+}
+
+input[type="range"]:focus::-moz-range-thumb {
+  box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.4) !important;
+}
+
+/* ===== 暗色主题 ===== */
+
+/* 暗色轨道 */
+[data-theme="dark"] input[type="range"]::-webkit-slider-runnable-track {
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.08) 0%,
+    rgba(255, 255, 255, 0.12) 100%
+  ) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2) !important;
+}
+
+[data-theme="dark"] input[type="range"]::-moz-range-track {
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.08) 0%,
+    rgba(255, 255, 255, 0.12) 100%
+  ) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* 暗色悬停轨道 */
+[data-theme="dark"] input[type="range"]:hover::-webkit-slider-runnable-track {
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.10) 0%,
+    rgba(255, 255, 255, 0.16) 100%
+  ) !important;
+  border-color: rgba(255, 255, 255, 0.22) !important;
+}
+
+[data-theme="dark"] input[type="range"]:hover::-moz-range-track {
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.10) 0%,
+    rgba(255, 255, 255, 0.16) 100%
+  ) !important;
+  border-color: rgba(255, 255, 255, 0.22) !important;
+}
+
+/* 暗色滑块 */
+[data-theme="dark"] input[type="range"]::-webkit-slider-thumb {
+  background: #22c55e !important;
+  border: 2px solid #15803d !important;
+  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.5) !important;
+}
+
+[data-theme="dark"] input[type="range"]::-moz-range-thumb {
+  background: #22c55e !important;
+  border: 2px solid #15803d !important;
+  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.5) !important;
+}
+
+/* 暗色悬停滑块 */
+[data-theme="dark"] input[type="range"]:hover::-webkit-slider-thumb {
+  background: #4ade80 !important;
+  border-color: #16a34a !important;
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.6) !important;
+}
+
+[data-theme="dark"] input[type="range"]:hover::-moz-range-thumb {
+  background: #4ade80 !important;
+  border-color: #16a34a !important;
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.6) !important;
+}
+
+/* 暗色激活滑块 */
+[data-theme="dark"] input[type="range"]:active::-webkit-slider-thumb {
+  background: #16a34a !important;
+  border-color: #14532d !important;
+  box-shadow: 0 2px 6px rgba(22, 163, 74, 0.5) !important;
+}
+
+[data-theme="dark"] input[type="range"]:active::-moz-range-thumb {
+  background: #16a34a !important;
+  border-color: #14532d !important;
+  box-shadow: 0 2px 6px rgba(22, 163, 74, 0.5) !important;
+}
+
+/* 暗色聚焦滑块 */
+[data-theme="dark"] input[type="range"]:focus::-webkit-slider-thumb {
+  box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.4) !important;
+}
+
+[data-theme="dark"] input[type="range"]:focus::-moz-range-thumb {
+  box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.4) !important;
+}
+
+/* ===== 禁用状态 ===== */
+
+input[type="range"]:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+input[type="range"]:disabled::-webkit-slider-thumb {
+  cursor: not-allowed;
+}
+
+input[type="range"]:disabled::-moz-range-thumb {
+  cursor: not-allowed;
+}

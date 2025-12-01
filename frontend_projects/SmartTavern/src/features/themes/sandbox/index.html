@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <title>ST Theme Sandbox</title>
+    <!-- 极简 CSP（可按需放宽，当前仅允许自源脚本） -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; connect-src 'none'; img-src 'none'; style-src 'self' 'unsafe-inline'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      html, body {
+        margin: 0; padding: 0;
+        background: transparent;
+      }
+      .sr {
+        position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="sr" aria-hidden="true">SmartTavern Theme Sandbox Client</div>
+    <!-- 客户端桥（最小实现，仅支持 ping） -->
+    <script src="./client.js"></script>
+  </body>
+</html>

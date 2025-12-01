@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SmartTavern</title>
+    <!-- Tailwind via CDN (per ui美化规范) - 保留以支持即时渲染 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 预连接 Google Fonts 以加速 ResourceLoader 字体加载，减少潜在重排 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- 注意：Lucide 和 Flowbite 现在由 resourceLoader.js 在启动时加载 -->
+  <!-- Early theming + background to avoid white flash on dark theme -->
+  <style>
+    /* CSS变量定义 */
+    :root {
+      --st-loading-bg-light: 246 248 253;
+      --st-loading-bg-dark: 18 18 20;
+      --st-loading-title-size: 24px;
+      --st-loading-title-weight: 600;
+      --st-loading-title-margin: 24px;
+      --st-loading-title-opacity: 0.9;
+      --st-loading-title-color-light: rgba(0, 0, 0, 0.9);
+      --st-loading-title-color-dark: rgba(255, 255, 255, 0.9);
+      --st-loading-bar-height: 6px;
+      --st-loading-bar-radius: 3px;
+      --st-loading-bar-bg-light: rgba(0, 0, 0, 0.1);
+      --st-loading-bar-bg-dark: rgba(255, 255, 255, 0.1);
+      --st-loading-bar-fill-start: #f59e0b;
+      --st-loading-bar-fill-end: #f97316;
+      --st-loading-bar-transition: 0.3s;
+      --st-loading-text-size: 14px;
+      --st-loading-text-margin: 16px;
+      --st-loading-text-opacity: 0.7;
+      --st-loading-text-color-light: rgba(0, 0, 0, 0.7);
+      --st-loading-text-color-dark: rgba(255, 255, 255, 0.7);
+      --st-loading-container-max-width: 400px;
+      --st-loading-container-width: 90%;
+      --st-loading-overlay-transition: 0.3s;
+    }
+    
+    /* Default to dark background to prevent flash; override via prefers-color-scheme */
+    html, body { background: rgb(var(--st-loading-bg-dark)); margin: 0; padding: 0; }
+    @media (prefers-color-scheme: light) {
+      html, body { background: rgb(var(--st-loading-bg-light)); }
+    }
+    /* Honor early data-theme if present (set by the bootstrap script below) */
+    html[data-theme="dark"], html[data-theme="dark"] body { background: rgb(var(--st-loading-bg-dark)) !important; }
+    html[data-theme="light"], html[data-theme="light"] body { background: rgb(var(--st-loading-bg-light)) !important; }
+    
+    /* 资源加载进度条样式 */
+    #loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      transition: opacity var(--st-loading-overlay-transition) ease-out;
+    }
+    #loading-overlay.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+    .loader-container {
+      text-align: center;
+      max-width: var(--st-loading-container-max-width);
+      width: var(--st-loading-container-width);
+    }
+    .loader-title {
+      font-size: var(--st-loading-title-size);
+      font-weight: var(--st-loading-title-weight);
+      margin-bottom: var(--st-loading-title-margin);
+      opacity: var(--st-loading-title-opacity);
+      color: var(--st-loading-title-color-dark);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif !important;
+    }
+    html[data-theme="light"] .loader-title { color: var(--st-loading-title-color-light); }
+    @media (prefers-color-scheme: light) {
+      .loader-title { color: var(--st-loading-title-color-light); }
+    }
+    .progress-bar-bg {
+      width: 100%;
+      height: var(--st-loading-bar-height);
+      background: var(--st-loading-bar-bg-dark);
+      border-radius: var(--st-loading-bar-radius);
+      overflow: hidden;
+      position: relative;
+    }
+    html[data-theme="light"] .progress-bar-bg { background: var(--st-loading-bar-bg-light); }
+    @media (prefers-color-scheme: light) {
+      .progress-bar-bg { background: var(--st-loading-bar-bg-light); }
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--st-loading-bar-fill-start) 0%, var(--st-loading-bar-fill-end) 100%);
+      border-radius: var(--st-loading-bar-radius);
+      transition: width var(--st-loading-bar-transition) ease-out;
+      width: 0%;
+    }
+    .progress-text {
+      margin-top: var(--st-loading-text-margin);
+      font-size: var(--st-loading-text-size);
+      opacity: var(--st-loading-text-opacity);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      color: var(--st-loading-text-color-dark);
+    }
+    html[data-theme="light"] .progress-text { color: var(--st-loading-text-color-light); }
+    @media (prefers-color-scheme: light) {
+      .progress-text { color: var(--st-loading-text-color-light); }
+    }
+  </style>
+  <script>
+    (function () {
+      try {
+        // Load last selected theme mode if available; otherwise follow system
+        var saved = localStorage.getItem('st.theme');
+        var themeMode = (saved === 'dark' || saved === 'light' || saved === 'system') ? saved : null;
+        if (!themeMode) {
+          themeMode = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'system';
+        }
+        
+        // Resolve actual mode for theming
+        var effectiveMode = themeMode;
+        if (themeMode === 'system') {
+          effectiveMode = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+        }
+        
+        if (themeMode === 'dark' || themeMode === 'light') {
+          document.documentElement.setAttribute('data-theme', themeMode);
+        }
+        
+        // Load theme pack from localStorage and apply loading-screen variables
+        try {
+          var themePackRaw = localStorage.getItem('st.themePack.v1');
+          if (themePackRaw) {
+            var themePack = JSON.parse(themePackRaw);
+            if (themePack && themePack.pack) {
+              var pack = themePack.pack;
+              var root = document.documentElement;
+              
+              // Helper to apply tokens
+              function applyTokens(tokens) {
+                if (!tokens || typeof tokens !== 'object') return;
+                for (var key in tokens) {
+                  if (tokens.hasOwnProperty(key) && key.indexOf('--st-loading-') === 0) {
+                    try {
+                      root.style.setProperty(key, String(tokens[key]));
+                    } catch (e) {}
+                  }
+                }
+              }
+              
+              // Apply base tokens (if any loading-related)
+              if (pack.tokens) applyTokens(pack.tokens);
+              
+              // Apply mode-specific tokens
+              if (effectiveMode === 'dark' && pack.tokensDark) {
+                applyTokens(pack.tokensDark);
+              } else if (effectiveMode === 'light' && pack.tokensLight) {
+                applyTokens(pack.tokensLight);
+              }
+            }
+          }
+        } catch (e) {
+          // Silent fail - use defaults
+        }
+      } catch (e) {}
+    })();
+  </script>
+  </head>
+  <body data-app="smarttavern">
+    <!-- 资源加载进度条 -->
+    <div id="loading-overlay">
+      <div class="loader-container">
+        <div class="loader-title">SmartTavern</div>
+        <div class="progress-bar-bg">
+          <div class="progress-bar-fill" id="progress-bar"></div>
+        </div>
+        <div class="progress-text" id="progress-text">正在加载资源...</div>
+      </div>
+    </div>
+    
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

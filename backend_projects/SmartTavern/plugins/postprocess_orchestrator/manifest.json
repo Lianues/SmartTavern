@@ -1,0 +1,8 @@
+{
+  "name": "postprocess_orchestrator",
+  "description": "后处理编排（后端主导），前端无行为，仅占位以消除前端缺失告警。",
+  "entries": [
+    "index.js"
+  ]
+}
+

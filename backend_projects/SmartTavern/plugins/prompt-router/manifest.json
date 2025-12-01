@@ -1,0 +1,7 @@
+{
+  "name": "prompt-router",
+  "description": "prompt-router description",
+  "entries": [
+    "prompt-router.js"
+  ]
+}

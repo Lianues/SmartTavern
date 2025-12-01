@@ -1,0 +1,95 @@
+/* 内容卡片共享样式
+   用于 PresetPromptCard.vue, RegexRuleCard.vue, WorldBookCard.vue
+   避免重复代码，统一视觉语言
+*/
+
+.rounded-4 {
+  border-radius: var(--st-radius-card);
+}
+
+.ease-soft {
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 深色主题适配 - 使用中性灰色 */
+[data-theme="dark"] .bg-white {
+  background-color: var(--st-card-bg-dark) !important;
+}
+
+[data-theme="dark"] .text-black {
+  color: var(--st-card-text-dark) !important;
+}
+
+[data-theme="dark"] .text-black\/50 {
+  color: var(--st-card-text-dark-50) !important;
+}
+
+[data-theme="dark"] .text-black\/60 {
+  color: var(--st-card-text-dark-60) !important;
+}
+
+[data-theme="dark"] .text-black\/70 {
+  color: var(--st-card-text-dark-70) !important;
+}
+
+[data-theme="dark"] .text-black\/80 {
+  color: var(--st-card-text-dark-80) !important;
+}
+
+[data-theme="dark"] .border-gray-200 {
+  border-color: var(--st-card-border-200-dark) !important;
+}
+
+[data-theme="dark"] .border-gray-300 {
+  border-color: var(--st-card-border-300-dark) !important;
+}
+
+[data-theme="dark"] .border-gray-400 {
+  border-color: var(--st-card-border-400-dark) !important;
+}
+
+[data-theme="dark"] .border-gray-800 {
+  border-color: var(--st-card-border-800-dark) !important;
+}
+
+[data-theme="dark"] .border-gray-900 {
+  border-color: var(--st-card-border-900-dark) !important;
+}
+
+[data-theme="dark"] .hover\:bg-gray-100:hover {
+  background-color: var(--st-card-hover-bg-dark) !important;
+}
+
+[data-theme="dark"] .bg-transparent {
+  background-color: transparent !important;
+}
+
+[data-theme="dark"] .text-red-600 {
+  color: var(--st-card-error-text-dark) !important;
+}
+
+/* 暗色主题 - 输入框适配 */
+[data-theme="dark"] input,
+[data-theme="dark"] textarea,
+[data-theme="dark"] select {
+  background-color: var(--st-card-input-bg-dark) !important;
+  color: var(--st-card-input-text-dark) !important;
+  border-color: var(--st-card-input-border-dark) !important;
+}
+
+[data-theme="dark"] input::placeholder,
+[data-theme="dark"] textarea::placeholder {
+  color: var(--st-card-input-placeholder-dark) !important;
+}
+
+[data-theme="dark"] input:focus,
+[data-theme="dark"] textarea:focus,
+[data-theme="dark"] select:focus {
+  border-color: var(--st-card-input-focus-border-dark) !important;
+  box-shadow: 0 0 0 2px var(--st-card-input-focus-shadow-dark) !important;
+}
+
+[data-theme="dark"] select option {
+  background-color: var(--st-card-select-option-bg-dark) !important;
+  color: var(--st-card-select-option-text-dark) !important;
+}

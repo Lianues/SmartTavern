@@ -1,0 +1,10 @@
+{
+  "name": "context-variables",
+  "description": "上下文变量插件：在新建/加载对话时初始化 context_variables.json（从角色世界书 [InitVar] 条目平移占位），并提供后端 API 读/写/合并。",
+  "entries": [
+    "index.js"
+  ],
+  "backend_entries": [
+    "api/plugins/SmartTavern/context_variables/context_variables.py"
+  ]
+}

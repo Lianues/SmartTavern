@@ -1,0 +1,1003 @@
+/* SmartTavern Design Tokens (v1)
+   Note:
+   - These are CSS custom properties (variables) used across the app.
+   - Runtime themes (ThemeManager) override them via document.documentElement.style.setProperty.
+   - AppearancePanel also updates these live and persists to localStorage.
+   - For actual CSS rules and selectors, see global.css
+*/
+
+:root {
+  /* UI 缩放变量（默认 1.0，由 JS 在 zoom 时同步设置） */
+  --st-ui-scale: 1;
+  
+  /* 基础语义令牌（RGB 形式，便于调优） */
+  --st-color-bg: 246 248 253;
+  --st-color-text: 18 24 38;
+  --st-surface: 255 255 255;
+  --st-surface-2: 248 249 255;
+  --st-primary: 88 80 236;
+  --st-primary-contrast: 255 255 255;
+  --st-border: 225 228 236;
+  --st-accent: 14 165 233;
+  /* 背景遮罩在浅色主题使用纯白，在深色主题使用纯黑（RGB三通道数值） */
+  --st-overlay-ink: 255 255 255;
+
+  --st-radius-sm: 2px;
+  --st-radius-md: 3px;
+  --st-radius-lg: 4px;
+
+  --st-shadow-sm: 0 1px 2px rgba(0,0,0,0.06);
+  --st-shadow-card: 0 4px 16px rgba(0,0,0,0.08);
+  --st-shadow-md: 0 8px 30px rgba(0,0,0,0.06);
+  --st-shadow-lg: 0 12px 45px rgba(0,0,0,0.1);
+  --st-shadow-focus-sm: 0 0 0 2px;           /* 聚焦阴影（小） */
+  --st-shadow-focus-md: 0 0 0 3px;           /* 聚焦阴影（中） */
+
+  /* 背景图 Hook（可被主题覆盖） */
+  --st-surface-bg-image: none;
+  --st-surface-bg-size: cover;
+  --st-surface-bg-position: center center;
+  --st-surface-bg-repeat: no-repeat;
+
+  /* 页面背景图（由 BackgroundsManager 动态设置） */
+  --st-bg-start: none;
+  --st-bg-threaded: none;
+  --st-bg-sandbox: none;
+
+  --st-font-body: 'Inter', ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial, 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji';
+  --st-font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+  --st-font-myth: 'Cinzel', 'Cormorant Garamond', Georgia, serif;
+
+  /* Chat tuning defaults */
+  --st-content-font-size: 20px; /* 正文文字大小 */
+  --st-name-font-size: 16px; /* 角色名称文字大小 */
+  --st-badge-font-size: 11px; /* 角色徽章文字大小 */
+  --st-floor-font-size: 16px; /* 楼层号文字大小 */
+  --st-avatar-size: 56px; /* 角色头像大小 */
+  --st-chat-width: 80%; /* 百分比宽度 */
+  --st-input-height: 100px; /* 输入框高度 */
+
+  /* New: common appearance tokens (overridable via AppearancePanel) */
+  --st-content-line-height: 1.75;
+  --st-message-gap: 12px;
+  /* If unset, components may fall back to var(--st-radius-lg) */
+  --st-card-radius: var(--st-radius-lg);
+  --st-stripe-width: 8px;
+
+  /* Threaded 内嵌 HTML 舞台（消息卡片内 iframe） */
+  --st-threaded-stage-aspect: 16 / 9;   /* 宽高比 */
+  --st-threaded-stage-maxw: 100;        /* 最大宽度（百分比的数值，CSS 内用 *1%） */
+  --st-threaded-stage-padding: 8px;     /* 舞台内边距 */
+  --st-threaded-stage-radius: 12px;     /* 舞台圆角 */
+
+  /* Sandbox layout controls */
+  --st-sandbox-max-width: 1100px;  /* 舞台最大宽度 */
+  --st-sandbox-aspect: 16 / 9;     /* 舞台宽高比（CSS aspect-ratio） */
+  --st-sandbox-padding: 16px;      /* 舞台内边距 */
+  --st-sandbox-radius: 18px;       /* 舞台圆角 */
+
+  /* ========================== */
+  /* Common Component Design Tokens */
+  /* ========================== */
+
+  /* 间距系统 (Spacing System) */
+  --st-spacing-xs: 4px;
+  --st-spacing-sm: 6px;
+  --st-spacing-md: 8px;
+  --st-spacing-lg: 10px;
+  --st-spacing-xl: 12px;
+  --st-spacing-2xl: 16px;
+  --st-spacing-3xl: 20px;
+  --st-spacing-4xl: 24px;
+  --st-spacing-5xl: 28px;
+  --st-spacing-input: 8px 10px;
+  --st-spacing-input-md: 12px 12px;
+
+  /* 按钮尺寸系统 (Button Sizes) */
+  --st-btn-sm: 28px;
+  --st-btn-md: 32px;
+  --st-btn-lg: 36px;
+
+  /* 图标尺寸 (Icon Sizes) */
+  --st-icon-sm: 14px;
+  --st-icon-md: 16px;
+  --st-icon-lg: 20px;
+  --st-icon-xl: 24px;
+  --st-icon-2xl: 26px;
+  --st-icon-3xl: 32px;
+
+  /* 边框系统 (Border System) */
+  --st-border-width: 1px;
+  --st-border-width-md: 2px;
+  --st-border-alpha-light: 0.15;
+  --st-border-alpha-medium: 0.6;
+  --st-border-alpha-strong: 0.9;
+
+  /* 状态颜色 (State Colors - RGB format) */
+  --st-color-error: 220 38 38;
+  --st-color-error-light: 244 63 94;
+  --st-color-success: 34 197 94;
+  --st-color-warning: 251 191 36;
+
+  /* 状态渐变 (State Gradients) */
+  --st-gradient-error: linear-gradient(135deg, rgb(220,38,38), rgb(244,63,94));
+
+  /* 过渡动画参数 (Transitions) */
+  --st-transition-fast: 0.18s cubic-bezier(0.22, 0.61, 0.36, 1);
+  --st-transition-normal: 0.2s cubic-bezier(0.22, 0.61, 0.36, 1);
+  --st-transition-medium: 0.3s ease;            /* 中速过渡（面板内容切换） */
+  --st-transition-slow: 0.26s cubic-bezier(0.22, 0.61, 0.36, 1);
+
+  /* 模糊值 (Blur) */
+  --st-blur-xs: 4px;
+  --st-blur-sm: 6px;
+  --st-blur-md: 8px;
+  --st-blur-lg: 12px;
+  --st-blur-xl: 18px;
+
+  /* 圆角扩展 (Extended Radius) */
+  --st-radius-xs: 2px;
+  --st-radius-panel: 6px;
+  --st-radius-xl: 12px;
+  --st-radius-2xl: 20px;
+  --st-radius-card: 10px;
+  --st-radius-input: 8px;
+  --st-radius-circle: 50%;
+  --st-radius-full: 9999px;
+
+  /* 滚动条 (Scrollbar) */
+  --st-scrollbar-width: 6px;
+  --st-scrollbar-width-lg: 8px;
+  --st-scrollbar-thumb-alpha: 0.3;
+  --st-scrollbar-thumb-hover-alpha: 0.5;
+
+  /* 字体大小系统 (Font Sizes) */
+  --st-font-hint: 12px;                      /* 提示文字大小 */
+  --st-font-xs: 11px;
+  --st-font-sm: 12px;
+  --st-font-base: 13px;
+  --st-font-md: 14px;
+  --st-font-lg: 15px;
+  --st-font-xl: 16px;
+  --st-font-2xl: 18px;
+  --st-font-3xl: 22px;
+
+  /* Modal/Dialog 尺寸 (Modal Sizes) */
+  --st-modal-sm-width: 400px;
+  --st-modal-md-width: 480px;
+  --st-modal-lg-width: 600px;
+  --st-modal-xl-width: 1400px;
+  --st-modal-xxl-width: 960px;
+  --st-modal-max-width: 90vw;
+  --st-modal-max-width-alt: 94vw;
+  --st-modal-max-height: 90vh;
+  --st-modal-max-height-alt: 88vh;
+
+  /* Modal Padding (Modal Spacing) */
+  --st-modal-padding: 20px;
+  --st-modal-header-padding: 16px 20px;
+  --st-modal-footer-padding: 16px 20px;
+  --st-modal-body-padding: 20px;
+
+  /* 按钮内边距 (Button Padding) */
+  --st-btn-padding-sm: 6px 10px;
+  --st-btn-padding-md: 10px 18px;
+  --st-btn-padding-lg: 13px 18px;
+  --st-btn-padding-xl: 14px 20px;
+  --st-btn-min-width: 64px;
+  --st-btn-min-width-sm: 80px;
+  --st-btn-min-width-md: 110px;
+  --st-btn-min-width-lg: 120px;
+
+  /* 输入框宽度 (Input Widths) */
+  --st-input-width-xs: 50px;
+  --st-input-width-sm: 60px;
+  --st-input-width-md: 120px;
+  --st-input-width-lg: 200px;
+
+  /* 输入框内边距 (Input Padding) */
+  --st-input-padding-xs: 2px 4px;
+
+  /* 外边距 (Outline Offset) */
+  --st-outline-offset: 2px;
+
+  /* 预览高度 (Preview Heights) */
+  --st-preview-height-sm: 120px;
+  --st-bg-preview-height: 200px;             /* 背景预览区高度 */
+  --st-bg-preview-checkerboard-size: 20px;   /* 背景预览棋盘格大小 */
+
+  /* 头像尺寸 (Avatar Sizes) */
+  --st-avatar-sm: 32px;
+  --st-avatar-md: 40px;
+  --st-avatar-lg: 48px;
+  --st-avatar-xl: 64px;
+
+  /* 背景模糊级别 (Backdrop Blur) */
+  --st-backdrop-blur-xs: 4px;
+  --st-backdrop-blur-sm: 6px;
+  --st-backdrop-blur-md: 10px;
+  --st-backdrop-blur-lg: 16px;
+  --st-backdrop-blur-xl: 24px;
+
+  /* 图标容器尺寸 (Icon Container Sizes) */
+  --st-icon-container-sm: 40px;
+  --st-icon-container-md: 48px;
+  --st-icon-container-lg: 60px;
+
+  /* Gap 间隙系统 (Gap System) */
+  --st-gap-xs: 4px;
+  --st-gap-sm: 8px;
+  --st-gap-md: 10px;
+  --st-gap-lg: 12px;
+  --st-gap-xl: 14px;
+  --st-gap-2xl: 20px;
+
+  /* Background opacity controls */
+  --st-threaded-bg-opacity: 0.12;            /* 楼层对话 背景图片遮罩不透明度 (0~1) */
+  --st-threaded-msg-bg-opacity: 0.82;        /* 楼层消息卡 背景不透明度 (0~1) */
+  --st-sandbox-bg-opacity: 0.12;             /* 全局沙盒 背景图片遮罩不透明度 (0~1) */
+  --st-sandbox-stage-bg-opacity: 0.82;       /* 全局沙盒 舞台背景不透明度 (0~1) */
+
+  /* Background blur controls (px; used by overlay layers) */
+  --st-threaded-bg-blur: 0px;                /* 楼层对话 背景图片遮罩模糊(px) */
+  --st-sandbox-bg-blur: 0px;                 /* 全局沙盒 背景图片遮罩模糊(px) */
+
+  /* Threaded chat container and input opacities */
+  --st-threaded-list-bg-opacity: 0.62;       /* 楼层对话 列表容器背景不透明度 (0~1) */
+  --st-threaded-input-bg-opacity: 0.80;      /* 楼层对话 底部输入框背景不透明度 (0~1) */
+  --st-threaded-input-bg-focus-opacity: 0.86;/* 楼层对话 底部输入框聚焦背景不透明度 (0~1) */
+  --st-threaded-stage-container-bg-opacity: 0.82; /* 楼层内 HTML 舞台容器背景不透明度 (0~1) */
+
+  /* ========================== */
+  /* 背景动画控制 (Background Animation) */
+  /* ========================== */
+  /* 动画时长与缓动 */
+  --st-bg-anim-duration: 4s;                 /* 背景动画持续时间 */
+  --st-bg-anim-easing: cubic-bezier(.22,.61,.36,1); /* 背景动画缓动函数 */
+  
+  /* 焦点位移 */
+  --fx-shift-x: 0px;                         /* 背景景深动画焦点X轴位移 */
+  --fx-shift-y: 0px;                         /* 背景景深动画焦点Y轴位移 */
+  
+  /* 缩放效果 */
+  --st-bg-intro-scale-start: 1.08;           /* 背景景深动画起始缩放 */
+  --st-bg-intro-scale-mid: 1;                /* 背景景深动画中间缩放 */
+  --st-bg-intro-scale-end: 1;                /* 背景景深动画结束缩放 */
+  
+  /* 模糊效果 */
+  --st-bg-intro-blur-start: 20px;            /* 背景景深动画起始模糊度 */
+  --st-bg-intro-blur-mid: 2px;               /* 背景景深动画中间阶段模糊度 */
+  --st-bg-intro-blur-end: 0px;               /* 背景景深动画结束模糊度 */
+  
+  /* 饱和度效果 */
+  --st-bg-intro-saturate-start: 118%;        /* 背景景深动画起始饱和度 */
+  --st-bg-intro-saturate-mid: 103%;          /* 背景景深动画中间饱和度 */
+  --st-bg-intro-saturate-end: 100%;          /* 背景景深动画结束饱和度 */
+  
+  /* 亮度效果 */
+  --st-bg-intro-brightness-start: 0.96;      /* 背景景深动画起始亮度 */
+  --st-bg-intro-brightness-mid: 1;           /* 背景景深动画中间亮度 */
+  --st-bg-intro-brightness-end: 1;           /* 背景景深动画结束亮度 */
+  
+  /* 不透明度效果 */
+  --st-bg-intro-opacity-start: 0;            /* 背景景深动画起始不透明度 */
+  --st-bg-intro-opacity-mid: 1;              /* 背景景深动画中间不透明度 */
+  --st-bg-intro-opacity-end: 1;              /* 背景景深动画结束不透明度 */
+  
+  /* 遮罩层不透明度 */
+  --st-overlay-opacity-start: 1;             /* 遮罩层起始不透明度 */
+
+  /* ========================== */
+  /* 背景渐变与噪点效果 (Background Gradient & Noise) */
+  /* ========================== */
+  /* 渐变圆形尺寸 */
+  --st-bg-gradient-size: 800px 500px;        /* 背景渐变圆形尺寸 */
+  
+  /* 渐变位置 */
+  --st-bg-gradient-1-pos: 20% 10%;           /* 第1个渐变圆位置 */
+  --st-bg-gradient-2-pos: 80% 10%;           /* 第2个渐变圆位置 */
+  --st-bg-gradient-3-pos: 50% 90%;           /* 第3个渐变圆位置 */
+  
+  /* 渐变颜色与透明度 */
+  --st-bg-gradient-1-color: 120 120 130;     /* 第1个渐变圆颜色 (RGB) */
+  --st-bg-gradient-1-alpha: 0.18;            /* 第1个渐变圆不透明度 */
+  --st-bg-gradient-2-color: 100 100 110;     /* 第2个渐变圆颜色 (RGB) */
+  --st-bg-gradient-2-alpha: 0.15;            /* 第2个渐变圆不透明度 */
+  --st-bg-gradient-3-color: 110 110 120;     /* 第3个渐变圆颜色 (RGB) */
+  --st-bg-gradient-3-alpha: 0.15;            /* 第3个渐变圆不透明度 */
+  --st-bg-gradient-stop: 60%;                /* 渐变停止位置 */
+  
+  /* 渐变模糊 */
+  --st-bg-gradient-blur: 40px;               /* 背景渐变模糊度 */
+  
+  /* 噪点效果 */
+  --st-bg-noise-opacity: 0.045;              /* 噪点不透明度 */
+  --st-bg-noise-frequency: 0.9;              /* 噪点频率 */
+  --st-bg-noise-octaves: 4;                  /* 噪点倍频数 */
+
+  /* ========================== */
+  /* 玻璃拟态效果 (Glass Morphism) */
+  /* ========================== */
+  /* 浅色玻璃效果 */
+  --st-glass-bg-light: 255 255 255;          /* 浅色玻璃背景色 (RGB) */
+  --st-glass-bg-light-alpha: 0.6;            /* 浅色玻璃背景不透明度 */
+  --st-glass-saturate: 140%;                 /* 玻璃饱和度 */
+  --st-glass-blur: 10px;                     /* 玻璃模糊度 */
+  --st-glass-border-alpha: 0.7;              /* 玻璃边框不透明度 */
+  
+  /* 暗色玻璃效果 */
+  --st-glass-bg-dark: 28 28 30;              /* 暗色玻璃背景色 (RGB) */
+  --st-glass-bg-dark-alpha: 0.55;            /* 暗色玻璃背景不透明度 */
+
+  /* ========================== */
+  /* 状态卡片样式 (Status Card) */
+  /* ========================== */
+  --st-status-card-bg-opacity: 0.85;         /* 状态卡片背景不透明度 */
+  --st-status-card-blur: 12px;               /* 状态卡片背景模糊度 */
+  --st-status-card-border-width: 1px;        /* 状态卡片边框宽度 */
+  --st-status-card-border-opacity: 0.2;      /* 状态卡片边框不透明度 */
+  --st-status-card-shadow: 0 8px 32px rgba(0, 0, 0, 0.12); /* 状态卡片阴影 */
+  --st-status-card-max-width: 480px;         /* 状态卡片最大宽度 */
+  --st-status-card-error-border: rgb(239, 68, 68, 0.3); /* 错误状态边框颜色 */
+  --st-status-icon-size: 64px;               /* 状态图标大小 */
+  --st-status-icon-opacity: 0.9;             /* 状态图标不透明度 */
+  
+  /* 状态文本样式 */
+  --st-status-text-font-weight: 500;         /* 状态文本字重 */
+  --st-status-text-line-height: 1.6;         /* 状态文本行高 */
+  --st-status-icon-line-height: 1;           /* 状态图标行高 */
+  
+  /* 重试按钮样式 */
+  --st-retry-btn-bg-opacity: 0.12;           /* 重试按钮背景不透明度 */
+  --st-retry-btn-border-width: 1px;          /* 重试按钮边框宽度 */
+  --st-retry-btn-border-opacity: 0.3;        /* 重试按钮边框不透明度 */
+  --st-retry-btn-font-weight: 500;           /* 重试按钮字重 */
+  --st-retry-btn-hover-bg-opacity: 0.2;      /* 重试按钮悬停背景不透明度 */
+  --st-retry-btn-hover-border-opacity: 0.5;  /* 重试按钮悬停边框不透明度 */
+  --st-retry-btn-hover-lift: -1px;           /* 重试按钮悬停提升距离 */
+
+  /* ========================== */
+  /* 面板过渡动画 (Panel Transitions) */
+  /* ========================== */
+  --st-panel-transition-opacity: 0.2s;       /* 面板不透明度过渡时间 */
+  --st-panel-transition-transform: 0.24s;    /* 面板变换过渡时间 */
+  --st-panel-translate-enter: -10px;         /* 面板进入时X轴位移 */
+  --st-panel-translate-leave: -12px;         /* 面板离开时X轴位移 */
+  --st-panel-scale: 0.98;                    /* 面板进入/离开时缩放 */
+  --st-panel-blur-transition: 4px;           /* 面板过渡模糊度 */
+
+  /* ========================== */
+  /* 面板背板 (Panel Backdrop) */
+  /* ========================== */
+  --st-panel-backdrop-opacity: 0.18;         /* 面板背板不透明度 */
+  --st-panel-backdrop-blur: 12px;            /* 面板背板模糊度 */
+  --st-panel-backdrop-z: 58;                 /* 面板背板层级 */
+  --st-panel-backdrop-transition: 0.18s;     /* 面板背板过渡时间 */
+
+  /* ========================== */
+  /* 模态占位符 (Modal Placeholder) */
+  /* ========================== */
+  --st-modal-placeholder-gap: 12px;          /* 占位符元素间距 */
+  --st-modal-placeholder-padding: 60px 20px; /* 占位符内边距 */
+  --st-modal-placeholder-icon-size: 64px;    /* 占位符图标大小 */
+  --st-modal-placeholder-icon-opacity: 0.6;  /* 占位符图标不透明度 */
+  --st-modal-placeholder-text-size: 20px;    /* 占位符文本大小 */
+  --st-modal-placeholder-text-weight: 600;   /* 占位符文本粗细 */
+  --st-modal-placeholder-desc-size: 14px;    /* 占位符描述文本大小 */
+  --st-modal-placeholder-desc-opacity: 0.65; /* 占位符描述不透明度 */
+
+  /* ========================== */
+  /* 外观配置面板 (Appearance Settings Panels) */
+  /* ========================== */
+  
+  /* 透明度等级 (Opacity Levels) */
+  --st-opacity-08: 0.08;                     /* 极轻透明 */
+  --st-opacity-10: 0.1;                      /* 很轻透明 */
+  --st-opacity-40: 0.4;                      /* 中度透明 */
+  --st-opacity-50: 0.5;                      /* 中等透明 */
+  --st-opacity-60: 0.6;                      /* 稍强透明 */
+  --st-opacity-70: 0.7;                      /* 较弱透明 */
+  --st-opacity-75: 0.75;                     /* 轻度透明 */
+  --st-opacity-80: 0.8;                      /* 微弱透明 */
+  --st-opacity-90: 0.9;                      /* 几乎不透明 */
+  
+  /* 字体粗细 (Font Weights for Settings) */
+  --st-settings-title-weight: 700;           /* 面板主标题字重 */
+  --st-settings-subtitle-weight: 600;        /* 面板副标题字重 */
+  
+  /* 外观面板间距 (Appearance Panel Spacing) */
+  --st-settings-title-margin-bottom: 6px;    /* 标题下边距 */
+
+  /* ========================== */
+  /* 沙盒舞台效果 (Sandbox Stage Effects) */
+  /* ========================== */
+  
+  /* 舞台边框/背景增强 */
+  --st-sandbox-stage-border-alpha: 0.25;     /* 舞台边框透明度系数 */
+  --st-sandbox-stage-blur-multiplier: 4px;   /* 舞台背景模糊倍数 */
+  --st-sandbox-stage-saturate-boost: 0.4;    /* 舞台饱和度增强因子 */
+
+  /* ========================== */
+  /* 主题管理器 (Theme Manager) */
+  /* ========================== */
+  
+  --st-theme-list-max-height: 500px;         /* 主题列表最大高度 */
+  --st-theme-icon-size: 48px;                /* 主题图标尺寸 */
+  --st-theme-btn-min-width: 52px;            /* 主题操作按钮最小宽度 */
+  --st-theme-grip-width: 20px;               /* 主题拖拽手柄宽度 */
+  --st-theme-checkbox-size: 18px;            /* 主题复选框尺寸 */
+  --st-theme-drop-end-height: 8px;           /* 主题拖拽末尾区域高度 */
+  --st-theme-drop-end-active-height: 24px;   /* 主题拖拽末尾区域激活高度 */
+  --st-theme-folder-icon-size: 12px;         /* 主题文件夹图标尺寸 */
+  --st-theme-disabled-opacity: 0.6;          /* 未启用主题透明度 */
+  --st-theme-disabled-hover-opacity: 0.8;    /* 未启用主题悬停透明度 */
+  
+  /* ========================== */
+  /* 主题切换器 (Theme Switcher) */
+  /* ========================== */
+  
+  --st-theme-switcher-radius: 3px;           /* 主题切换器外框圆角（符合 < 4px 规范） */
+
+  /* ========================== */
+  /* ========================== */
+  /* 保存指示器 (Save Indicator) */
+  /* ========================== */
+  --st-save-indicator-min-width: 72px;               /* 保存指示器最小宽度 */
+  --st-save-spinner-border-width: 2px;               /* 保存动画边框粗细 */
+  --st-save-spinner-border-light: rgba(17, 17, 17, 0.2);     /* 保存动画边框（浅色） */
+  --st-save-spinner-border-dark: rgba(232, 236, 244, 0.25);  /* 保存动画边框（暗色） */
+  --st-save-spinner-top-light: #111;                 /* 保存动画顶部颜色（浅色） */
+  --st-save-spinner-top-dark: rgb(232, 236, 244);    /* 保存动画顶部颜色（暗色） */
+  --st-save-spinner-duration: 0.8s;                  /* 保存动画持续时间 */
+  --st-save-done-color-light: #111;                  /* 保存完成文本颜色（浅色） */
+  --st-save-done-color-dark: rgb(232, 236, 244);     /* 保存完成文本颜色（暗色） */
+
+  /* ========================== */
+  /* 内容卡片暗色主题 (Content Cards Dark Theme) */
+  /* ========================== */
+  
+  /* 卡片背景与文本 */
+  --st-card-bg-dark: rgb(28, 28, 30);                /* 卡片背景（暗色） */
+  --st-card-bg-gray-50-dark: rgb(32, 32, 35);        /* 卡片 gray-50 背景（暗色） */
+  --st-card-text-dark: rgb(235, 235, 240);           /* 卡片文本（暗色） */
+  --st-card-text-dark-50: rgba(235, 235, 240, 0.5);  /* 卡片文本 50% 透明度 */
+  --st-card-text-dark-60: rgba(235, 235, 240, 0.6);  /* 卡片文本 60% 透明度 */
+  --st-card-text-dark-70: rgba(235, 235, 240, 0.7);  /* 卡片文本 70% 透明度 */
+  --st-card-text-dark-80: rgba(235, 235, 240, 0.8);  /* 卡片文本 80% 透明度 */
+  --st-card-disabled-text-dark: rgba(235, 235, 240, 0.4); /* 卡片禁用文本（暗色） */
+  
+  /* 卡片边框 */
+  --st-card-border-200-dark: rgb(50, 50, 55);        /* 边框颜色 200（暗色） */
+  --st-card-border-300-dark: rgb(60, 60, 65);        /* 边框颜色 300（暗色） */
+  --st-card-border-400-dark: rgb(70, 70, 75);        /* 边框颜色 400（暗色） */
+  --st-card-border-800-dark: rgb(200, 200, 205);     /* 边框颜色 800（暗色） */
+  --st-card-border-900-dark: rgb(200, 200, 205);     /* 边框颜色 900（暗色） */
+  
+  /* 卡片交互状态 */
+  --st-card-hover-bg-dark: rgb(38, 38, 42);          /* 悬停背景（暗色） */
+  --st-card-error-text-dark: rgb(248, 113, 113);     /* 错误文本（暗色） */
+  
+  /* 卡片输入框 */
+  --st-card-input-bg-dark: rgb(38, 38, 42);          /* 输入框背景（暗色） */
+  --st-card-input-text-dark: rgb(235, 235, 240);     /* 输入框文本（暗色） */
+  --st-card-input-border-dark: rgb(60, 60, 65);      /* 输入框边框（暗色） */
+  --st-card-input-placeholder-dark: rgba(235, 235, 240, 0.5);  /* 输入框占位符（暗色） */
+  --st-card-input-focus-border-dark: rgb(100, 100, 110);       /* 输入框焦点边框（暗色） */
+  --st-card-input-focus-shadow-dark: rgba(140, 140, 160, 0.2); /* 输入框焦点阴影（暗色） */
+  --st-card-select-option-bg-dark: rgb(38, 38, 42);            /* 下拉选项背景（暗色） */
+  --st-card-select-option-text-dark: rgb(235, 235, 240);       /* 下拉选项文本（暗色） */
+
+  /* ========================== */
+  /* 拖拽交互 (Drag & Drop) */
+  /* ========================== */
+  
+  /* 拖拽自动滚动 */
+  --st-drag-scroll-edge-size: 80px;                  /* 拖拽触发自动滚动的边界距离 */
+  --st-drag-scroll-min-speed: 2px;                   /* 拖拽自动滚动最小速度 */
+  --st-drag-scroll-speed-divisor: 4;                 /* 拖拽自动滚动速度计算除数 */
+  --st-drag-scroll-interval: 16ms;                   /* 拖拽自动滚动更新间隔 */
+  
+  /* 拖拽幽灵元素（浅色主题） */
+  --st-drag-ghost-bg: rgba(255, 255, 255, 0.95);     /* 拖拽幽灵背景色 */
+  --st-drag-ghost-border: rgba(59, 130, 246, 0.8);   /* 拖拽幽灵边框色 */
+  --st-drag-ghost-text: rgba(31, 41, 55, 0.95);      /* 拖拽幽灵文字色 */
+  --st-drag-ghost-shadow: rgba(0, 0, 0, 0.25);       /* 拖拽幽灵阴影色 */
+  
+  /* 拖拽指示器 */
+  --st-drag-indicator-offset-top: -6px;              /* 拖拽上方指示线偏移 */
+  --st-drag-indicator-offset-bottom: -6px;           /* 拖拽下方指示线偏移 */
+  --st-drag-indicator-offset-end: 5px;               /* 拖拽结束区指示线偏移 */
+  --st-drag-indicator-height: 2px;                   /* 拖拽指示线高度 */
+  --st-drag-indicator-color-light: #111;             /* 拖拽指示线颜色（浅色主题） */
+  --st-drag-indicator-color-dark: rgb(232, 236, 244); /* 拖拽指示线颜色（暗色主题） */
+  
+  /* 拖拽元素效果 */
+  --st-drag-item-scale: 0.98;                        /* 拖拽元素缩放比例 */
+  --st-drag-item-shadow: 0 12px 24px rgba(0,0,0,0.18); /* 拖拽元素阴影 */
+  --st-drag-item-opacity: 0.92;                      /* 拖拽元素不透明度 */
+  --st-drag-item-z-index: 1;                         /* 拖拽元素层级 */
+  --st-drag-transition-duration: 150ms;              /* 拖拽过渡动画时长 */
+  --st-drag-transition-easing: ease;                 /* 拖拽过渡动画缓动 */
+  
+  /* 拖拽手柄 */
+  --st-drag-grip-icon-content: '⋮⋮';                /* 拖拽手柄图标内容 */
+  --st-drag-grip-icon-weight: 700;                   /* 拖拽手柄图标粗细 */
+  --st-drag-grip-color-light: #111;                  /* 拖拽手柄颜色（浅色） */
+  /* ========================== */
+  /* 图标上传组件 (Icon Upload) */
+  /* ========================== */
+  --st-icon-upload-size: 120px;                  /* 图标上传区域尺寸 */
+  --st-icon-upload-border-width: 2px;            /* 图标上传边框宽度 */
+  --st-icon-remove-btn-size: 24px;               /* 删除按钮尺寸 */
+  --st-icon-remove-btn-bg: rgba(0, 0, 0, 0.6);   /* 删除按钮背景 */
+  --st-icon-remove-btn-hover-bg: rgba(220, 38, 38, 0.8); /* 删除按钮悬停背景 */
+  --st-icon-remove-btn-offset: 4px;              /* 删除按钮距离边缘的偏移 */
+  
+  /* ========================== */
+  /* 聊天组件专用变量 (Chat Components) */
+  /* ========================== */
+  
+  /* 输入框 (Input Row) */
+  --st-input-min-height: 100px;              /* 输入框最小高度 */
+  --st-input-bottom-margin: 0px;             /* 输入框底部外边距 */
+  --st-send-btn-min-width: 90px;             /* 发送按钮最小宽度 */
+  --st-send-btn-min-width-em: 3em;           /* 发送按钮最小宽度（em单位） */
+  --st-send-text-letter-spacing: 0.2px;      /* 发送按钮文字间距 */
+  
+  /* 消息卡片 (Message Item) */
+  --st-msg-stripe-inset-v: 12px;             /* 消息色条垂直内缩 */
+  --st-msg-content-padding: var(--st-spacing-md) var(--st-spacing-xl); /* 消息内容内边距 */
+  --st-msg-avatar-letter-scale: 0.36;        /* 头像文字缩放比例 */
+  --st-msg-edit-bg-light: rgba(0, 0, 0, 0.06);       /* 编辑框背景（浅色） */
+  --st-msg-edit-bg-dark: rgba(255, 255, 255, 0.08);  /* 编辑框背景（暗色） */
+  
+  /* 等待/错误框 (Waiting/Error Box) */
+  --st-msg-waiting-spinner-size: 18px;       /* 等待动画尺寸 */
+  --st-msg-waiting-spinner-border: 2.5px;    /* 等待动画边框粗细 */
+  --st-msg-waiting-spinner-duration: 0.8s;   /* 等待动画持续时间 */
+  --st-msg-error-bg-alpha: 0.08;             /* 错误框背景透明度 */
+  --st-msg-error-border-alpha: 0.5;          /* 错误框边框透明度 */
+  
+  /* 状态 Chip (Status Chip) */
+  --st-chip-spinner-size: 12px;              /* Chip 动画尺寸 */
+  --st-chip-spinner-border: 2px;             /* Chip 动画边框粗细 */
+  --st-chip-spinner-duration: 0.9s;          /* Chip 动画持续时间 */
+  
+  /* 消息进场动画 (Message Enter Animation) */
+  --st-msg-enter-offset-y: 10px;             /* 消息进场Y轴偏移 */
+  --st-msg-enter-scale: 0.985;               /* 消息进场缩放 */
+  --st-msg-enter-blur: 10px;                 /* 消息进场模糊度 */
+  --st-msg-enter-saturate: 0.9;              /* 消息进场饱和度 */
+  --st-msg-enter-opacity-duration: 0.34s;    /* 消息进场透明度动画时长 */
+  --st-msg-enter-transform-duration: 0.44s;  /* 消息进场变换动画时长 */
+  --st-msg-enter-delay-1: 24ms;              /* 消息进场延迟 1 */
+  --st-msg-enter-delay-2: 48ms;              /* 消息进场延迟 2 */
+  --st-msg-enter-delay-3: 72ms;              /* 消息进场延迟 3 */
+  
+  /* 分支切换器 (Branch Switcher) */
+  --st-branch-btn-bg-alpha: 0.08;            /* 分支按钮背景透明度 */
+  --st-branch-btn-border-alpha: 0.3;         /* 分支按钮边框透明度 */
+  --st-branch-btn-hover-bg-alpha: 0.15;      /* 分支按钮悬停背景透明度 */
+  --st-branch-btn-hover-border-alpha: 0.5;   /* 分支按钮悬停边框透明度 */
+  --st-branch-btn-disabled-alpha: 0.3;       /* 分支按钮禁用透明度 */
+  --st-branch-indicator-min-width: 48px;     /* 分支指示器最小宽度 */
+  --st-branch-indicator-border-alpha: 0.35;  /* 分支指示器边框透明度 */
+  
+  /* 角色头像渐变 (Avatar Gradients) */
+  --st-avatar-user-start: rgba(59,130,246,0.85);      /* 用户头像渐变起始色 */
+  --st-avatar-user-end: rgba(99,102,241,0.85);        /* 用户头像渐变结束色 */
+  --st-avatar-assistant-start: rgba(14,165,233,0.85); /* 助手头像渐变起始色 */
+  --st-avatar-assistant-end: rgba(94,234,212,0.85);   /* 助手头像渐变结束色 */
+  --st-avatar-system-start: rgba(251,191,36,0.85);    /* 系统头像渐变起始色 */
+  --st-avatar-system-end: rgba(253,230,138,0.85);     /* 系统头像渐变结束色 */
+  
+  /* 楼层对话列表 (Threaded Chat List) */
+  --st-msg-gap-default: 0px;                 /* 消息间隙默认值 */
+  --st-scroll-edge-size: 80px;               /* 滚动边缘触发区域 */
+  
+  /* 错误提示 (Error Tip) */
+  --st-error-tip-bg-alpha: 0.12;             /* 错误提示背景透明度 */
+  --st-error-tip-border-alpha: 0.5;          /* 错误提示边框透明度 */
+  --st-error-tip-shadow-alpha: 0.15;         /* 错误提示阴影透明度 */
+  --st-error-tip-enter-duration: 0.25s;      /* 错误提示进场动画时长 */
+  --st-error-tip-transform-duration: 0.28s;  /* 错误提示变换动画时长 */
+  /* ========================== */
+  /* 通用组件专用变量 (Common Components) */
+  /* ========================== */
+  
+  /* 模态框遮罩 (Modal Overlays) */
+  --st-modal-overlay-dark-bg: rgba(0, 0, 0, 0.5);    /* 模态框深色遮罩背景 */
+  --st-modal-overlay-darker-bg: rgba(0, 0, 0, 0.6);  /* 模态框更深遮罩背景 */
+  --st-modal-overlay-light-bg: rgba(0, 0, 0, 0.35);  /* 模态框浅色遮罩背景 */
+  --st-modal-overlay-options-bg: rgba(0, 0, 0, 0.65); /* 选项面板遮罩背景 */
+  
+  /* 冲突模态框 (Conflict Modal) */
+  --st-conflict-warning-bg: rgba(255, 193, 7, 0.08);  /* 警告头部背景 */
+  --st-conflict-warning-color: #f59e0b;              /* 警告色 */
+  --st-conflict-error-bg: rgba(239, 68, 68, 0.12);   /* 错误背景 */
+  --st-conflict-error-bg-light: rgba(239, 68, 68, 0.05); /* 错误背景（浅） */
+  --st-conflict-error-border: rgba(239, 68, 68, 0.3); /* 错误边框 */
+  --st-conflict-error-color: #ef4444;                /* 错误色 */
+  
+  /* 内容视图模态框 (Content View Modal) */
+  --st-content-modal-bg-light: rgb(255, 255, 255);   /* 内容模态框背景（浅色） */
+  --st-content-modal-bg-dark: rgb(24, 24, 26);       /* 内容模态框背景（暗色） */
+  --st-content-modal-transition: 0.3s;               /* 内容模态框过渡时间 */
+  
+  /* 删除确认模态框 (Delete Confirm Modal) */
+  --st-delete-icon-bg: rgba(220, 38, 38, 0.1);       /* 删除图标背景 */
+  --st-delete-icon-color: rgb(220, 38, 38);          /* 删除图标颜色 */
+  --st-delete-spinner-border: rgba(255, 255, 255, 0.3); /* 删除等待动画边框 */
+  --st-delete-spinner-top: #fff;                     /* 删除等待动画顶部颜色 */
+  --st-delete-spinner-duration: 0.6s;                /* 删除等待动画持续时间 */
+  
+  /* 导出模态框 (Export Modal) */
+  --st-export-list-min-width: 360px;                 /* 导出列表最小宽度 */
+  --st-export-list-max-width: 440px;                 /* 导出列表最大宽度 */
+  --st-export-list-height: 480px;                    /* 导出列表高度 */
+  --st-export-list-min-height: 320px;                /* 导出列表最小高度 */
+  --st-export-list-max-height: 480px;                /* 导出列表最大高度 */
+  --st-export-item-max-width: 280px;                 /* 导出项目最大宽度 */
+  --st-export-check-selected-bg: rgb(60, 60, 70);    /* 导出选中背景（浅色） */
+  --st-export-check-bg-dark: rgb(45, 45, 50);        /* 导出复选框背景（暗色） */
+  --st-export-check-border-dark: rgb(80, 80, 90);    /* 导出复选框边框（暗色） */
+  --st-export-check-hover-dark: rgb(110, 110, 120);  /* 导出复选框悬停（暗色） */
+  --st-export-check-selected-dark: rgb(120, 120, 140); /* 导出选中（暗色） */
+  --st-export-check-selected-text-dark: rgb(20, 20, 22); /* 导出选中文本（暗色） */
+  --st-export-image-clear-bg: rgba(0, 0, 0, 0.6);    /* 导出图片清除按钮背景 */
+  --st-export-image-clear-hover: rgba(0, 0, 0, 0.8); /* 导出图片清除按钮悬停 */
+  --st-export-preview-max-height: 150px;             /* 导出预览图最大高度 */
+  --st-export-success-transition: 0.3s;              /* 导出成功过渡时间 */
+  
+  /* 导入错误模态框 (Import Error Modal) */
+  --st-import-error-max-width: 420px;                /* 导入错误模态框最大宽度 */
+  --st-import-warning-icon-color: rgb(202, 138, 4);  /* 导入警告图标颜色 */
+  
+  /* 加载遮罩 (Loading Overlay) */
+  --st-loading-overlay-bg: rgba(0, 0, 0, 0.5);       /* 加载遮罩背景 */
+  --st-loading-text-color: white;                    /* 加载文本颜色 */
+  --st-loading-text-shadow: 0 var(--st-spacing-xs) var(--st-spacing-xs) rgba(0, 0, 0, 0.3); /* 加载文本阴影 */
+  --st-loading-rotate-duration: 2s;                  /* 加载旋转动画时长 */
+  --st-loading-dash-duration: 1.5s;                  /* 加载虚线动画时长 */
+  --st-loading-fade-duration: 0.3s;                  /* 加载淡入淡出时长 */
+  
+  /* 面板内容过渡 (Panel Content Transition) */
+  --st-panel-content-offset: 8px;                    /* 面板内容过渡位移 */
+  
+  /* 提示框 (Toasts) */
+  --st-toast-min-width: 300px;                       /* 提示框最小宽度 */
+  --st-toast-max-width: 440px;                       /* 提示框最大宽度 */
+  --st-toast-max-width-vw: 85vw;                     /* 提示框最大宽度（视口） */
+  
+  /* 浅色主题提示框样式 */
+  --st-toast-bg-light: rgba(255, 255, 255, 0.95);    /* 提示框背景（浅色） */
+  --st-toast-text-light: rgba(18, 24, 38, 0.95);     /* 提示框文本（浅色） */
+  --st-toast-border-light: rgba(0, 0, 0, 0.08);      /* 提示框边框（浅色） */
+  --st-toast-close-bg-light: rgba(0, 0, 0, 0.06);    /* 提示框关闭按钮背景（浅色） */
+  --st-toast-close-text-light: rgba(0, 0, 0, 0.6);   /* 提示框关闭按钮文本（浅色） */
+  --st-toast-close-hover-light: rgba(0, 0, 0, 0.12); /* 提示框关闭按钮悬停（浅色） */
+  --st-toast-close-hover-text-light: rgba(0, 0, 0, 0.9); /* 提示框关闭按钮悬停文本（浅色） */
+  
+  /* 暗色主题提示框样式 */
+  --st-toast-bg-dark: rgba(30, 30, 35, 0.92);        /* 提示框背景（暗色） */
+  --st-toast-text-dark: rgba(255, 255, 255, 0.95);   /* 提示框文本（暗色） */
+  --st-toast-border-dark: rgba(255, 255, 255, 0.08); /* 提示框边框（暗色） */
+  --st-toast-close-bg-dark: rgba(255, 255, 255, 0.08);    /* 提示框关闭按钮背景（暗色） */
+  --st-toast-close-text-dark: rgba(255, 255, 255, 0.7);   /* 提示框关闭按钮文本（暗色） */
+  --st-toast-close-hover-dark: rgba(255, 255, 255, 0.15); /* 提示框关闭按钮悬停（暗色） */
+  --st-toast-close-hover-text-dark: rgba(255, 255, 255, 1); /* 提示框关闭按钮悬停文本（暗色） */
+  
+  /* 默认使用浅色主题 */
+  --st-toast-bg: var(--st-toast-bg-light);
+  --st-toast-text: var(--st-toast-text-light);
+  --st-toast-border: var(--st-toast-border-light);
+  --st-toast-close-bg: var(--st-toast-close-bg-light);
+  --st-toast-close-text: var(--st-toast-close-text-light);
+  --st-toast-close-hover: var(--st-toast-close-hover-light);
+  --st-toast-close-hover-text: var(--st-toast-close-hover-text-light);
+  
+  /* 类型颜色（适用于所有主题） */
+  --st-toast-success-color: #10b981;                 /* 成功提示颜色 */
+  --st-toast-success-light: #34d399;                 /* 成功提示浅色 */
+  --st-toast-warning-color: #f59e0b;                 /* 警告提示颜色 */
+  --st-toast-warning-light: #fbbf24;                 /* 警告提示浅色 */
+  --st-toast-error-color: #ef4444;                   /* 错误提示颜色 */
+  --st-toast-error-light: #f87171;                   /* 错误提示浅色 */
+  --st-toast-info-color: #3b82f6;                    /* 信息提示颜色 */
+  --st-toast-info-light: #60a5fa;                    /* 信息提示浅色 */
+  
+  /* RGB格式用于阴影 */
+  --st-toast-success-rgb: 16 185 129;                /* 成功提示RGB */
+  --st-toast-warning-rgb: 245 158 11;                /* 警告提示RGB */
+  --st-toast-error-rgb: 239 68 68;                   /* 错误提示RGB */
+  --st-toast-info-rgb: 59 130 246;                   /* 信息提示RGB */
+  
+  /* 顶部栏 (Top Bar) */
+  --st-topbar-scroll-threshold: 8px;                 /* 顶部栏滚动阈值 */
+  --st-topbar-hover-lift: -1px;                      /* 顶部栏悬停提升 */
+  --st-topbar-focus-shadow-alpha: 0.14;              /* 顶部栏焦点阴影透明度 */
+  --st-topbar-focus-border-alpha: 0.6;               /* 顶部栏焦点边框透明度 */
+  --st-topbar-tooltip-bg: rgba(0,0,0,0.9);           /* 顶部栏提示框背景 */
+  --st-topbar-tooltip-shadow: 0 var(--st-spacing-sm) var(--st-spacing-xl) rgba(0,0,0,0.25); /* 顶部栏提示框阴影 */
+  
+  /* 自定义滚动条 (Custom Scrollbar) */
+  --st-scroll-thumb-light-bg: rgba(30, 30, 30, 0.4);           /* 滚动条滑块背景（浅色） */
+  --st-scroll-thumb-light-border: rgba(30, 30, 30, 0.3);       /* 滚动条滑块边框（浅色） */
+  --st-scroll-thumb-light-hover-bg: rgba(30, 30, 30, 0.55);    /* 滚动条滑块悬停背景（浅色） */
+  --st-scroll-thumb-light-hover-border: rgba(30, 30, 30, 0.45); /* 滚动条滑块悬停边框（浅色） */
+  --st-scroll-thumb-dark-bg: rgba(240, 240, 240, 0.35);        /* 滚动条滑块背景（暗色） */
+  --st-scroll-thumb-dark-border: rgba(240, 240, 240, 0.25);    /* 滚动条滑块边框（暗色） */
+  --st-scroll-thumb-dark-hover-bg: rgba(240, 240, 240, 0.5);   /* 滚动条滑块悬停背景（暗色） */
+  --st-scroll-thumb-dark-hover-border: rgba(240, 240, 240, 0.4); /* 滚动条滑块悬停边框（暗色） */
+  --st-scroll-thumb-min-height: 32px;                /* 滚动条滑块最小高度 */
+  --st-scroll-thumb-min-height-2: 24px;              /* 滚动条2滑块最小高度 */
+  --st-scroll-reveal-distance: 24px;                 /* 滚动条显示触发距离 */
+  --st-scroll-track-transition: 0.35s;               /* 滚动条轨道过渡时间 */
+  --st-scroll-thumb-transition: 0.18s;               /* 滚动条滑块过渡时间 */
+  --st-scroll-thumb-position-transition: 0.06s;      /* 滚动条滑块位置过渡时间 */
+  --st-scroll-thumb2-light-bg: rgba(60, 60, 60, 0.45);     /* 滚动条2滑块背景（浅色） */
+  --st-scroll-thumb2-light-hover: rgba(60, 60, 60, 0.6);   /* 滚动条2滑块悬停（浅色） */
+  --st-scroll-thumb2-light-active: rgba(60, 60, 60, 0.7);  /* 滚动条2滑块激活（浅色） */
+  --st-scroll-thumb2-dark-bg: rgba(200, 200, 200, 0.4);    /* 滚动条2滑块背景（暗色） */
+  --st-scroll-thumb2-dark-hover: rgba(200, 200, 200, 0.55); /* 滚动条2滑块悬停（暗色） */
+  --st-scroll-thumb2-dark-active: rgba(200, 200, 200, 0.65); /* 滚动条2滑块激活（暗色） */
+  
+  /* 选项面板 (Options Panel) */
+  /* 浅色主题样式 */
+  --st-options-bg-light: rgba(255, 255, 255, 0.95);  /* 选项面板背景（浅色） */
+  --st-options-text-light: rgba(18, 24, 38, 0.95);   /* 选项面板文本（浅色） */
+  --st-options-border-light: rgba(0, 0, 0, 0.08);    /* 选项面板边框（浅色） */
+  --st-options-title-light: rgba(18, 24, 38, 0.98);  /* 标题颜色（浅色） */
+  --st-options-subtitle-light: rgba(18, 24, 38, 0.7); /* 副标题颜色（浅色） */
+  --st-options-message-light: rgba(18, 24, 38, 0.85); /* 消息文本颜色（浅色） */
+  --st-options-btn-bg-light: rgba(0, 0, 0, 0.06);    /* 选项按钮背景（浅色） */
+  --st-options-btn-text-light: rgba(18, 24, 38, 0.9); /* 选项按钮文本（浅色） */
+  --st-options-btn-border-light: rgba(0, 0, 0, 0.15); /* 选项按钮边框（浅色） */
+  --st-options-btn-hover-bg-light: rgba(0, 0, 0, 0.10); /* 选项按钮悬停背景（浅色） */
+  --st-options-btn-hover-border-light: rgba(59, 130, 246, 0.5); /* 选项按钮悬停边框（浅色） */
+  --st-options-action-cancel-light: rgba(18, 24, 38, 0.6); /* 取消按钮文本（浅色） */
+  
+  /* 暗色主题样式 */
+  --st-options-bg-dark: rgba(30, 30, 35, 0.92);      /* 选项面板背景（暗色） */
+  --st-options-text-dark: rgba(255, 255, 255, 0.95); /* 选项面板文本（暗色） */
+  --st-options-border-dark: rgba(255, 255, 255, 0.1); /* 选项面板边框（暗色） */
+  --st-options-title-dark: rgba(255, 255, 255, 0.98); /* 标题颜色（暗色） */
+  --st-options-subtitle-dark: rgba(255, 255, 255, 0.7); /* 副标题颜色（暗色） */
+  --st-options-message-dark: rgba(255, 255, 255, 0.85); /* 消息文本颜色（暗色） */
+  --st-options-btn-bg-dark: rgba(255, 255, 255, 0.08); /* 选项按钮背景（暗色） */
+  --st-options-btn-text-dark: rgba(255, 255, 255, 0.9); /* 选项按钮文本（暗色） */
+  --st-options-btn-border-dark: rgba(255, 255, 255, 0.15); /* 选项按钮边框（暗色） */
+  --st-options-btn-hover-bg-dark: rgba(255, 255, 255, 0.12); /* 选项按钮悬停背景（暗色） */
+  --st-options-btn-hover-border-dark: rgba(59, 130, 246, 0.5); /* 选项按钮悬停边框（暗色） */
+  --st-options-action-cancel-dark: rgba(255, 255, 255, 0.6); /* 取消按钮文本（暗色） */
+  
+  /* 默认使用浅色主题 */
+  --st-options-bg: var(--st-options-bg-light);
+  --st-options-text: var(--st-options-text-light);
+  --st-options-border: var(--st-options-border-light);
+  --st-options-title: var(--st-options-title-light);
+  --st-options-subtitle: var(--st-options-subtitle-light);
+  --st-options-message: var(--st-options-message-light);
+  --st-options-btn-bg: var(--st-options-btn-bg-light);
+  --st-options-btn-text: var(--st-options-btn-text-light);
+  --st-options-btn-border: var(--st-options-btn-border-light);
+  --st-options-btn-hover-bg: var(--st-options-btn-hover-bg-light);
+  --st-options-btn-hover-border: var(--st-options-btn-hover-border-light);
+  --st-options-action-cancel: var(--st-options-action-cancel-light);
+  
+  /* 单选框/复选框边框（浅色/暗色） */
+  --st-options-indicator-border-light: rgba(0, 0, 0, 0.4);  /* 指示器边框（浅色） */
+  --st-options-indicator-border-dark: rgba(255, 255, 255, 0.4); /* 指示器边框（暗色） */
+  
+  /* 默认使用浅色 */
+  --st-options-indicator-border: var(--st-options-indicator-border-light);
+  
+  /* 确认按钮悬停背景色（浅色/暗色） */
+  --st-options-confirm-hover-bg-light: rgba(0, 0, 0, 0.95);      /* 浅色主题：更深的黑色 */
+  --st-options-confirm-hover-bg-dark: rgba(200, 200, 200, 0.95); /* 暗色主题：浅灰色 */
+  
+  /* 默认使用浅色 */
+  --st-options-confirm-hover-bg: var(--st-options-confirm-hover-bg-light);
+  
+  /* 通用样式（适用于所有主题） */
+  --st-options-gradient-start: #3b82f6;              /* 选项面板渐变起始色 */
+  --st-options-gradient-mid: #8b5cf6;                /* 选项面板渐变中间色 */
+  --st-options-gradient-end: #ec4899;                /* 选项面板渐变结束色 */
+  --st-options-btn-selected-border: #60a5fa;         /* 选项按钮选中边框 */
+  --st-options-btn-selected-start: rgba(59, 130, 246, 0.4);  /* 选项按钮选中渐变起始 */
+  --st-options-btn-selected-end: rgba(139, 92, 246, 0.4);    /* 选项按钮选中渐变结束 */
+  --st-options-radio-active: #3b82f6;                /* 单选按钮激活色 */
+  --st-options-checkbox-active-bg: #3b82f6;          /* 复选框激活背景 */
+  --st-options-action-confirm-bg: #3b82f6;           /* 确认按钮背景 */
+  --st-options-action-confirm-hover: #2563eb;        /* 确认按钮悬停 */
+  
+  /* 主题切换器 (Theme Switcher) */
+  --st-theme-pill-hover-light: rgba(0, 0, 0, 0.04);  /* 主题按钮悬停（浅色） */
+  --st-theme-pill-hover-dark: rgba(255, 255, 255, 0.06); /* 主题按钮悬停（暗色） */
+  --st-theme-pill-active-bg-light: rgba(60, 60, 70, 0.12);  /* 主题按钮激活背景（浅色） */
+  --st-theme-pill-active-border-light: rgba(60, 60, 70, 0.35); /* 主题按钮激活边框（浅色） */
+  --st-theme-pill-active-bg-dark: rgba(180, 180, 190, 0.14);   /* 主题按钮激活背景（暗色） */
+  --st-theme-pill-active-border-dark: rgba(180, 180, 190, 0.4); /* 主题按钮激活边框（暗色） */
+  
+  /* 模式切换器 (Mode Switcher) */
+  --st-mode-active-bg: rgba(var(--st-primary), 0.14);  /* 模式切换激活背景 */
+  --st-mode-active-border: rgba(var(--st-primary), 0.45); /* 模式切换激活边框 */
+
+  /* ========================== */
+  /* 初始加载页面 (Initial Loading Screen) */
+  /* ========================== */
+  
+  /* 背景色 */
+  --st-loading-bg-light: 246 248 253;                /* 加载页面浅色背景 (RGB) */
+  --st-loading-bg-dark: 18 18 20;                    /* 加载页面暗色背景 (RGB) - 使用中性灰而非墨蓝 */
+  
+  /* 加载标题 */
+  --st-loading-title-size: 24px;                     /* 加载标题字体大小 */
+  --st-loading-title-weight: 600;                    /* 加载标题字重 */
+  --st-loading-title-margin: 24px;                   /* 加载标题下边距 */
+  --st-loading-title-opacity: 0.9;                   /* 加载标题不透明度 */
+  --st-loading-title-color-light: rgba(0, 0, 0, 0.9); /* 加载标题颜色（浅色） */
+  --st-loading-title-color-dark: rgba(255, 255, 255, 0.9); /* 加载标题颜色（暗色） */
+  
+  /* 进度条 */
+  --st-loading-bar-height: 6px;                      /* 进度条高度 */
+  --st-loading-bar-radius: 3px;                      /* 进度条圆角 */
+  --st-loading-bar-bg-opacity: 0.1;                  /* 进度条背景不透明度 */
+  --st-loading-bar-bg-light: rgba(0, 0, 0, 0.1);     /* 进度条背景（浅色） */
+  --st-loading-bar-bg-dark: rgba(255, 255, 255, 0.1); /* 进度条背景（暗色） */
+  --st-loading-bar-fill-start: #f59e0b;              /* 进度条填充渐变起始色 */
+  --st-loading-bar-fill-end: #f97316;                /* 进度条填充渐变结束色 */
+  --st-loading-bar-transition: 0.3s;                 /* 进度条过渡时间 */
+  
+  /* 进度文本 */
+  --st-loading-text-size: 14px;                      /* 进度文本字体大小 */
+  --st-loading-text-margin: 16px;                    /* 进度文本上边距 */
+  --st-loading-text-opacity: 0.7;                    /* 进度文本不透明度 */
+  --st-loading-text-color-light: rgba(0, 0, 0, 0.7); /* 进度文本颜色（浅色） */
+  --st-loading-text-color-dark: rgba(255, 255, 255, 0.7); /* 进度文本颜色（暗色） */
+  
+  /* 容器 */
+  --st-loading-container-max-width: 400px;           /* 加载容器最大宽度 */
+  --st-loading-container-width: 90%;                 /* 加载容器宽度 */
+  --st-loading-overlay-transition: 0.3s;             /* 加载遮罩过渡时间 */
+
+  --st-drag-grip-color-dark: rgb(232, 236, 244);     /* 拖拽手柄颜色（暗色） */
+  
+  /* 拖拽幽灵元素（暗色主题） */
+  --st-drag-ghost-bg-dark: rgba(30, 30, 32, 0.95);   /* 拖拽幽灵背景色（暗色） */
+  --st-drag-ghost-border-dark: rgba(96, 165, 250, 0.8); /* 拖拽幽灵边框色（暗色） */
+  --st-drag-ghost-text-dark: rgba(243, 244, 246, 0.95); /* 拖拽幽灵文字色（暗色） */
+  --st-drag-ghost-shadow-dark: rgba(0, 0, 0, 0.5);   /* 拖拽幽灵阴影色（暗色） */
+}
+
+/* 暗色主题 - 使用中性灰色配色 */
+[data-theme="dark"] {
+  --st-color-bg: 18 18 20;
+  --st-color-text: 235 235 240;
+  --st-surface: 28 28 30;
+  --st-surface-2: 38 38 42;
+  --st-primary: 140 140 160;
+  --st-primary-contrast: 20 20 22;
+  --st-border: 60 60 65;
+  
+  /* 拖拽幽灵元素（暗色主题覆盖） */
+  --st-drag-ghost-bg: var(--st-drag-ghost-bg-dark);
+  --st-drag-ghost-border: var(--st-drag-ghost-border-dark);
+  --st-drag-ghost-text: var(--st-drag-ghost-text-dark);
+  --st-drag-ghost-shadow: var(--st-drag-ghost-shadow-dark);
+  /* ========================== */
+  /* 外观面板 (Appearance Panel) */
+  /* ========================== */
+  
+  /* 面板定位 */
+  --st-appearance-panel-top: 64px;               /* 外观面板顶部距离 */
+  --st-appearance-panel-bottom: 12px;            /* 外观面板底部距离 */
+  
+  /* 面板样式 */
+  --st-appearance-panel-backdrop-blur: 8px;      /* 外观面板背景模糊 */
+  --st-appearance-panel-backdrop-saturate: 130%; /* 外观面板背景饱和度 */
+  --st-appearance-header-border-alpha: 0.85;     /* 外观面板头部边框透明度 */
+  --st-appearance-tabs-bg-alpha: 0.65;           /* 外观面板标签栏背景透明度 */
+  --st-appearance-tabs-shadow: inset 0 -1px 0 rgba(0,0,0,0.02); /* 外观面板标签栏阴影 */
+  
+  /* Tab 按钮 */
+  --st-appearance-tab-hover-lift: -1px;          /* 外观面板标签悬停提升 */
+  --st-appearance-tab-active-bg: rgba(var(--st-primary), 0.14);  /* 外观面板标签激活背景 */
+  --st-appearance-tab-active-border: rgba(var(--st-primary), 0.45); /* 外观面板标签激活边框 */
+  --st-appearance-tab-active-shadow: 0 1px 0 rgba(0,0,0,0.02);   /* 外观面板标签激活阴影 */
+  --st-appearance-tab-focus-outline: 2px solid rgba(var(--st-primary), 0.6); /* 外观面板标签焦点轮廓 */
+  
+  /* Live Tuning 模式 */
+  /* ========================== */
+  /* 侧边栏组件 (Sidebar Components) */
+  /* ========================== */
+  
+  /* SidebarDrawer */
+  --st-sidebar-top: 64px;                            /* 侧边栏顶部距离 */
+  --st-sidebar-backdrop-bg: rgba(0,0,0,0.18);        /* 侧边栏背板背景 */
+  --st-sidebar-backdrop-blur: 16px;                  /* 侧边栏背板模糊 */
+  --st-sidebar-panel-blur: 8px;                      /* 侧边栏面板模糊 */
+  --st-sidebar-panel-saturate: 130%;                 /* 侧边栏面板饱和度 */
+  --st-sidebar-header-border-alpha: 0.85;            /* 侧边栏头部边框透明度 */
+  --st-sidebar-close-hover-offset: -2px;             /* 侧边栏关闭按钮悬停偏移 */
+  --st-sidebar-close-hover-rotate: -2deg;            /* 侧边栏关闭按钮悬停旋转 */
+  --st-sidebar-drawer-enter-x: -14px;                /* 侧边栏进入X轴偏移 */
+  --st-sidebar-drawer-leave-x: -16px;                /* 侧边栏离开X轴偏移 */
+  --st-sidebar-drawer-scale: 0.98;                   /* 侧边栏进入/离开缩放 */
+  --st-sidebar-drawer-blur: 4px;                     /* 侧边栏进入/离开模糊 */
+  --st-sidebar-float-duration: 4s;                   /* 侧边栏浮动动画时长 */
+  --st-sidebar-float-offset: -3px;                   /* 侧边栏浮动偏移 */
+  
+  /* SidebarNav */
+  --st-sidebar-nav-ctrl-blur: 10px;                  /* 侧边栏导航控制按钮模糊 */
+  --st-sidebar-nav-ctrl-saturate: 140%;              /* 侧边栏导航控制按钮饱和度 */
+  --st-sidebar-nav-ctrl-bg-alpha: 0.35;              /* 侧边栏导航控制按钮背景透明度 */
+  --st-sidebar-nav-ctrl-min-height: 30px;            /* 侧边栏导航控制按钮最小高度 */
+  
+  /* PreviewCard */
+  --st-preview-card-bg-light: rgba(120, 120, 130, 0.08); /* 预览卡背景（浅色） */
+  --st-preview-card-hover-light: rgba(255, 255, 255, 0.85); /* 预览卡悬停背景（浅色） */
+  --st-preview-card-bg-dark: rgba(40, 42, 50, 0.6);    /* 预览卡背景（暗色） */
+  --st-preview-card-hover-dark: rgba(55, 58, 68, 0.9); /* 预览卡悬停背景（暗色） */
+  --st-preview-badge-threaded-bg: rgba(59, 130, 246, 0.15); /* 楼层对话徽章背景 */
+  --st-preview-badge-threaded-color: rgb(59, 130, 246);     /* 楼层对话徽章颜色 */
+  --st-preview-badge-sandbox-bg: rgba(168, 85, 247, 0.15);  /* 沙盒徽章背景 */
+  --st-preview-badge-sandbox-color: rgb(168, 85, 247);      /* 沙盒徽章颜色 */
+  --st-preview-badge-threaded-bg-dark: rgba(96, 165, 250, 0.2); /* 楼层对话徽章背景（暗色） */
+  --st-preview-badge-threaded-color-dark: rgb(147, 197, 253);   /* 楼层对话徽章颜色（暗色） */
+  --st-preview-badge-sandbox-bg-dark: rgba(192, 132, 252, 0.2); /* 沙盒徽章背景（暗色） */
+  --st-preview-badge-sandbox-color-dark: rgb(216, 180, 254);    /* 沙盒徽章颜色（暗色） */
+  
+  /* CharactersPanel (和其他数据面板) */
+  --st-panel-header-border-alpha: 0.85;              /* 面板头部边框透明度 */
+  --st-panel-danger-color: rgb(220, 38, 38);         /* 危险操作颜色 */
+  --st-panel-danger-border-alpha: 0.5;               /* 危险按钮边框透明度 */
+  --st-panel-danger-bg-alpha: 0.06;                  /* 危险按钮背景透明度 */
+  --st-panel-danger-hover-border: 0.7;               /* 危险按钮悬停边框透明度 */
+  --st-panel-danger-hover-bg: 0.1;                   /* 危险按钮悬停背景透明度 */
+  /* AppSettingsPanel 特有样式 */
+  --st-settings-theme-indicator-bg: rgba(60, 60, 70, 0.12); /* 主题指示器背景 */
+  --st-settings-theme-indicator-bg-dark: rgba(180, 180, 190, 0.16); /* 主题指示器背景（暗色） */
+  --st-settings-input-focus-color: rgb(96, 165, 250);       /* 输入框焦点颜色 */
+  --st-settings-input-focus-shadow: rgba(96, 165, 250, 0.2); /* 输入框焦点阴影 */
+  --st-settings-input-hover-border: rgba(96, 165, 250, 0.6); /* 输入框悬停边框 */
+  --st-settings-action-btn-bg-dark: rgba(var(--st-surface-2), 0.8); /* 操作按钮背景（暗色） */
+
+  --st-panel-avatar-gradient-start: rgba(var(--st-primary),0.12); /* 面板头像渐变起始 */
+  --st-panel-avatar-gradient-end: rgba(var(--st-accent),0.12);    /* 面板头像渐变结束 */
+  --st-panel-folder-bg-alpha: 0.15;                  /* 文件夹标签背景透明度 */
+  --st-panel-folder-color-alpha: 0.55;               /* 文件夹标签文本透明度 */
+  --st-panel-disabled-grayscale: 30%;                /* 面板禁用状态灰度值 */
+
+  --st-live-tuning-control-bg: rgba(var(--st-surface), 0.85);    /* 实时调整控件背景 */
+  --st-live-tuning-control-border: rgba(var(--st-primary), 0.45); /* 实时调整控件边框 */
+  --st-live-tuning-control-shadow: 0 6px 18px rgba(0,0,0,0.12), 0 0 0 4px rgba(var(--st-primary), 0.06); /* 实时调整控件阴影 */
+
+  --st-accent: 160 180 200;
+  --st-overlay-ink: 0 0 0;
+  
+  /* 暗色主题提示框覆盖 */
+  --st-toast-bg: var(--st-toast-bg-dark);
+  --st-toast-text: var(--st-toast-text-dark);
+  --st-toast-border: var(--st-toast-border-dark);
+  --st-toast-close-bg: var(--st-toast-close-bg-dark);
+  --st-toast-close-text: var(--st-toast-close-text-dark);
+  --st-toast-close-hover: var(--st-toast-close-hover-dark);
+  --st-toast-close-hover-text: var(--st-toast-close-hover-text-dark);
+  
+  /* 暗色主题选项面板覆盖 */
+  --st-options-bg: var(--st-options-bg-dark);
+  --st-options-text: var(--st-options-text-dark);
+  --st-options-border: var(--st-options-border-dark);
+  --st-options-title: var(--st-options-title-dark);
+  --st-options-subtitle: var(--st-options-subtitle-dark);
+  --st-options-message: var(--st-options-message-dark);
+  --st-options-btn-bg: var(--st-options-btn-bg-dark);
+  --st-options-btn-text: var(--st-options-btn-text-dark);
+  --st-options-btn-border: var(--st-options-btn-border-dark);
+  --st-options-btn-hover-bg: var(--st-options-btn-hover-bg-dark);
+  --st-options-btn-hover-border: var(--st-options-btn-hover-border-dark);
+  --st-options-action-cancel: var(--st-options-action-cancel-dark);
+  --st-options-indicator-border: var(--st-options-indicator-border-dark);
+  --st-options-confirm-hover-bg: var(--st-options-confirm-hover-bg-dark);
+}
