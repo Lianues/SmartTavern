@@ -177,6 +177,7 @@ const currentData = ref(
 // 外部数据变更时同步
 watch(() => props.llmConfigData, async (v) => {
   currentData.value = deepClone(normalizeLLMConfigData(v) || DEFAULT_LLM_CONFIG)
+  initApiToggles(v)
   initJsonStrings()
   await loadExistingIcon()
   await nextTick()
@@ -189,6 +190,17 @@ const providers = ['openai', 'anthropic', 'gemini', 'openai_compatible', 'custom
 // 请求参数启用开关
 const apiToggleKeys = ['max_tokens', 'temperature', 'top_p', 'presence_penalty', 'frequency_penalty', 'stream']
 const apiToggles = reactive(Object.fromEntries(apiToggleKeys.map(k => [k, true])))
+
+// 根据配置数据初始化 apiToggles（字段存在且非 null 视为启用）
+function initApiToggles(src) {
+  if (!src) return
+  for (const key of apiToggleKeys) {
+    apiToggles[key] = src[key] !== undefined && src[key] !== null
+  }
+}
+
+// 初始化 apiToggles
+initApiToggles(props.llmConfigData)
 
 const showGemini = computed(() => currentData.value.provider === 'gemini')
 const showAnthropic = computed(() => currentData.value.provider === 'anthropic')
@@ -336,7 +348,7 @@ async function save() {
     return
   }
   
-  // 构建保存内容
+  // 构建保存内容（根据 apiToggles 条件性包含可选参数）
   const payloadContent = {
     name: currentData.value.name || '',
     description: currentData.value.description || '',
@@ -344,17 +356,18 @@ async function save() {
     base_url: currentData.value.base_url,
     api_key: currentData.value.api_key,
     model: currentData.value.model,
-    max_tokens: currentData.value.max_tokens,
-    temperature: currentData.value.temperature,
-    top_p: currentData.value.top_p,
-    presence_penalty: currentData.value.presence_penalty,
-    frequency_penalty: currentData.value.frequency_penalty,
-    stream: currentData.value.stream,
     timeout: currentData.value.timeout,
     connect_timeout: currentData.value.connect_timeout,
     enable_logging: currentData.value.enable_logging,
     custom_params: currentData.value.custom_params
   }
+  // 可选参数：只有启用时才包含在请求中
+  if (apiToggles.max_tokens) payloadContent.max_tokens = currentData.value.max_tokens
+  if (apiToggles.temperature) payloadContent.temperature = currentData.value.temperature
+  if (apiToggles.top_p) payloadContent.top_p = currentData.value.top_p
+  if (apiToggles.presence_penalty) payloadContent.presence_penalty = currentData.value.presence_penalty
+  if (apiToggles.frequency_penalty) payloadContent.frequency_penalty = currentData.value.frequency_penalty
+  if (apiToggles.stream) payloadContent.stream = currentData.value.stream
   
   // 根据 provider 条件性地添加特定配置
   if (currentData.value.provider === 'gemini') {
