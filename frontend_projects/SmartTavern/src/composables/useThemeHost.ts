@@ -17,7 +17,7 @@ const state = reactive({
   ready: false,
 })
 
-let __off: (() => void) | null = null
+let _themeChangeUnsub: (() => void) | null = null
 
 async function ensureInit(): Promise<void> {
   if (__inited) return
@@ -27,7 +27,7 @@ async function ensureInit(): Promise<void> {
       state.ready = true
       currentTheme.value = ThemeManager.getCurrentTheme?.() || null
       // 订阅主题变化
-      __off = ThemeManager.on('change', () => {
+      _themeChangeUnsub = ThemeManager.on('change', () => {
         currentTheme.value = ThemeManager.getCurrentTheme?.() || null
       })
       __inited = true
@@ -147,7 +147,7 @@ export function useThemeHost(): UseThemeHostAPI {
     await ensureInit()
   })
   onBeforeUnmount(() => {
-    // 不主动取消全局订阅（保持单例），组件级无需处理
+    // 单例模式：组件卸载时不取消全局订阅
   })
 
   return {
@@ -170,3 +170,11 @@ export function useThemeHost(): UseThemeHostAPI {
 }
 
 export default useThemeHost
+
+/** 清理主题订阅（仅在应用卸载时调用） */
+export function cleanupThemeHost(): void {
+  if (_themeChangeUnsub) {
+    _themeChangeUnsub()
+    _themeChangeUnsub = null
+  }
+}

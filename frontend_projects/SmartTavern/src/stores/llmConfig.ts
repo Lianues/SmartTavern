@@ -97,14 +97,14 @@ export const useLlmConfigStore = defineStore('llmConfig', () => {
     error.value = null
     
     try {
-      const result: LLMConfigDetailResponse = await dataCatalog.getLLMConfigDetail(llmConfigFile)
-      
+      const result = await dataCatalog.getLLMConfigDetail(llmConfigFile)
+
       if (!result || !result.content) {
         throw new Error('Failed to load LLM config file')
       }
-      
+
       currentLlmConfigFile.value = llmConfigFile
-      meta.value = result.content
+      meta.value = result.content as LLMConfigMeta
       
       return meta.value
     } catch (err) {

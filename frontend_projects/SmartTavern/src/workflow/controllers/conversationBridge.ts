@@ -86,31 +86,31 @@ export function initConversationBridge(bus: EventBus): void {
   // ===== 保存对话 =====
   bus.on(ConversationChannel.EVT_CONVERSATION_SAVE_REQ, async (payload: any) => {
     const { file, doc, tag } = payload || {}
-    
+
     try {
       ConversationChannel.loadingStates.value.save = true
       ConversationChannel.errorStates.value.save = null
-      
-      // 注意：ChatBranches 可能没有 saveConversation 方法，这里使用 any 类型绕过
-      const res = await (ChatBranches as any).saveConversation?.(file, doc)
-      
+
+      const res = await ChatBranches.saveConversation(file, doc)
+
       // 更新当前对话文档
       if (ConversationChannel.currentConversationFile.value === file) {
-        ConversationChannel.currentConversationDoc.value = res || doc
+        ConversationChannel.currentConversationDoc.value = doc
       }
-      
+
       ConversationChannel.loadingStates.value.save = false
-      
+
       bus.emit(ConversationChannel.EVT_CONVERSATION_SAVE_OK, {
         tag,
         file,
-        doc: res || doc
+        doc,
+        result: res
       })
     } catch (error: any) {
       const errMsg = error?.message || String(error)
       ConversationChannel.errorStates.value.save = errMsg
       ConversationChannel.loadingStates.value.save = false
-      
+
       bus.emit(ConversationChannel.EVT_CONVERSATION_SAVE_FAIL, {
         tag,
         file,
@@ -122,21 +122,20 @@ export function initConversationBridge(bus: EventBus): void {
   // ===== 删除对话 =====
   bus.on(ConversationChannel.EVT_CONVERSATION_DELETE_REQ, async (payload: any) => {
     const { file, tag } = payload || {}
-    
+
     try {
       ConversationChannel.loadingStates.value.delete = true
       ConversationChannel.errorStates.value.delete = null
-      
-      // 注意：ChatBranches 可能没有 deleteConversation 方法，这里使用 any 类型绕过
-      const res = await (ChatBranches as any).deleteConversation?.(file)
-      
+
+      const res = await ChatBranches.deleteConversation(file)
+
       // 如果删除的是当前对话，清空当前状态
       if (ConversationChannel.currentConversationFile.value === file) {
         ConversationChannel.resetCurrentConversation()
       }
-      
+
       ConversationChannel.loadingStates.value.delete = false
-      
+
       bus.emit(ConversationChannel.EVT_CONVERSATION_DELETE_OK, {
         tag,
         file,
@@ -146,7 +145,7 @@ export function initConversationBridge(bus: EventBus): void {
       const errMsg = error?.message || String(error)
       ConversationChannel.errorStates.value.delete = errMsg
       ConversationChannel.loadingStates.value.delete = false
-      
+
       bus.emit(ConversationChannel.EVT_CONVERSATION_DELETE_FAIL, {
         tag,
         file,

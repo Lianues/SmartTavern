@@ -1,4 +1,5 @@
 import { ref, nextTick, type Ref } from 'vue'
+import ChatBranches from '@/services/chatBranches'
 
 /**
  * useNewGame：管理"新建对话"模态的状态与行为
@@ -28,17 +29,22 @@ export interface NewGamePayload {
 export interface UseNewGameOptions {
   setView?: (view: ViewType) => void
   refreshIcons?: () => void
+  onConversationCreated?: (file: string) => void
 }
 
 export interface UseNewGameAPI {
   newGameOpen: Ref<boolean>
   openNewGame: () => void
   cancelNewGame: () => void
-  onNewChatConfirm: (payload?: NewGamePayload) => void
+  onNewChatConfirm: (payload?: NewGamePayload) => Promise<void>
+  isCreating: Ref<boolean>
+  createError: Ref<string | null>
 }
 
-export function useNewGame({ setView, refreshIcons }: UseNewGameOptions = {}): UseNewGameAPI {
+export function useNewGame({ setView, refreshIcons, onConversationCreated }: UseNewGameOptions = {}): UseNewGameAPI {
   const newGameOpen = ref<boolean>(false)
+  const isCreating = ref<boolean>(false)
+  const createError = ref<string | null>(null)
 
   function openNewGame(): void {
     newGameOpen.value = true
@@ -77,28 +83,44 @@ export function useNewGame({ setView, refreshIcons }: UseNewGameOptions = {}): U
     })
   }
 
-  function onNewChatConfirm(payload?: NewGamePayload): void {
-    // TODO：与后端通信创建会话（携带所选项）
-    // payload: { name, type, preset, character, persona, regex?, worldbook? }
-    const t = payload?.type
-    if (t === 'threaded' || t === 'sandbox') {
-      try {
-        typeof setView === 'function' && setView(t)
-      } catch (_) {
-        // Ignore errors
-      }
+  async function onNewChatConfirm(payload?: NewGamePayload): Promise<void> {
+    if (!payload?.character || !payload?.preset || !payload?.persona) {
+      createError.value = 'Missing required fields: character, preset, persona'
+      return
     }
-    newGameOpen.value = false
-    // 关闭后刷新图标
-    if (typeof refreshIcons === 'function') {
-      refreshIcons()
-    } else {
-      nextTick(() => { 
-        try { 
-          (window as any)?.lucide?.createIcons?.() 
-        } catch (_) {
-          // Ignore errors
-        } 
+
+    isCreating.value = true
+    createError.value = null
+
+    try {
+      const res = await ChatBranches.createConversation({
+        name: payload.name || `Chat_${Date.now()}`,
+        type: (payload.type as 'threaded' | 'sandbox') || 'threaded',
+        character: payload.character,
+        preset: payload.preset,
+        persona: payload.persona,
+        regex: payload.regex || null,
+        worldbook: payload.worldbook || null,
+        llm_config: payload.llm_config || null,
+      })
+
+      if (res?.file) {
+        onConversationCreated?.(res.file)
+      }
+
+      const t = payload?.type
+      if (t === 'threaded' || t === 'sandbox') {
+        setView?.(t)
+      }
+
+      newGameOpen.value = false
+    } catch (err: any) {
+      createError.value = err?.message || String(err)
+      console.error('[useNewGame] createConversation failed:', err)
+    } finally {
+      isCreating.value = false
+      refreshIcons?.() || nextTick(() => {
+        try { (window as any)?.lucide?.createIcons?.() } catch (_) {}
       })
     }
   }
@@ -108,6 +130,8 @@ export function useNewGame({ setView, refreshIcons }: UseNewGameOptions = {}): U
     openNewGame,
     cancelNewGame,
     onNewChatConfirm,
+    isCreating,
+    createError,
   }
 }
 

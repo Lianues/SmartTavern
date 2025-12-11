@@ -1,5 +1,11 @@
 frontend_projects/manosaba_ai/
 backups/
+
+# Local development docs
+DEVELOPMENT_PLAN.md
+DEVELOPMENT_PROGRESS.md
+CLAUDE.md
+.serena/
 # Python bytecode & cache
 __pycache__/
 *.py[cod]
